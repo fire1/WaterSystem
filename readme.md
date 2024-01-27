@@ -24,7 +24,7 @@ users to interact with and monitor the system. Users can view current water leve
 6. **Fault Detection:** The system incorporates fault detection mechanisms to identify and alert users about any anomalies or 
 malfunctions, ensuring a reliable and resilient operation.
 
-### <a name="specific-periods"></a> Specific Periods
+#### <a name="specific-periods"></a> <u>Specific Periods</u>
 
 The system utilizes a Real-Time Clock (RTC) module to intelligently schedule pump operations during specific periods of the day, 
 days of the week, and even across different seasons. By integrating time-based control, the WaterSystem ensures efficient water 
