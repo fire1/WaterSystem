@@ -7,7 +7,7 @@ efficiently managed to ensure a continuous and optimal water supply.
 ## Key Features
 
 1. **Pump Control:** The system automates the operation of water pumps based on real-time water levels in different containers. 
-Pumps are activated or deactivated as needed to maintain optimal water levels.
+Pumps are activated or deactivated as needed to maintain optimal water levels at [specific periods](#specific-periods).
 
 2. **Container Monitoring:** Water levels in multiple containers are constantly monitored using sensors. This information is crucial 
 for making informed decisions about when and how long to activate the pumps.
@@ -23,6 +23,14 @@ users to interact with and monitor the system. Users can view current water leve
 
 6. **Fault Detection:** The system incorporates fault detection mechanisms to identify and alert users about any anomalies or 
 malfunctions, ensuring a reliable and resilient operation.
+
+### <a name="specific-periods"></a> Specific Periods
+
+The system utilizes a Real-Time Clock (RTC) module to intelligently schedule pump operations during specific periods of the day, 
+days of the week, and even across different seasons. By integrating time-based control, the WaterSystem ensures efficient water 
+management aligned with user-defined schedules. This feature enhances the system's adaptability to varying water needs and 
+contributes to overall resource optimization.
+
 
 ## Potential Components
 
