@@ -24,7 +24,7 @@ users to interact with and monitor the system. Users can view current water leve
 6. **Fault Detection:** The system incorporates fault detection mechanisms to identify and alert users about any anomalies or 
 malfunctions, ensuring a reliable and resilient operation.
 
-###<a name="specific-periods"></a> <ins>Specific Periods</ins>
+<a name="specific-periods"></a> <ins>Specific Periods</ins>
 
 The system utilizes a Real-Time Clock (RTC) module to intelligently schedule pump operations during specific periods of the day, 
 days of the week, and even across different seasons. By integrating time-based control, the WaterSystem ensures efficient water 
@@ -36,16 +36,7 @@ contributes to overall resource optimization.
 
 - **Microcontroller (Arduino):** Manages sensor inputs, controls pump activation, and interfaces with user settings.
 - **Water Level Sensors:** Installed in each container to measure water levels accurately.
-- **Pumps:** Automated water pumps controlled by the system based on user-defined rules.
+- **Pumps:** Automated water pumps controlled by the system's Solid state relays.
 - **User Interface (LCD Display):** Provides real-time feedback and allows users to configure settings.
-- **Data Logging System:** Stores historical water level data for analysis and optimization.
-
-## Applications
-
-- **Agriculture:** Efficient irrigation management for crops.
-- **Residential Water Systems:** Optimal control of water pumps in homes.
-- **Industrial Processes:** Automated water distribution for manufacturing processes.
-
-The WaterSystem is a versatile and adaptable solution that brings efficiency and intelligence to water management, ensuring a 
-reliable and optimized water supply tailored to specific needs.
+- **RTC Module** To resolve periods (white list times) when to run pumps.
 
