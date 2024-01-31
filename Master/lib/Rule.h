@@ -38,6 +38,14 @@ private:
 
     //
     // TODO measure bank1 before running...
+    //
+
+    if (!isDaytime()) {
+      //
+      // Stop the system
+      Serial.println(F(" It is not daytime! "));
+      return;
+    }
 
     if (!isCompressorOn && (millis() - compresorTimer >= this->calcMinutes(workMin))) {
       digitalWrite(PinCompressor, HIGH);
@@ -50,7 +58,6 @@ private:
       compresorTimer = millis();
       isCompressorOn = false;
     }
-
   }
 
 
@@ -59,7 +66,6 @@ private:
 
     switch (mode.value()) {
       default:
-
       case 0:
         // noting
         digitalWrite(PinCompressor, LOW);
@@ -77,8 +83,8 @@ private:
         break;
 
       case 3:
-        // 10 minutes works, 15 stopped
-        workAmplitudePump1(10, 15);
+        // 8 minutes works, 15 stopped
+        workAmplitudePump1(8, 15);
         break;
     }
   }

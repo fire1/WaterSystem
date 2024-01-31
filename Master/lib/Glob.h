@@ -19,7 +19,6 @@ public:
 };
 
 
-DS3231 rc;
 
 //
 // LCD display setup
@@ -27,6 +26,7 @@ DS3231 rc;
 const uint8_t pinRs = 22, pinEn = 24, pinD4 = 25, pinD5 = 26, pinD6 = 27, pinD7 = 28;
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
+#include "Time.h"
 #include "Util.h"
 #include "Data.h"
 #include "Rule.h"

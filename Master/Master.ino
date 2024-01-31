@@ -67,9 +67,6 @@ void setup() {
   // Setup the normal serial link to the PC
   Serial.begin(9600);
   dbgLn(F("Starting Water system MASTER..."));
-
-  
-
   //
   // I2C start
   Wire.begin();
