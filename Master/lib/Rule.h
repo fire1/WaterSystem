@@ -16,16 +16,16 @@ SoftwareSerial com(pinRx, pinTx);
 
 class Rule {
 private:
-  unsigned long compresorTimer = 0;
+  unsigned long wellTimer = 0;
   Data& mode;
-  Data& tank1;
-  Data& tank2;
+  Data& pump1;
+  Data& pump2;
 
   uint16_t baud;
-  uint8_t led;
   char bank2;
 
-  bool isCompressorOn;
+  bool isWellPumpOn = false;
+  bool isRisePumpOn = false;
 
 
   unsigned long calcMinutes(unsigned int minutes) {
@@ -34,7 +34,7 @@ private:
 
   //
   // Defines work amplitude for Pump1
-  void workAmplitudePump1(uint8_t workMin, uint8_t stopMin) {
+  void workPump1(uint8_t workMin, uint8_t stopMin) {
 
     //
     // TODO measure bank1 before running...
@@ -43,66 +43,91 @@ private:
     if (!isDaytime()) {
       //
       // Stop the system
-      Serial.println(F(" It is not daytime! "));
+      Serial.println(F("It is not daytime!"));
       return;
     }
 
-    if (!isCompressorOn && (millis() - compresorTimer >= this->calcMinutes(workMin))) {
+    if (!isWellPumpOn && (millis() - wellTimer >= this->calcMinutes(workMin))) {
       digitalWrite(PinCompressor, HIGH);
-      compresorTimer = millis();
-      isCompressorOn = true;
+      wellTimer = millis();
+      isWellPumpOn = true;
     }
 
-    if (isCompressorOn && (millis() - compresorTimer >= this->calcMinutes(stopMin))) {
+    if (isWellPumpOn && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
       digitalWrite(PinCompressor, LOW);
-      compresorTimer = millis();
-      isCompressorOn = false;
+      wellTimer = millis();
+      isWellPumpOn = false;
     }
   }
 
 
-
-  void controlCompressor() {
+  //
+  // Controlls pump1
+  void controllWellPump() {
 
     switch (mode.value()) {
       default:
       case 0:
         // noting
         digitalWrite(PinCompressor, LOW);
-        isCompressorOn = false;
+        isWellPumpOn = false;
         break;
 
       case 1:
         // 4 minutes works, 120 stopped
-        workAmplitudePump1(4, 120);
+        workPump1(4, 120);
         break;
 
       case 2:
         // 4 minutes works, 45 stopped
-        workAmplitudePump1(4, 45);
+        workPump1(4, 45);
         break;
 
       case 3:
-        // 8 minutes works, 15 stopped
-        workAmplitudePump1(8, 15);
+        // 6 minutes works, 15 stopped
+        workPump1(6, 15);
         break;
     }
   }
 
-  void readBank2() {
-    digitalWrite(this->led, LOW);
-
-    if (com.available()) {
-      digitalWrite(this->led, HIGH);
-
-      this->bank2 = com.read();
-      dbg(F("RX: "));
-      dbgLn(this->bank2);
-    }
+  void readBank1() {
+    //
+    // TODO check level bank 1
+    //
   }
+
+  void readBank2() {
+
+
+    if (digitalRead(pinB2)) {
+
+      digitalWrite(pinLed, LOW);
+      if (com.available()) {
+        digitalWrite(pinLed, HIGH);
+
+        this->bank2 = com.read();
+        dbg(F("RX: "));
+        dbgLn(this->bank2);
+      }
+    }
+    
+    digitalWrite(pinB2, HIGH);
+  }
+
+
+
+  void resolveLevels() {
+    this->readBank1();
+    this->readBank2();
+
+    //
+    //
+  }
+
+
 public:
-  Rule(uint16_t baud, uint8_t led, Data mode, Data tank1, Data tank2)
-    : baud(baud), led(led), mode(mode), tank1(tank1), tank2(tank2) {}
+  Rule(uint16_t baud, Data mode, Data p1, Data p2)
+    : baud(baud), mode(mode), pump1(p1), pump2(p2) {}
 
 
   void begin() {
@@ -110,7 +135,8 @@ public:
   }
 
   void hark() {
-    this->readBank2();
+    this->resolveLevels();
+    //this->controllWellPump();
   }
 };
 

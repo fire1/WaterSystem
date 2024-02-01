@@ -18,8 +18,6 @@ public:
   virtual void drawLevel(byte l) = 0;
 };
 
-
-
 //
 // LCD display setup
 #define pinBacklight 23
@@ -27,11 +25,22 @@ const uint8_t pinRs = 22, pinEn = 24, pinD4 = 25, pinD5 = 26, pinD6 = 27, pinD7 
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 #include "Time.h"
+
+static Time timer200ms(200);
+static Time timer2sec(2000);
+static Time timer1min(60000);
+
+#include "Tone.h"
 #include "Util.h"
 #include "Data.h"
 #include "Rule.h"
 #include "Menu.h"
 #include "Draw.h"
 #include "Cmd.h"
+
+
+
+
+
 
 #endif

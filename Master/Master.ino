@@ -14,10 +14,12 @@
 
 //
 // Communication pins
-const byte pinRx = 10;
-const byte pinTx = 11;
-const byte pinLed = 13;
+const byte pinRx = 10;         // Recive data pin for bank 2
+const byte pinB2 = 8;          // Turn on power for Bank 2
+const byte pinTx = -1;         // Just disable Tx pin
+const byte pinLed = 13;        // LED blinks
 const uint16_t rxBaud = 4800;  // This is the communication speed over serial
+const byte pinTone = 9;
 
 //
 // Private libs
@@ -52,7 +54,7 @@ Menu mn(tk1, tk2, md);
 
 //
 // Initialize managment driver
-Rule rl(rxBaud, pinLed, md, tk1, tk2);
+Rule rl(rxBaud, md, tk1, tk2);
 
 //
 // Draw driver
@@ -63,6 +65,7 @@ Draw ui;
 Cmd cd;
 
 void setup() {
+  tone(pinTone, 2000);
   //
   // Setup the normal serial link to the PC
   Serial.begin(9600);
@@ -73,12 +76,16 @@ void setup() {
   //
   // LED to indicate when recieving
   pinMode(pinLed, OUTPUT);
+  pinMode(pinB2, OUTPUT);
+  pinMode(pinTone, OUTPUT);
   //
   // Setup the menu
   ui.begin();
   //
   // Prepare managment
   rl.begin();
+
+  playMelody(Melodies[MELODY_BOOT]);
 }
 
 void loop() {
