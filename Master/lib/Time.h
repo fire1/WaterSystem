@@ -10,7 +10,7 @@ DateTime rtcNow() {
 }
 
 //
-// Check if it is a daytime
+// Check if it is daytime, to run pumps only in the daytime
 bool isDaytime() {
   const DateTime currentTime = rtcNow();
   int currentHour = currentTime.hour();
@@ -33,13 +33,19 @@ bool isDaytime() {
   }
 }
 
+//
+// Function is used to check levels before weekend start, if level is lower then pumping is started.
 bool isPrepareDay() {
+  const DateTime currentTime = rtcNow();
+  int currentDay = currentTime.dayOfTheWeek();
 
-  //
-  // TODO ...
-  // Check is a day before a weeked.
-  // *Function is used to check levels before weekend start, if level is lower then pumping is started.
+  // Assume Saturday and Sunday are weekend days
+  const int weekendStartDay = 5;  // Friday
+
+  // Check if the current day is the day before a weekend
+  return currentDay == (weekendStartDay - 1);
 }
+
 
 
 #endif
