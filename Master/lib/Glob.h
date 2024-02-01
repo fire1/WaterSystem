@@ -26,9 +26,6 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 #include "Time.h"
 
-static Time timer200ms(200);
-static Time timer2sec(2000);
-static Time timer1min(60000);
 
 #include "Tone.h"
 #include "Util.h"

@@ -10,7 +10,7 @@ DateTime rtcNow() {
 }
 
 //
-// Check if it's daytime
+// Check if it is a daytime
 bool isDaytime() {
   const DateTime currentTime = rtcNow();
   int currentHour = currentTime.hour();
@@ -33,25 +33,13 @@ bool isDaytime() {
   }
 }
 
+bool isPrepareDay() {
 
-class Time {
-private:
-    unsigned long previousMillis;
-    unsigned long interval;
+  //
+  // TODO ...
+  // Check is a day before a weeked.
+  // *Function is used to check levels before weekend start, if level is lower then pumping is started.
+}
 
-public:
-    Time(unsigned long interval) : interval(interval) {
-        previousMillis = millis();
-    }
-
-    bool elapsed() {
-        unsigned long currentMillis = millis();
-        if (currentMillis - previousMillis >= interval) {
-            previousMillis = currentMillis;
-            return true;
-        }
-        return false;
-    }
-};
 
 #endif
