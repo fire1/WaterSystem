@@ -110,7 +110,7 @@ private:
         dbgLn(this->bank2);
       }
     }
-    
+
     digitalWrite(pinB2, HIGH);
   }
 
@@ -137,6 +137,29 @@ public:
   void hark() {
     this->resolveLevels();
     //this->controllWellPump();
+  }
+
+  /**
+  * Function for test dump of serial comunication.
+  */
+  void test() {
+    if (digitalRead(pinB2)) {
+
+      digitalWrite(pinLed, LOW);
+      if (com.available()) {
+        digitalWrite(pinLed, HIGH);
+
+        this->bank2 = com.read();
+        Serial.print(F("RX: "));
+        Serial.println(this->bank2);
+
+      }
+    }else{
+      Serial.println(F("Turning Slave ON..."));
+      digitalWrite(pinB2, HIGH);
+    }
+
+    
   }
 };
 

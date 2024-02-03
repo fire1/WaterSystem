@@ -65,7 +65,7 @@ Draw ui;
 Cmd cd;
 
 void setup() {
-  tone(pinTone, 2000);
+  //tone(pinTone, 2000);
   //
   // Setup the normal serial link to the PC
   Serial.begin(9600);
@@ -88,7 +88,11 @@ void setup() {
   playMelody(Melodies[MELODY_BOOT]);
 }
 
-void loop() {
+void loop(){
+  rl.test();
+}
+
+void _loop() {
   cd.hark();
   rl.hark();
   ui.draw(&mn);

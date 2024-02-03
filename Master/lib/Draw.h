@@ -176,10 +176,10 @@ private:
 
     if (!this->displayOn) {
       lcd.noDisplay();
-      lcd.setBacklight(BACKLIGHT_OFF);
+      //lcd.setBacklight(BACKLIGHT_OFF);
     } else {
       lcd.display();
-      lcd.setBacklight(BACKLIGHT_ON);
+      //lcd.setBacklight(BACKLIGHT_ON);
     }
 
     digitalWrite(pinBacklight, this->displayOn);
