@@ -156,8 +156,8 @@ public:
         digitalWrite(pinLed, LOW);
       }
     } else {
-      Serial.println(F("Waiting 1 sec"));
-      delay(1);
+      Serial.println(F("Waiting 100 ms"));
+      delay(100);
       Serial.println(F("Turning Slave ON..."));
       digitalWrite(pinB2, HIGH);
     }
