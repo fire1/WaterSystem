@@ -22,7 +22,7 @@ private:
   Data& pump2;
 
   uint16_t baud;
-  char bank2;
+  uint8_t bank2;
 
   bool isWellPumpOn = false;
   bool isRisePumpOn = false;
@@ -152,14 +152,15 @@ public:
         this->bank2 = com.read();
         Serial.print(F("RX: "));
         Serial.println(this->bank2);
-
+        
+        digitalWrite(pinLed, LOW);
       }
-    }else{
+    } else {
+      Serial.println(F("Waiting 1 sec"));
+      delay(1);
       Serial.println(F("Turning Slave ON..."));
       digitalWrite(pinB2, HIGH);
     }
-
-    
   }
 };
 

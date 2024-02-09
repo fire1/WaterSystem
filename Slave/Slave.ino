@@ -21,7 +21,7 @@
 
 const uint8_t numLeds = 10;       // Number of LEDs
 const uint8_t maxDistance = 100;  // Maximum distance in centimeters
-const uint8_t minDistance = 20;    // Minimum distance in centimeters
+const uint8_t minDistance = 20;   // Minimum distance in centimeters
 
 // Map function to map distance values to the range of LEDs
 uint8_t mapDistanceToLEDs(uint8_t distance) {
@@ -52,7 +52,7 @@ void lightUp(int data, unsigned int upTime = 25) {
 
   //
   // Turn on the last LED and leave it ON
-  digitalWrite(ledPins[ledsToTurnOn ], HIGH);
+  digitalWrite(ledPins[ledsToTurnOn], HIGH);
 }
 
 const byte pinEch = 2;
@@ -125,6 +125,6 @@ void loop() {
     dbg(data);
     dbgLn();
 
-    com.print(data);
+    com.print(data, DEC);
   }
 }
