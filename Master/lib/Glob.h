@@ -20,8 +20,8 @@ public:
 
 //
 // LCD display setup
-#define pinBacklight 23
-const uint8_t pinRs = 22, pinEn = 24, pinD4 = 25, pinD5 = 26, pinD6 = 27, pinD7 = 28;
+#define pinBacklight 29
+const uint8_t pinRs = 22, pinEn = 23, pinD4 = 24, pinD5 = 25, pinD6 = 26, pinD7 = 27;
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 #include "Time.h"
