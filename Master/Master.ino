@@ -50,11 +50,11 @@ Data md(4, modeNames, 2);
 
 //
 // Menu UI instance
-Menu mn(tk1, tk2, md);
+Menu mn(&tk1, &tk2, &md);
 
 //
 // Initialize managment driver
-Rule rl(rxBaud, md, tk1, tk2);
+Rule rl(rxBaud, &md, &tk1, &tk2);
 
 //
 // Draw driver

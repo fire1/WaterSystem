@@ -17,9 +17,9 @@ SoftwareSerial com(pinRx, pinTx);
 class Rule {
 private:
   unsigned long wellTimer = 0;
-  Data& mode;
-  Data& pump1;
-  Data& pump2;
+  Data *mode;
+  Data *pump1;
+  Data *pump2;
 
   uint16_t baud;
   uint8_t bank2;
@@ -65,7 +65,7 @@ private:
   // Controlls pump1
   void controllWellPump() {
 
-    switch (mode.value()) {
+    switch (mode->value()) {
       default:
       case 0:
         // noting
@@ -126,8 +126,8 @@ private:
 
 
 public:
-  Rule(uint16_t baud, Data mode, Data p1, Data p2)
-    : baud(baud), mode(mode), pump1(p1), pump2(p2) {}
+  Rule(uint16_t baud, Data *md, Data *p1, Data *p2)
+    : baud(baud), mode(md), pump1(p1), pump2(p2) {}
 
 
   void begin() {
@@ -152,7 +152,7 @@ public:
         this->bank2 = com.read();
         Serial.print(F("RX: "));
         Serial.println(this->bank2);
-        
+
         digitalWrite(pinLed, LOW);
       }
     } else {

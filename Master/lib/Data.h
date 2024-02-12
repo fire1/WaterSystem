@@ -15,11 +15,17 @@ public:
   }
 
   void next() {
-    this->index = (index + 1) % numOptions;
+    index = (index + 1) % numOptions;
+
+    dbg(F("Index "));
+    dbg(numOptions);
+    dbg(' ');
+    dbgLn(this->index);
   }
 
   void back() {
-    this->index = (index - 1 + numOptions) % numOptions;
+    index = (index - 1 + numOptions) % numOptions;
+    dbgLn(this->index);
   }
 
   const char* getName() {
@@ -34,12 +40,17 @@ public:
     EEPROM.write(eepromAddress, static_cast<uint8_t>(index));
   }
 
+  void setIndex(uint8_t index) {
+    this->index = index;
+    dbgLn(this->index);
+  }
+
 private:
   uint8_t numOptions;
   uint8_t eepromAddress;
   const char* const* PROGMEM dataNames;
 
-  uint8_t index;
+  uint8_t index = 0;
 
   void readEepRom() {
     uint8_t storedValue = EEPROM.read(eepromAddress);

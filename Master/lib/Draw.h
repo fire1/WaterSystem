@@ -10,26 +10,27 @@
 AsyncDelay refreshRate;
 AsyncDelay stopDisplay;
 
-const uint8_t timeRefresh = 50;
-const uint16_t timeDisplay = 250000;
+const uint8_t timeRefresh = 400;
+const uint16_t timeDisplay = 600000;  // 10min
 
-//
-// Joystick pins
-#define pinBtnNext 14
-#define pinBtnBack 15
-#define pinBtnOk 16
-//
-// Debounce time for the joystick
-#define BtnDebounceTime 50
-#define BtnHoldTime 2000
+
 
 //
 // Define custom characters
 //
 // An empty bar
-const byte charEmptyBar[] = { B11111, B10001, B10001, B10001, B10001, B10001, B11111, B00000 };
+const byte charBarLevel[] = {
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B00000
+};
 
-class Draw {
+class Draw : public DrawInterface {
 private:
   enum HoldState {
     None = 0,
@@ -50,15 +51,20 @@ private:
   * Method to capture button presses
   */
   bool onClick(uint8_t pinBtn) {
-    byte state = digitalRead(pinBtn);
 
-    if (!state) {
-      debounceTime = millis();
+    if (!lastBtnPress && !digitalRead(pinBtn) && millis() + debounceTime > BtnDebounceTime) {
       lastBtnPress = pinBtn;
+      debounceTime = 0;
+      stopDisplay.restart();
+      return true;
     }
 
-    if (!state && lastBtnPress == pinBtn && millis() - debounceTime > BtnDebounceTime)
-      return true;
+    if (!digitalRead(pinBtn) && !lastBtnPress) {
+      debounceTime = millis();
+    }
+
+    if (lastBtnPress == pinBtn && digitalRead(pinBtn))
+      lastBtnPress = 0;
 
     return false;
   }
@@ -75,14 +81,14 @@ private:
     }
 
 
-    if (!state && lastBtnPress == pinBtn && millis() - debounceTime > BtnDebounceTime) {
-      if (millis() - debounceTime > BtnHoldTime) {
+    if (!lastBtnPress && digitalRead(pinBtn) && millis() + debounceTime > BtnDebounceTime) {
+      if (millis() + debounceTime > BtnHoldTime) {
         //
         // Notify the user and mark as hold state
         this->isHold = true;
         this->playTick();
       }
-    } else if (lastBtnPress == pinBtn && millis() - debounceTime > BtnDebounceTime) {
+    } else if (lastBtnPress == pinBtn && !digitalRead(pinBtn)) {
 
       if (this->isHold) {
         this->isHold = false;
@@ -96,73 +102,82 @@ private:
   }
 
 
-  void playTick() {
+  void
+  playTick() {
   }
   /**
     * Handles user general input
     */
   void input() {
 
+
+
+    if (!this->displayOn) {
+      if (this->onClick(pinBtnOk) || this->onClick(pinBtnBack) || this->onClick(pinBtnNext)) {
+        this->weakUpDisplay();
+        return;
+      }
+    }
+
+    if (!this->displayOn || this->isEdit) {
+
+      return;
+    }
+
     //
     // Present enter
     if (this->onClick(pinBtnOk) && !this->isEdit) {
-
-      //
-      // Activate menu or enter
-      if (!this->displayOn) {
-        this->displayOn = true;
-      } else {
-        this->enter = true;
-      }
-
-      stopDisplay.restart();
+      dbgLn(F("BTN OK pressed"));
+      this->isEdit = true;
     }
 
-    if (!this->displayOn || this->isEdit)
-      return;
 
     //
     // Pressed next
     if (this->onClick(pinBtnNext)) {
+      dbgLn(F("BTN Next pressed"));
       this->cursor++;
-      stopDisplay.restart();
     }
     //
     // Pressed back
     if (this->onClick(pinBtnBack)) {
+      dbgLn(F("BTN Back pressed"));
       this->cursor--;
-      stopDisplay.restart();
     }
   }
 
   //
   // Pump edit
-  void edit(Data data) {
+  void edit(Data *data) {
     this->isDraw = true;
     if (!this->isEdit) return;
+
+    // dbgLn(F("Edit"));
     //
     // Pressed next
     if (this->onClick(pinBtnNext)) {
-      data.next();
-      stopDisplay.restart();
+      dbgLn(F("Data next "));
+      data->next();
     }
     //
     // Pressed back
     if (this->onClick(pinBtnBack)) {
-      data.back();
-      stopDisplay.restart();
+      dbgLn(F("Data back "));
+      data->back();
     }
 
-    HoldState state = this->onHold(pinBtnOk);
-    if (Draw::Hold == state) {
+    //HoldState state = this->onClick(pinBtnOk);
+    if (this->onClick(pinBtnOk)) {
       this->isEdit = !this->isEdit;
-      data.save();
+      dbgLn(F("Data save "));
+      data->save();
     }
-
+    /*
     if (Draw::Tick == state) {
       this->isEdit = !this->isEdit;
       // exit?
     }
+    */
   }
   //
   // Controls the display suspend
@@ -172,16 +187,25 @@ private:
     if (stopDisplay.isExpired()) {
       this->displayOn = false;
       this->isEdit = false;  // Close the edit menu
+      this->cursor = 0;      // Reset the menu
     }
 
     if (!this->displayOn) {
       lcd.noDisplay();
-      //lcd.setBacklight(BACKLIGHT_OFF);
     } else {
       lcd.display();
-      //lcd.setBacklight(BACKLIGHT_ON);
     }
 
+    digitalWrite(pinBacklight, this->displayOn);
+  }
+
+  //
+  // Weaks up the display
+  void weakUpDisplay() {
+    this->displayOn = true;
+    this->cursor = 0;
+    stopDisplay.restart();
+    lcd.display();
     digitalWrite(pinBacklight, this->displayOn);
   }
 
@@ -200,7 +224,7 @@ public:
     //
     // Setup the display type
     lcd.begin(16, 2);
-
+    lcd.createChar(0, charBarLevel);
     // lcd.createChar(0, charEmptyBar);
 
     refreshRate.start(timeRefresh, AsyncDelay::MILLIS);
@@ -209,9 +233,13 @@ public:
     //
     // Print a Welcome message to the LCD.
     lcd.setCursor(0, 0);
-    lcd.print(F("Welcome to"));
+    lcd.print(F("Automated"));
     lcd.setCursor(0, 1);
-    lcd.print(F("the Water system"));
+    lcd.print(F("  Water system "));
+    lcd.blink();
+
+
+
 
     //
     // Define simple joystick pins
@@ -219,18 +247,48 @@ public:
     pinMode(pinBtnBack, INPUT_PULLUP);
     pinMode(pinBtnOk, INPUT_PULLUP);
 
+    //
+    // Instant pump buttons
+    pinMode(pinBtnWell, INPUT_PULLUP);
+    pinMode(pinBtnRise, INPUT_PULLUP);
+
+
+
+    //
+    // Pin leds
+    pinMode(pinLedWell, OUTPUT);
+    pinMode(pinLedRise, OUTPUT);
+    pinMode(pinLedBeat, OUTPUT);
+
+    //
+    // Display backlight
     pinMode(pinBacklight, OUTPUT);
+    digitalWrite(pinBacklight, HIGH);
+
+    digitalWrite(pinLedWell, LOW);
+    digitalWrite(pinLedRise, LOW);
+    digitalWrite(pinLedBeat, LOW);
+    delay(200);
+
+    digitalWrite(pinLedWell, HIGH);
+    digitalWrite(pinLedRise, HIGH);
+    digitalWrite(pinLedBeat, HIGH);
+    delay(2000);
   }
 
   //
   // Drawse the menu and handles the inputs
   void draw(Menu* mn) {
+    if (!this->isEdit)
+      lcd.noBlink();
 
     this->input();
 
     if (refreshRate.isExpired()) {
+      lcd.clear();
       refreshRate.repeat();
       this->isDraw = false;
+      mn->draw(this);
     }
 
     this->suspendDisplay();
@@ -240,14 +298,8 @@ public:
     return this->cursor;
   }
 
-  void drawLevel(byte level) {
-
-    if (level > 1)
-      for (byte i = 0; i <= level; i++) {
-        lcd.print((char)0xF);
-      }
-
-    lcd.blink();
+  void resetCursor() {
+    this->cursor = 0;
   }
 };
 
