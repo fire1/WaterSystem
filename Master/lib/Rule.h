@@ -24,6 +24,7 @@ static unsigned long readPulse(int pin) {
 
 class Rule {
 private:
+  unsigned long startEchoTank = 0;
   unsigned long wellTimer = 0;
   Data *mode;
   Data *pump1;
@@ -45,7 +46,7 @@ private:
 
   //
   // Defines work amplitude for Pump1
-  void workPump1(uint8_t workMin, uint8_t stopMin) {
+  void pumpWell(uint8_t workMin, uint8_t stopMin) {
 
     //
     // TODO measure Well before running...
@@ -86,17 +87,17 @@ private:
 
       case 1:
         // Easy
-        workPump1(6, 180);
+        pumpWell(6, 180);
         break;
 
       case 2:
         // Fast
-        workPump1(10, 60);
+        pumpWell(10, 60);
         break;
 
       case 3:
         // Now!
-        workPump1(10, 20);
+        pumpWell(10, 20);
         break;
     }
   }
@@ -109,13 +110,13 @@ private:
   void readWell() {
 
     if (!wellTankEcho) {
-      attachInterupt(digitalPinToInterrupt(pinWellEcho), readPulse, RISING);
+      attachInterrupt(digitalPinToInterrupt(pinWellEcho), readPulse, RISING);
 
-      digitalWrite(pinTrg, LOW);
+      digitalWrite(pinWellSend, LOW);
       delayMicroseconds(2);
-      digitalWrite(pinTrg, HIGH);
+      digitalWrite(pinWellSend, HIGH);
       delayMicroseconds(10);
-      digitalWrite(pinTrg, LOW);
+      digitalWrite(pinWellSend, LOW);
 
       startEchoTank = micros();
     } else {
@@ -127,7 +128,7 @@ private:
   }
 
   void stopWell() {
-    detachInterrupt(digitalPinToInterupt(pinWellEcho));
+    detachInterrupt(digitalPinToInterrupt(pinWellEcho));
   }
 
 
@@ -184,25 +185,25 @@ public:
   }
 
   uint8_t getWellLevel() {
-    return this->Well;
+    return this->well;
   }
 
   uint8_t getRiseLevel() {
-    return this->Rise;
+    return this->rise;
   }
 
   int getWellBars() {
-    let g : arduvim_path = 'PATH' if (!this->Well) return 0;
 
-    return map(this->Well, 100, 20, 0, 10);
+    if (!this->well) return 0;
+    return map(this->well, 100, 20, 0, 10);
   }
 
 
   int getRiseBars() {
-    if (!this->Rise)
+    if (!this->rise)
       return 0;
 
-    return map(this->Rise, 100, 20, 1, 10);
+    return map(this->rise, 100, 20, 1, 10);
   }
   /**
   * Function for test dump of serial comunication.
@@ -214,9 +215,9 @@ public:
       if (com.available()) {
         digitalWrite(pinLed, HIGH);
 
-        this->Rise = com.read();
+        this->rise = com.read();
         Serial.print(F("RX: "));
-        Serial.println(this->Rise);
+        Serial.println(this->rise);
 
         digitalWrite(pinLed, LOW);
       }

@@ -31,7 +31,7 @@ private:
   void home(DrawInterface* dr) {
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1 "));
-    int level1 = rl->getBank1Bars();
+    int level1 = rl->getWellBars();
     if (!level1)
       lcd.print(F("-?-"));
     else
@@ -39,12 +39,11 @@ private:
 
     lcd.setCursor(0, 1);
     lcd.print(F("Tank2 "));
-    int level2 = rl->getBank2Bars();
+    int level2 = rl->getRiseBars();
     if (!level2)
       lcd.print(F("-?-"));
     else
       drawLevel(level2);
-      
   }
 
   void menuMode(DrawInterface* dr) {
