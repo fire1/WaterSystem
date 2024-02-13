@@ -88,12 +88,13 @@ void setup() {
   playMelody(Melodies[MELODY_BOOT]);
 }
 
-void loop1(){
+void loop1() {
   rl.test();
 }
 
 void loop() {
   cd.hark();
   rl.hark();
+  mn.pass(&rl);
   ui.draw(&mn);
 }

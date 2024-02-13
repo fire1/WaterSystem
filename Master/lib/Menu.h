@@ -12,6 +12,8 @@ private:
   Data* tank1;
   Data* tank2;
 
+  Rule* rl;
+
   /**
     * Draw level from 0 to 10 bars
     */
@@ -29,12 +31,20 @@ private:
   void home(DrawInterface* dr) {
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1 "));
-    drawLevel(3);
+    int level1 = rl->getBank1Bars();
+    if (!level1)
+      lcd.print(F("-?-"));
+    else
+      drawLevel(level1);
 
     lcd.setCursor(0, 1);
     lcd.print(F("Tank2 "));
-
-    drawLevel(5);
+    int level2 = rl->getBank2Bars();
+    if (!level2)
+      lcd.print(F("-?-"));
+    else
+      drawLevel(level2);
+      
   }
 
   void menuMode(DrawInterface* dr) {
@@ -94,6 +104,10 @@ public:
       case 2: return this->menuTank1(dr);
       case 3: return this->menuTank2(dr);
     }
+  }
+
+  void pass(Rule* rl) {
+    this->rl = rl;
   }
 };
 

@@ -11,6 +11,14 @@ SoftwareSerial com(pinRx, pinTx);
 
 // https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
 
+//
+// User to capture echo by attachInterupt
+volatile unsigned long wellTankEcho = 0;
+
+static unsigned long readPulse(int pin) {
+  wellTankEcho = micros();
+}
+
 
 #define PinCompressor 20
 
@@ -22,7 +30,10 @@ private:
   Data *pump2;
 
   uint16_t baud;
-  uint8_t bank2;
+  uint8_t well;
+  uint8_t rise;
+
+
 
   bool isWellPumpOn = false;
   bool isRisePumpOn = false;
@@ -37,7 +48,7 @@ private:
   void workPump1(uint8_t workMin, uint8_t stopMin) {
 
     //
-    // TODO measure bank1 before running...
+    // TODO measure Well before running...
     //
 
     if (!isDaytime()) {
@@ -74,54 +85,84 @@ private:
         break;
 
       case 1:
-        // 4 minutes works, 120 stopped
-        workPump1(4, 120);
+        // Easy
+        workPump1(6, 180);
         break;
 
       case 2:
-        // 4 minutes works, 45 stopped
-        workPump1(4, 45);
+        // Fast
+        workPump1(10, 60);
         break;
 
       case 3:
-        // 6 minutes works, 15 stopped
-        workPump1(6, 15);
+        // Now!
+        workPump1(10, 20);
         break;
     }
   }
 
-  void readBank1() {
-    //
-    // TODO check level bank 1
-    //
+
+
+
+  //
+  // Read well tank
+  void readWell() {
+
+    if (!wellTankEcho) {
+      attachInterupt(digitalPinToInterrupt(pinWellEcho), readPulse, RISING);
+
+      digitalWrite(pinTrg, LOW);
+      delayMicroseconds(2);
+      digitalWrite(pinTrg, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(pinTrg, LOW);
+
+      startEchoTank = micros();
+    } else {
+
+      float duration = wellTankEcho - startEchoTank;
+      float distance = (duration * .0343) / 2;
+      this->well = (uint8_t)distance;
+    }
   }
 
-  void readBank2() {
+  void stopWell() {
+    detachInterrupt(digitalPinToInterupt(pinWellEcho));
+  }
 
 
+  //
+  // Read rised tank
+  void readRise() {
     if (digitalRead(pinB2)) {
 
       digitalWrite(pinLed, LOW);
       if (com.available()) {
         digitalWrite(pinLed, HIGH);
 
-        this->bank2 = com.read();
+        this->rise = com.read();
         dbg(F("RX: "));
-        dbgLn(this->bank2);
+        dbgLn(this->rise);
+        digitalWrite(pinLed, LOW);
       }
+    } else {
+      digitalWrite(pinB2, HIGH);
     }
+  }
 
-    digitalWrite(pinB2, HIGH);
+  void stopRise() {
+    digitalWrite(pinB2, LOW);
   }
 
 
 
-  void resolveLevels() {
-    this->readBank1();
-    this->readBank2();
-
-    //
-    //
+  void initLevels() {
+    if (!this->well)
+      this->readWell();
+    else this->stopWell();
+    if (!this->rise)
+      this->readRise();
+    else this->stopRise();
   }
 
 
@@ -132,13 +173,37 @@ public:
 
   void begin() {
     com.begin(this->baud);
+    pinMode(pinWellEcho, INPUT);
+    pinMode(pinWellSend, OUTPUT);
   }
 
   void hark() {
-    this->resolveLevels();
+    this->initLevels();
+
     //this->controllWellPump();
   }
 
+  uint8_t getWellLevel() {
+    return this->Well;
+  }
+
+  uint8_t getRiseLevel() {
+    return this->Rise;
+  }
+
+  int getWellBars() {
+    let g : arduvim_path = 'PATH' if (!this->Well) return 0;
+
+    return map(this->Well, 100, 20, 0, 10);
+  }
+
+
+  int getRiseBars() {
+    if (!this->Rise)
+      return 0;
+
+    return map(this->Rise, 100, 20, 1, 10);
+  }
   /**
   * Function for test dump of serial comunication.
   */
@@ -149,9 +214,9 @@ public:
       if (com.available()) {
         digitalWrite(pinLed, HIGH);
 
-        this->bank2 = com.read();
+        this->Rise = com.read();
         Serial.print(F("RX: "));
-        Serial.println(this->bank2);
+        Serial.println(this->Rise);
 
         digitalWrite(pinLed, LOW);
       }

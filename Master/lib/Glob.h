@@ -45,6 +45,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define pinBtnOk 36
 #define pinBtnNext 37
 
+//
+// Define Ultrasonic mesurment pins
+#define pinEchoWell 18
+#define pinSendWell 17
 
 //
 // Debounce time for the joystick
