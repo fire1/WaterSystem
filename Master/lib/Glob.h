@@ -50,13 +50,17 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define pinWellEcho 18
 #define pinWellSend 19
 
-#define pinMainPower 8 // Turn on (GND) power for slave 
-#define pinMainRx 10 // Recive data pin from slave
+// #define LevelsRefreshTime 60000
+#define LevelsRefreshTime 5000
+
+#define pinMainPower 8  // Turn on (GND) power for slave
+#define pinMainRx 10    // Recive data pin from slave
 //
 // Defines how meny time to read sensors
 //  before defining tank state.
 #define LevelSensorReads 5
 
+#define SuspendDisplayTime 600000 // 10min
 //
 // Debounce time for the joystick
 #define BtnDebounceTime 100

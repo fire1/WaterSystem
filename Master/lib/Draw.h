@@ -11,7 +11,6 @@ AsyncDelay refreshRate;
 AsyncDelay stopDisplay;
 
 const uint8_t timeRefresh = 400;
-const uint16_t timeDisplay = 600000;  // 10min
 
 
 
@@ -228,7 +227,7 @@ public:
     // lcd.createChar(0, charEmptyBar);
 
     refreshRate.start(timeRefresh, AsyncDelay::MILLIS);
-    stopDisplay.start(timeDisplay, AsyncDelay::MILLIS);
+    stopDisplay.start(SuspendDisplayTime, AsyncDelay::MILLIS);
 
     //
     // Print a Welcome message to the LCD.

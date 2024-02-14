@@ -16,9 +16,12 @@ SoftwareSerial com(pinMainRx, -1);
 #define PinCompressor 20
 
 
+AsyncDelay refreshLevels;
+
 class Rule {
 private:
-  bool isReadWellStart = false;
+
+
   unsigned long wellTimer = 0;
   Data *mode;
   Data *pump1;
@@ -26,8 +29,8 @@ private:
 
   struct LevelSensorAverage {
     uint8_t index = 0;
-    uint32_t distances[LevelSensorReads];
-    uint8_t avr;
+    uint32_t average = 0;
+    bool done = false;
   };
 
   //
@@ -39,6 +42,7 @@ private:
   uint16_t baud;
   uint8_t well;
   uint8_t main;
+
 
 
 
@@ -122,7 +126,7 @@ private:
       delayMicroseconds(10);
       digitalWrite(pinWellSend, LOW);
 
-      unsigned long duration = pulseIn(pinWellEcho, HIGH, 120000);  // read pulse with timeout for ~150cm
+      unsigned long duration = pulseIn(pinWellEcho, HIGH, 130000);  // read pulse with timeout for ~150cm
 
       // Check for timeout
       if (duration == 0) {
@@ -132,21 +136,17 @@ private:
       }
 
       float distance = (duration * .0343) / 2;
+
+
       // Store distance reading
-      sensorWell.distances[sensorWell.index] = distance;
-      // Calculate and update average after all readings are collected
-      if (sensorWell.index == (LevelSensorReads - 1)) {  // All readings received
-        for (int i = 0; i < LevelSensorReads; i++) {
-          sensorWell.avr += sensorWell.distances[i];
-        }
-        sensorWell.avr /= LevelSensorReads;  // Calculate final average
-      }
+      sensorWell.average += distance;
       sensorWell.index++;  // Increment index for next reading
 
     } else {
-      this->well = (uint8_t)sensorWell.avr;
+      this->well = sensorWell.average / sensorWell.index;
       sensorWell.index = 0;
-      sensorWell.avr = 0;
+      sensorWell.average = 0;
+      sensorWell.done = true;
       dbg(F("Well tank average value: "));
       dbg(this->well);
       dbgLn();
@@ -154,7 +154,8 @@ private:
   }
 
 
-
+  //
+  // Read Main tank using slave MCU
   void readMain() {
     if (sensorMain.index < LevelSensorReads) {
       if (digitalRead(pinMainPower)) {
@@ -167,16 +168,7 @@ private:
           uint8_t currentValue = com.read();
 
           // Store value in the sensorMain struct
-          sensorMain.distances[sensorMain.index] = currentValue;
-
-          // Calculate and update average if all readings are collected
-          if (sensorMain.index == (LevelSensorReads - 1)) {
-            for (int i = 0; i < LevelSensorReads; i++) {
-              sensorMain.avr += sensorMain.distances[i];
-            }
-            sensorMain.avr /= LevelSensorReads;  // Calculate final average
-          }
-
+          sensorMain.average += currentValue;
           sensorMain.index++;  // Increment index for next reading
 
           dbg(F("RX: "));
@@ -187,9 +179,10 @@ private:
         digitalWrite(pinMainPower, HIGH);
       }
     } else {
-      this->main = sensorMain.avr;
+      this->main = sensorMain.average / sensorMain.index;
       sensorMain.index = 0;
-      sensorWell.avr = 0;
+      sensorMain.average = 0;
+      sensorMain.done = true;
       dbg(F("Main tank average value: "));
       dbg(this->main);
       dbgLn();
@@ -203,12 +196,22 @@ private:
 
 
 
-  void initLevels() {
-    if (this->well == 0)
+  void readLevels() {
+    if (!sensorWell.done) {
       this->readWell();
+    }
 
-    if (this->main == 0)
+    if (!sensorMain.done) {
       this->readMain();
+    }
+
+    if (refreshLevels.isExpired()) {
+
+      sensorWell.done = false;
+      sensorMain.done = false;
+      dbgLn(F("Reseting levels"));
+      refreshLevels.repeat();
+    }
   }
 
 
@@ -218,6 +221,8 @@ public:
 
 
   void begin() {
+
+    refreshLevels.start(LevelsRefreshTime, AsyncDelay::MILLIS);
     com.begin(this->baud);
 
     //
@@ -233,7 +238,9 @@ public:
   }
 
   void hark() {
-    this->initLevels();
+    this->readLevels();
+
+
 
     //this->controllWellPump();
   }
@@ -261,47 +268,6 @@ public:
       return 0;
 
     return map(this->main, 100, 20, 1, 10);
-  }
-  /**
-  * Function for test dump of serial comunication.
-  */
-  void testMain() {
-    if (digitalRead(pinMainPower)) {
-
-      digitalWrite(pinLed, LOW);
-      if (com.available()) {
-        digitalWrite(pinLed, HIGH);
-
-        this->main = com.read();
-        Serial.print(F("RX: "));
-        Serial.println(this->main);
-
-        digitalWrite(pinLed, LOW);
-      }
-    } else {
-      Serial.println(F("Waiting 100 ms"));
-      delay(100);
-      Serial.println(F("Turning Slave ON..."));
-      digitalWrite(pinMainPower, HIGH);
-    }
-  }
-
-
-  void testWell() {
-
-    digitalWrite(pinWellSend, LOW);
-    delayMicroseconds(2);
-    digitalWrite(pinWellSend, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(pinWellSend, LOW);
-
-    unsigned long duration = pulseIn(pinWellEcho, HIGH, 120000);  // read pulse with timeout for ~150cm
-    float distance = (duration * .0343) / 2;
-    Serial.print(F("RX: "));
-    Serial.print(distance);
-    Serial.println();
-
-    delay(500);
   }
 };
 
