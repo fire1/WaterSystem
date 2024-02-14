@@ -39,7 +39,7 @@ private:
 
     lcd.setCursor(0, 1);
     lcd.print(F("Tank2 "));
-    int level2 = rl->getRiseBars();
+    int level2 = rl->getMainBars();
     if (!level2)
       lcd.print(F("-?-"));
     else

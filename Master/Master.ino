@@ -76,7 +76,6 @@ void setup() {
   //
   // LED to indicate when recieving
   pinMode(pinLed, OUTPUT);
-  pinMode(pinB2, OUTPUT);
   pinMode(pinTone, OUTPUT);
   //
   // Setup the menu
@@ -88,9 +87,12 @@ void setup() {
   playMelody(Melodies[MELODY_BOOT]);
 }
 
-void loop1() {
-  rl.test();
+void loop_() {  // test sensors
+  //rl.testMain();
+  rl.testWell();
 }
+
+
 
 void loop() {
   cd.hark();

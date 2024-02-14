@@ -48,7 +48,14 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 //
 // Define Ultrasonic mesurment pins
 #define pinWellEcho 18
-#define pinWellSend 17
+#define pinWellSend 19
+
+#define pinMainPower 8 // Turn on (GND) power for slave 
+#define pinMainRx 10 // Recive data pin from slave
+//
+// Defines how meny time to read sensors
+//  before defining tank state.
+#define LevelSensorReads 5
 
 //
 // Debounce time for the joystick
