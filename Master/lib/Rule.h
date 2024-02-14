@@ -126,7 +126,7 @@ private:
 
       // Check for timeout
       if (duration == 0) {
-        Serial.println("Timeout error: Sensor reading exceeds range");
+        Serial.println("Timeout error: Sensor WELL reading exceeds range");
         // Handle timeout (e.g., set distance to maximum or other logic)
         return;
       }
@@ -204,13 +204,11 @@ private:
 
 
   void initLevels() {
-    if (!this->well)
+    if (this->well == 0)
       this->readWell();
 
-
-    if (!this->main)
+    if (this->main == 0)
       this->readMain();
-    else this->stopMain();
   }
 
 
@@ -299,8 +297,6 @@ public:
 
     unsigned long duration = pulseIn(pinWellEcho, HIGH, 120000);  // read pulse with timeout for ~150cm
     float distance = (duration * .0343) / 2;
-
-    this->well = (uint8_t)distance;
     Serial.print(F("RX: "));
     Serial.print(distance);
     Serial.println();

@@ -87,14 +87,24 @@ void setup() {
   playMelody(Melodies[MELODY_BOOT]);
 }
 
-void loop_() {  // test sensors
+void loop() {  // test sensors
+  rl.hark();
+  Serial.print(F(" Main: "));
+  Serial.print(rl.getMainLevel());
+
+  Serial.print(F(" Well: "));
+  Serial.print(rl.getWellLevel());
+
+  Serial.println();
   //rl.testMain();
-  rl.testWell();
+  // rl.testWell();
+
+  delay(300);
 }
 
 
 
-void loop() {
+void loop_() {
   cd.hark();
   rl.hark();
   mn.pass(&rl);
