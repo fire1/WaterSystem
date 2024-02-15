@@ -98,7 +98,7 @@ private:
 
 
     if (!this->displayOn) {
-      if (this->onClick(pinBtnOk) || this->onClick(pinBtnBack) || this->onClick(pinBtnNext)) {
+      if (this->onClick(pinBtnOk) || this->onClick(pinBtnBack) || this->onClick(pinBtnNext) || this->onClick(pinBtnWell) || this->onClick(pinBtnMain)) {
         this->weakUpDisplay();
         return;
       }
