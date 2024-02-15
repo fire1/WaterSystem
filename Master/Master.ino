@@ -39,6 +39,8 @@ void setup() {
   // LED to indicate when recieving
   pinMode(pinLed, OUTPUT);
   pinMode(pinTone, OUTPUT);
+
+  mn.begin();
   //
   // Setup the menu
   ui.begin();

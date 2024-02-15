@@ -1,9 +1,20 @@
-
-
-
 #ifndef Menu_h
 #define Menu_h
 
+//
+// Define custom characters
+//
+// An empty bar
+const byte charBarLevel[] = {
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B11111,
+  B00000
+};
 
 class Menu {
 private:
@@ -61,7 +72,6 @@ private:
     lcd.print(F("Mode: "));
     lcd.print(this->mode->getName());
     dbgLn(this->mode->getName());
-    lcd.blink();
   }
 
 
@@ -72,7 +82,6 @@ private:
     lcd.setCursor(0, 1);
     lcd.print(F("Start: "));
     lcd.print(this->tank1->getName());
-    lcd.blink();
   }
 
   void menuTank2(DrawInterface* dr) {
@@ -83,7 +92,6 @@ private:
     lcd.setCursor(0, 1);
     lcd.print(F("Start: "));
     lcd.print(this->tank2->getName());
-    lcd.blink();
   }
 
 
@@ -128,15 +136,38 @@ public:
   Menu(Rule* rl, Data* tk1, Data* tk2, Data* md)
     : rl(rl), tank1(tk1), tank2(tk2), mode(md) {
   }
+
+  void begin() {
+    //
+    // Setup the display type
+    lcd.begin(16, 2);
+    lcd.createChar(0, charBarLevel);
+
+
+    //
+    // Print a Welcome message to the LCD.
+    lcd.setCursor(0, 0);
+    lcd.print(F("Automated"));
+    lcd.setCursor(0, 1);
+    lcd.print(F("  Water system "));
+    lcd.blink();
+    delay(1500);
+  }
   //
   //Draw menu
   void draw(DrawInterface* dr) {
+
+    if (!dr->isEditing()) lcd.noBlink();
+    else lcd.blink();
+
+
     switch (dr->getCursor()) {
 
       case 0:
       default:
         this->home(dr);
         dr->resetCursor();
+
         break;
 
       case 1: return this->menuMode(dr);

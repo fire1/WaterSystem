@@ -21,6 +21,7 @@ public:
   virtual void edit(Data* d) = 0;
   virtual void pump(Pump* p) = 0;
   virtual void resetCursor();
+  virtual bool isEditing() = 0;
 };
 
 
@@ -72,10 +73,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorMainMin 95
 
 
-#define SuspendDisplayTime 600000  // 10min
+#define SuspendDisplayTime 120000  // 5min
 //
 // Debounce time for the joystick
-#define BtnDebounceTime 100
+#define BtnDebounceTime 50
 #define BtnHoldTime 2000
 
 

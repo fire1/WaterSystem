@@ -13,7 +13,7 @@ SoftwareSerial com(pinMainRx, -1);
 
 
 
-
+AsyncDelay beat;
 
 
 AsyncDelay refreshLevels;
@@ -149,6 +149,9 @@ private:
   }
 
 
+  void beatWell(int ms) {
+    beat.start(ms, AsyncDelay::MILLIS);
+  }
   //
   // Read Main tank using slave MCU
   void readMain() {

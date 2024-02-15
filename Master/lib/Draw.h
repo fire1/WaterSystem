@@ -14,20 +14,6 @@ const uint8_t timeRefresh = 400;
 
 
 
-//
-// Define custom characters
-//
-// An empty bar
-const byte charBarLevel[] = {
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B00000
-};
 
 class Draw : public DrawInterface {
 private:
@@ -225,6 +211,9 @@ public:
   Draw() {
   }
 
+  bool isEditing() {
+    return this->isEdit;
+  }
   //
   // Toggle pump state on click
   void pump(Pump* pump) {
@@ -251,26 +240,8 @@ public:
   // Setup the menu
   void begin() {
 
-    //
-    // Setup the display type
-    lcd.begin(16, 2);
-    lcd.createChar(0, charBarLevel);
-    // lcd.createChar(0, charEmptyBar);
-
     refreshRate.start(timeRefresh, AsyncDelay::MILLIS);
     stopDisplay.start(SuspendDisplayTime, AsyncDelay::MILLIS);
-
-    //
-    // Print a Welcome message to the LCD.
-    lcd.setCursor(0, 0);
-    lcd.print(F("Automated"));
-    lcd.setCursor(0, 1);
-    lcd.print(F("  Water system "));
-    lcd.blink();
-
-
-
-
     //
     // Define simple joystick pins
     pinMode(pinBtnNext, INPUT_PULLUP);
@@ -303,14 +274,11 @@ public:
     digitalWrite(pinLedWell, HIGH);
     digitalWrite(pinLedMain, HIGH);
     digitalWrite(pinLedBeat, HIGH);
-    delay(2000);
   }
 
   //
   // Drawse the menu and handles the inputs
   void draw(Menu* mn) {
-    if (!this->isEdit)
-      lcd.noBlink();
 
     this->input();
 
