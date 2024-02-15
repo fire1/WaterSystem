@@ -24,45 +24,7 @@ const byte pinTone = 9;
 //
 // Private libs
 #include "lib/Glob.h"
-
-//
-// Define tanks
-DefineData(
-  tankNames,
-  "None",
-  "Full",
-  "High",
-  "Half",
-  "Lows");
-Data tk1(5, tankNames, 0);
-Data tk2(5, tankNames, 1);
-
-
-//
-// Define mode
-DefineData(
-  modeNames,
-  "None",
-  "Easy",
-  "Fast",
-  "Now!");
-Data md(4, modeNames, 2);
-
-//
-// Menu UI instance
-Menu mn(&tk1, &tk2, &md);
-
-//
-// Initialize managment driver
-Rule rl(rxBaud, &md, &tk1, &tk2);
-
-//
-// Draw driver
-Draw ui;
-
-//
-// Comands
-Cmd cd;
+#include "lib/Init.h"
 
 void setup() {
   //tone(pinTone, 2000);
@@ -87,6 +49,14 @@ void setup() {
   playMelody(Melodies[MELODY_BOOT]);
 }
 
+void loop() {
+  cd.hark();
+  rl.hark();
+  ui.draw(&mn);
+}
+
+
+
 void loop_() {  // test sensors
   rl.hark();
   /*
@@ -101,13 +71,4 @@ void loop_() {  // test sensors
   // rl.testWell();
 
   delay(300);*/
-}
-
-
-
-void loop() {
-  cd.hark();
-  rl.hark();
-  mn.pass(&rl);
-  ui.draw(&mn);
 }

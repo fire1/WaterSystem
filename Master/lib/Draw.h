@@ -119,7 +119,6 @@ private:
     }
 
     if (!this->displayOn || this->isEdit) {
-
       return;
     }
 
@@ -143,11 +142,22 @@ private:
       dbgLn(F("BTN Back pressed"));
       this->cursor--;
     }
+
+    if (this->onClick(pinBtnWell)) {
+      dbgLn(F("BTN Well pressed"));
+      this->cursor = 5;
+    }
+
+    if (this->onClick(pinBtnMain)) {
+      dbgLn(F("BTN Main pressed"));
+      this->cursor = 6;
+    }
   }
+
 
   //
   // Pump edit
-  void edit(Data *data) {
+  void edit(Data* data) {
     this->isDraw = true;
     if (!this->isEdit) return;
 
@@ -212,10 +222,31 @@ private:
 
 
 public:
-
   Draw() {
   }
 
+  //
+  // Toggle pump state on click
+  void pump(Pump* pump) {
+    this->isEdit = true;
+
+    if (this->onClick(pinBtnOk) || this->onClick(pinBtnNext) || this->onClick(pinBtnBack)) {
+      this->isEdit = false;
+      this->cursor = 0;
+    }
+
+    if (this->onClick(pump->getBtn())) {
+      pump->toggle();
+
+      dbg(F("Activated pump pin: "));
+      dbg(pump->getPin());
+      dbg(F(" / state: "));
+      dbg(pump->isOn());
+      dbgLn();
+      this->cursor = 0;
+      this->isEdit = false;
+    }
+  }
   //
   // Setup the menu
   void begin() {
@@ -249,14 +280,14 @@ public:
     //
     // Instant pump buttons
     pinMode(pinBtnWell, INPUT_PULLUP);
-    pinMode(pinBtnRise, INPUT_PULLUP);
+    pinMode(pinBtnMain, INPUT_PULLUP);
 
 
 
     //
     // Pin leds
     pinMode(pinLedWell, OUTPUT);
-    pinMode(pinLedRise, OUTPUT);
+    pinMode(pinLedMain, OUTPUT);
     pinMode(pinLedBeat, OUTPUT);
 
     //
@@ -265,12 +296,12 @@ public:
     digitalWrite(pinBacklight, HIGH);
 
     digitalWrite(pinLedWell, LOW);
-    digitalWrite(pinLedRise, LOW);
+    digitalWrite(pinLedMain, LOW);
     digitalWrite(pinLedBeat, LOW);
     delay(200);
 
     digitalWrite(pinLedWell, HIGH);
-    digitalWrite(pinLedRise, HIGH);
+    digitalWrite(pinLedMain, HIGH);
     digitalWrite(pinLedBeat, HIGH);
     delay(2000);
   }

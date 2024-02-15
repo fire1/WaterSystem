@@ -14,12 +14,19 @@ private:
 
   Rule* rl;
 
+
+
   /**
     * Draw level from 0 to 10 bars
+    * @param level The level of the tank, from 100 /empty/ and 20 /full/
+    * @param min An accured min value /100/
     */
-  void drawLevel(byte level) {
+  void drawLevel(byte level, byte min) {
 
-    if (level > 1)
+
+    uint8_t bars = map(level, min, LevelSensorBothMax, 1, 10);
+    // uint8_t bars = map(level, 100, 23, 1, 10);
+    if (level > 0)
       for (byte i = 0; i <= level; i++) {
         lcd.write((uint8_t)0);
       }
@@ -31,19 +38,19 @@ private:
   void home(DrawInterface* dr) {
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1 "));
-    int level1 = rl->getWellBars();
+    int level1 = rl->getWellLevel();
     if (!level1)
       lcd.print(F("-?-"));
     else
-      drawLevel(level1);
+      drawLevel(level1, LevelSensorWellMin);
 
     lcd.setCursor(0, 1);
     lcd.print(F("Tank2 "));
-    int level2 = rl->getMainBars();
+    int level2 = rl->getMainLevel();
     if (!level2)
       lcd.print(F("-?-"));
     else
-      drawLevel(level2);
+      drawLevel(level2, LevelSensorMainMin);
   }
 
   void menuMode(DrawInterface* dr) {
@@ -71,7 +78,6 @@ private:
   void menuTank2(DrawInterface* dr) {
     dr->edit(this->tank2);
 
-    lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print(F("Tank 2"));
     lcd.setCursor(0, 1);
@@ -81,12 +87,46 @@ private:
   }
 
 
+  void pumpWell(DrawInterface* dr) {
+
+    dr->pump(&ctrlWell);
+
+    lcd.setCursor(0, 0);
+    lcd.print(F("Compressor: "));
+
+    lcd.setCursor(0, 1);
+    lcd.print(F("         >> "));
+    if (ctrlWell.isOn())
+      lcd.print(F("ON"));
+    else
+      lcd.print(F("OFF"));
+
+    lcd.blink();
+  }
+
+  void pumpMain(DrawInterface* dr) {
+    dr->pump(&ctrlMain);
+
+    lcd.setCursor(0, 0);
+    lcd.print(F("Pump to up: "));
+
+    lcd.setCursor(0, 1);
+    lcd.print(F("         >> "));
+    if (ctrlMain.isOn())
+      lcd.print(F("ON"));
+    else
+      lcd.print(F("OFF"));
+
+    lcd.blink();
+  }
+
+
 
 public:
   //
   // Construct menu
-  Menu(Data* tk1, Data* tk2, Data* md)
-    : tank1(tk1), tank2(tk2), mode(md) {
+  Menu(Rule* rl, Data* tk1, Data* tk2, Data* md)
+    : rl(rl), tank1(tk1), tank2(tk2), mode(md) {
   }
   //
   //Draw menu
@@ -102,11 +142,10 @@ public:
       case 1: return this->menuMode(dr);
       case 2: return this->menuTank1(dr);
       case 3: return this->menuTank2(dr);
-    }
-  }
 
-  void pass(Rule* rl) {
-    this->rl = rl;
+      case 5: return this->pumpWell(dr);
+      case 6: return this->pumpMain(dr);
+    }
   }
 };
 

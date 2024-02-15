@@ -13,7 +13,7 @@ SoftwareSerial com(pinMainRx, -1);
 
 
 
-#define PinCompressor 20
+
 
 
 AsyncDelay refreshLevels;
@@ -45,11 +45,6 @@ private:
 
 
 
-
-  bool isWellPumpOn = false;
-  bool isMainPumpOn = false;
-
-
   unsigned long calcMinutes(unsigned int minutes) {
     return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
   }
@@ -69,16 +64,16 @@ private:
       return;
     }
 
-    if (!isWellPumpOn && (millis() - wellTimer >= this->calcMinutes(workMin))) {
-      digitalWrite(PinCompressor, HIGH);
+    if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
+      digitalWrite(pinWellPump, HIGH);
       wellTimer = millis();
-      isWellPumpOn = true;
+      ctrlWell.setOn(true);
     }
 
-    if (isWellPumpOn && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
-      digitalWrite(PinCompressor, LOW);
+    if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
+      digitalWrite(pinWellPump, LOW);
       wellTimer = millis();
-      isWellPumpOn = false;
+      ctrlWell.setOn(false);
     }
   }
 
@@ -91,8 +86,8 @@ private:
       default:
       case 0:
         // noting
-        digitalWrite(PinCompressor, LOW);
-        isWellPumpOn = false;
+        digitalWrite(pinWellPump, LOW);
+        ctrlWell.setOn(false);
         break;
 
       case 1:
@@ -217,7 +212,9 @@ private:
 
 public:
   Rule(uint16_t baud, Data *md, Data *p1, Data *p2)
-    : baud(baud), mode(md), pump1(p1), pump2(p2) {}
+    : baud(baud), mode(md), pump1(p1), pump2(p2) {
+  }
+
 
 
   void begin() {
@@ -240,8 +237,6 @@ public:
   void hark() {
     this->readLevels();
 
-
-
     //this->controllWellPump();
   }
 
@@ -255,21 +250,8 @@ public:
   uint8_t getMainLevel() {
     return this->main;
   }
-
-  int getWellBars() {
-
-    if (!this->well) return 0;
-    return map(this->well, 100, 20, 0, 10);
-  }
-
-
-  int getMainBars() {
-    if (!this->main)
-      return 0;
-
-    return map(this->main, 100, 20, 1, 10);
-  }
 };
+
 
 
 #endif
