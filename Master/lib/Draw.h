@@ -229,7 +229,7 @@ public:
   }
   //
   // Toggle pump state on click
-  void pump(Pump* pump) {
+  void pump(Pump* pump, Pump* stop) {
     this->isEdit = true;
 
     if (this->onClick(pinBtnOk) || this->onClick(pinBtnNext) || this->onClick(pinBtnBack)) {
@@ -239,6 +239,8 @@ public:
 
     if (this->onClick(pump->getBtn())) {
       pump->toggle();
+      if (stop->isOn())
+        stop->setOn(false);
 
       dbg(F("Activated pump pin: "));
       dbg(pump->getPin());

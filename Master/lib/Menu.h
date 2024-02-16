@@ -84,7 +84,7 @@ private:
 
   void pumpWell(DrawInterface* dr) {
 
-    dr->pump(&ctrlWell);
+    dr->pump(&ctrlWell, &ctrlMain);
 
     lcd.setCursor(0, 0);
     lcd.print(F("Compressor: "));
@@ -100,7 +100,7 @@ private:
   }
 
   void pumpMain(DrawInterface* dr) {
-    dr->pump(&ctrlMain);
+    dr->pump(&ctrlMain, &ctrlWell);
 
     lcd.setCursor(0, 0);
     lcd.print(F("Pump to up: "));

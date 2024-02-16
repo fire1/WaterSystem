@@ -30,7 +30,7 @@ public:
   // Pure virtual functions - These functions must be implemented by derived classes
   virtual uint8_t getCursor() = 0;
   virtual void edit(Data* d) = 0;
-  virtual void pump(Pump* p) = 0;
+  virtual void pump(Pump* p, Pump* s) = 0;
   virtual void resetCursor();
   virtual bool isEditing() = 0;
 };
@@ -106,10 +106,6 @@ extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 #include "Menu.h"
 #include "Draw.h"
 #include "Cmd.h"
-
-
-
-
 
 
 #endif
