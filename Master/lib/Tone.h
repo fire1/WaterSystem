@@ -21,7 +21,7 @@ private:
   // Define Melodies
   const Note MelodyClick[2] = {
     { 659, 5 },  // Note frequency and duration (in milliseconds)
-    { -1, 0 }     // End of melody marker
+    { -1, 0 }    // End of melody marker
   };
 
   const Note MelodyMode[4] = {
@@ -45,11 +45,23 @@ private:
     { -1, 0 }  // End of melody marker
   };
 
+  const Note MelodyBoot[8] = {
+    { 600, 50 },  // Note frequency and duration (in milliseconds)
+    { 0, 50 },
+    { 800, 100 },
+    { 0, 100 },
+    { 600, 50 },
+    { 0, 50 },
+    { 1000, 100 },
+    { -1, 0 }  // End of melody marker
+  };
+
 public:
   Tone() = default;
 
   void begin() {
     pinMode(pinTone, OUTPUT);
+    playMelody(MelodyBoot);
   }
 
   void playMelody(const Note* melody) {
@@ -74,6 +86,7 @@ public:
   void mode() {
     playMelody(MelodyMode);
   }
+
 
   void hark() {
     if (currentMelody != nullptr && millis() - noteStartTime >= (currentMelody + currentNoteIndex)->duration) {

@@ -58,7 +58,6 @@ private:
     lcd.setCursor(0, 1);
     lcd.print(F("Mode: "));
     lcd.print(this->mode->getName());
-    dbgLn(this->mode->getName());
   }
 
 

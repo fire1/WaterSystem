@@ -67,7 +67,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define pinWellSend 19
 
 // #define LevelsRefreshTime 60000
-#define LevelsRefreshTime 5000
+#define LevelsRefreshTime 15000
 
 #define pinMainPower 8  // Turn on (GND) power for slave
 #define pinMainRx 10    // Recive data pin from slave

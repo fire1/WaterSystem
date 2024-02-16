@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #ifndef Uart_h
 #define Uart_h
 
@@ -13,7 +14,7 @@ SoftwareSerial com(pinMainRx, -1);
 
 
 
-AsyncDelay beat;
+
 
 
 AsyncDelay refreshLevels;
@@ -27,6 +28,8 @@ private:
   Data *pump1;
   Data *pump2;
   Tone *sound;
+  AsyncDelay beatLed;
+  uint16_t beatLedLast = 0;
 
   struct LevelSensorAverage {
     uint8_t index = 0;
@@ -53,19 +56,23 @@ private:
   // Defines work amplitude for Pump1
   void pumpWell(uint8_t workMin, uint8_t stopMin) {
 
-    //
-    // TODO measure Well before running...
-    //
-
+#ifdef UseRtl
     if (!isDaytime()) {
       //
       // Stop the system
       Serial.println(F("It is not daytime!"));
       return;
     }
+#endif
+
+
+    //
+    // TODO check levels for running the pumps
+    //
 
     if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
       digitalWrite(pinWellPump, HIGH);
+      Serial.println(F("Ctrl pump Turning well ON "));
       wellTimer = millis();
       ctrlWell.setOn(true);
     }
@@ -73,6 +80,7 @@ private:
     if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
       digitalWrite(pinWellPump, LOW);
       wellTimer = millis();
+      Serial.println(F("Ctrl pump Turning well OFF "));
       ctrlWell.setOn(false);
     }
   }
@@ -88,21 +96,25 @@ private:
         // noting
         digitalWrite(pinWellPump, LOW);
         ctrlWell.setOn(false);
+        beatWell(0);
         break;
 
       case 1:
         // Easy
         pumpWell(6, 180);
+        beatWell(1500);
         break;
 
       case 2:
         // Fast
         pumpWell(10, 60);
+        beatWell(800);
         break;
 
       case 3:
         // Now!
-        pumpWell(10, 20);
+        pumpWell(10, 30);
+        beatWell(400);
         break;
     }
   }
@@ -125,7 +137,7 @@ private:
 
       // Check for timeout
       if (duration == 0) {
-   //     Serial.println("Timeout error: Sensor WELL reading exceeds range");
+        //     Serial.println("Timeout error: Sensor WELL reading exceeds range");
         // Handle timeout (e.g., set distance to maximum or other logic)
         return;
       }
@@ -150,7 +162,24 @@ private:
 
 
   void beatWell(int ms) {
-    beat.start(ms, AsyncDelay::MILLIS);
+
+    if (ms == 0) {
+      //
+      // Turn led off
+      digitalWrite(pinLedBeat, HIGH);
+      return;
+    }
+
+    if (ms != beatLedLast) {
+      beatLed.start(ms, AsyncDelay::MILLIS);
+      beatLedLast = ms;
+    }
+    if (beatLed.isExpired()) {
+      digitalWrite(pinLedBeat, !digitalRead(pinLedBeat));  // Toggle LED state
+      if (ms == beatLedLast && ms != 0) {
+        beatLed.repeat();
+      }
+    }
   }
   //
   // Read Main tank using slave MCU
@@ -204,18 +233,16 @@ private:
     }
 
     if (refreshLevels.isExpired()) {
-
       sensorWell.done = false;
       sensorMain.done = false;
-      dbgLn(F("Reseting levels"));
       refreshLevels.repeat();
     }
   }
 
 
 public:
-  Rule(Tone*tn, Data *md, Data *p1, Data *p2)
-    : sound(tn), mode(md), pump1(p1), pump2(p2) {
+  Rule(Tone *tn, Data *md, Data *p1, Data *p2)
+    : sound(tn), mode(md), pump1(p1), pump2(p2), beatLed(500, AsyncDelay::MILLIS) {
   }
 
 
@@ -240,7 +267,7 @@ public:
   void hark() {
     this->readLevels();
 
-    //this->controllWellPump();
+    this->controllWellPump();
   }
 
   //
