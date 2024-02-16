@@ -34,9 +34,12 @@ contributes to overall resource optimization.
 
 ## Potential Components
 
-- **Microcontroller (Arduino):** Manages sensor inputs, controls pump activation, and interfaces with user settings.
-- **Water Level Sensors:** Installed in each container to measure water levels accurately.
-- **Pumps:** Automated water pumps controlled by the system's Solid state relays.
-- **User Interface (LCD Display):** Provides real-time feedback and allows users to configure settings.
-- **RTC Module** To resolve periods (white list times) when to run pumps.
+Arduino board (e.g., Arduino Mega2560) - I'm using Mega as primary device and AtMega8 as Slave device.
+Ultrasonic sensors - For medurment water levels in tanks of water.
+Liquid Crystal Display (LCD) - For diferent modes and level reads.
+Push buttons for user input
+LEDs for status indication 
+Buzzer for sound output
+
+
 
