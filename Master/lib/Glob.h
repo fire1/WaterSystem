@@ -1,16 +1,27 @@
-#ifndef MenuInterface_h
-#define MenuInterface_h
+#ifndef Global_h
+#define Global_h
+
+
+#include <SoftwareSerial.h>
+#include <LiquidCrystal.h>
+#include <AsyncDelay.h>
+#include <Wire.h>
+#include <DS3231.h>
 
 //
 // Pump controll pins
 #define pinWellPump A8
 #define pinMainPump A9
 
+//
+// Baud rate for Slave
+#define BaudSlaveRx 4800
+
 class Draw;
 class Menu;
 class Data;
 class Pump;
-
+class Tone;
 
 
 class DrawInterface {
@@ -80,15 +91,17 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define BtnHoldTime 2000
 
 
+
 #include "Time.h"
 #include "Pump.h"
+#include "Util.h"
+#include "Data.h"
+#include "Tone.h"
 
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
-#include "Tone.h"
-#include "Util.h"
-#include "Data.h"
+
 #include "Rule.h"
 #include "Menu.h"
 #include "Draw.h"

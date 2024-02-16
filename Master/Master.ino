@@ -1,15 +1,4 @@
-// Slave Test Code
-// This code starts by listening for a transmission
-// And it will only respond after it recieves a message
-// If the message is larger than one char, change the recieve
-// condition to match the new mec:\Users\fire1\OneDrive\Documents\Arduino\WhaterSystem\Master\lib\Debug.hssage characteristic
-#include <SoftwareSerial.h>
-#include <LiquidCrystal.h>
-#include <AsyncDelay.h>
-#include <Wire.h>
-#include <DS3231.h>
 
-#define DEBUG
 
 
 //
@@ -21,24 +10,26 @@ const byte pinLed = 13;        // LED blinks
 const uint16_t rxBaud = 4800;  // This is the communication speed over serial
 const byte pinTone = 9;
 
+#define DEBUG
 //
 // Private libs
 #include "lib/Glob.h"
 #include "lib/Init.h"
 
+
 void setup() {
-  //tone(pinTone, 2000);
+
   //
   // Setup the normal serial link to the PC
   Serial.begin(9600);
-  dbgLn(F("Starting Water system MASTER..."));
+  Serial.println(F("Starting Water system /MASTER/"));
+  delay(10);
   //
   // I2C start
   Wire.begin();
   //
   // LED to indicate when recieving
   pinMode(pinLed, OUTPUT);
-  pinMode(pinTone, OUTPUT);
 
   mn.begin();
   //
@@ -48,19 +39,22 @@ void setup() {
   // Prepare managment
   rl.begin();
 
-  playMelody(Melodies[MELODY_BOOT]);
+  tn.begin();
+
+
 }
 
 void loop() {
+
+  tn.hark();
+
   cd.hark();
   rl.hark();
   ui.draw(&mn);
 }
 
-
-
 void loop_() {  // test sensors
-  rl.hark();
+  //rl.hark();
   /*
   Serial.print(F(" Main: "));
   Serial.print(rl.getMainLevel());

@@ -26,6 +26,7 @@ private:
   Data *mode;
   Data *pump1;
   Data *pump2;
+  Tone *sound;
 
   struct LevelSensorAverage {
     uint8_t index = 0;
@@ -39,7 +40,6 @@ private:
     sensorWell,
     sensorMain;
 
-  uint16_t baud;
   uint8_t well;
   uint8_t main;
 
@@ -125,7 +125,7 @@ private:
 
       // Check for timeout
       if (duration == 0) {
-        Serial.println("Timeout error: Sensor WELL reading exceeds range");
+   //     Serial.println("Timeout error: Sensor WELL reading exceeds range");
         // Handle timeout (e.g., set distance to maximum or other logic)
         return;
       }
@@ -214,8 +214,8 @@ private:
 
 
 public:
-  Rule(uint16_t baud, Data *md, Data *p1, Data *p2)
-    : baud(baud), mode(md), pump1(p1), pump2(p2) {
+  Rule(Tone*tn, Data *md, Data *p1, Data *p2)
+    : sound(tn), mode(md), pump1(p1), pump2(p2) {
   }
 
 
@@ -223,7 +223,7 @@ public:
   void begin() {
 
     refreshLevels.start(LevelsRefreshTime, AsyncDelay::MILLIS);
-    com.begin(this->baud);
+    com.begin(BaudSlaveRx);
 
     //
     // Well tank sensor pins

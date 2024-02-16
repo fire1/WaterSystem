@@ -1,38 +1,25 @@
 #ifndef Menu_h
 #define Menu_h
 
-//
-// Define custom characters
-//
-// An empty bar
-const byte charBarLevel[] = {
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B11111,
-  B00000
-};
+#include "Glob.h"
+
+
 
 class Menu {
 private:
-
   Data* mode;
   Data* tank1;
   Data* tank2;
 
   Rule* rl;
 
-
-
   /**
     * Draw level from 0 to 10 bars
     * @param level The level of the tank, from 100 /empty/ and 20 /full/
     * @param min An accured min value /100/
     */
-  void drawLevel(byte level, byte min) {
+  void
+  drawLevel(byte level, byte min) {
 
 
     uint8_t bars = map(level, min, LevelSensorBothMax, 1, 10);
@@ -141,6 +128,9 @@ public:
     //
     // Setup the display type
     lcd.begin(16, 2);
+
+    byte charBarLevel[8] = { B11111, B11111, B11111, B11111, B11111, B11111, B11111, B00000 };
+
     lcd.createChar(0, charBarLevel);
 
 

@@ -1,60 +1,99 @@
+#include "HardwareSerial.h"
+
 
 #ifndef Tone_h
 #define Tone_h
 
-// #include <toneAC.h>
+#include "Arduino.h"
+#include <AsyncDelay.h>
 
-struct Melody {
-  uint8_t length;
-  int notes[8];
-  int durations[8];
+struct Note {
+  int frequency;
+  int duration;  // in milliseconds
 };
 
-#define MELODY_BOOT 0
-#define MELODY_CLICK 1
-#define MELODY_ENTER 2
-#define MELODY_SAVE 3
+class Tone {
+private:
+  const Note* currentMelody = nullptr;
+  uint8_t currentNoteIndex = 0;
+  unsigned long noteStartTime = 0;
 
-// Define multiple melodies in PROGMEM
-const Melody Melodies[] PROGMEM = {
-  // Melody 0: Boot melody
-  { 8, { 659, 587, 740, 784, 880, 880, 988, 880 }, { 4, 3, 4, 3, 4, 2, 4, 4 } },
+  // Define Melodies
+  const Note MelodyClick[2] = {
+    { 659, 5 },  // Note frequency and duration (in milliseconds)
+    { -1, 0 }     // End of melody marker
+  };
 
-  // Melody 1: Click sound
-  { 1, { 2200 }, { 2 } },
+  const Note MelodyMode[4] = {
+    { 900, 50 },
+    { 0, 50 },
+    { 900, 50 },
+    { -1, 0 }
+  };
 
-  // Melody 2: Enter sound
-  { 2, { 2200, 2300 }, { 2, 1 } },
+  const Note MelodyEnter[4] = {
+    { 659, 100 },
+    { 988, 50 },
+    { -1, 0 }
+  };
 
-  // Melody 2: Save sound
-  { 4, { 1800, 1200, 2000, 2000 }, { 1, 1, 1, 1 } },
-  // Add more melodies as needed
+  const Note MelodySave[5] = {
+    { 659, 100 },  // Note frequency and duration (in milliseconds)
+    { 988, 50 },
+    { 0, 100 },
+    { 1200, 50 },
+    { -1, 0 }  // End of melody marker
+  };
+
+public:
+  Tone() = default;
+
+  void begin() {
+    pinMode(pinTone, OUTPUT);
+  }
+
+  void playMelody(const Note* melody) {
+    currentMelody = melody;
+    currentNoteIndex = 0;
+    noteStartTime = millis();
+    playCurrentNote();
+  }
+
+  void click() {
+    playMelody(MelodyClick);
+  }
+
+  void enter() {
+    playMelody(MelodyEnter);
+  }
+
+  void save() {
+    playMelody(MelodySave);
+  }
+
+  void mode() {
+    playMelody(MelodyMode);
+  }
+
+  void hark() {
+    if (currentMelody != nullptr && millis() - noteStartTime >= (currentMelody + currentNoteIndex)->duration) {
+      currentNoteIndex++;
+      playCurrentNote();
+    }
+  }
+
+private:
+  void playCurrentNote() {
+    if (currentMelody != nullptr && (currentMelody + currentNoteIndex)->frequency != -1) {
+      tone(pinTone, (currentMelody + currentNoteIndex)->frequency);
+      noteStartTime = millis();
+    } else {
+      noTone(pinTone);
+      currentMelody = nullptr;
+      currentNoteIndex = 0;
+    }
+  }
 };
 
-//
-// Simple function to play the defined melodies
-void playMelody(const Melody& melody) {
-  for (int i = 0; i < melody.length; ++i) {
-    int note = pgm_read_word_near(melody.notes + i);
-    int duration = pgm_read_word_near(melody.durations + i);
-
-    tone(pinTone, note);
-    delay(100 / duration);
-    noTone(pinTone);
-    delay(25);
-  }
-}
-
-void bootMelody() {
-  int melody[] = { 262, 294, 330, 349, 392, 440, 494, 523 };
-  int noteDurations[] = { 4, 4, 4, 4, 4, 4, 4, 4 };
-
-  for (int i = 0; i < 8; ++i) {
-    tone(pinTone, melody[i]);
-    delay(500 / noteDurations[i]);
-    noTone(pinTone);
-    delay(50);  // Add a small delay between notes
-  }
-}
 
 #endif

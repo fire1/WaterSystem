@@ -4,6 +4,7 @@
 #ifndef Draw_h
 #define Draw_h
 #include <AsyncDelay.h>
+#include <LiquidCrystal.h>
 
 
 
@@ -17,6 +18,8 @@ const uint8_t timeRefresh = 400;
 
 class Draw : public DrawInterface {
 private:
+  Tone* sound;
+
   enum HoldState {
     None = 0,
     Tick = 1,
@@ -112,7 +115,10 @@ private:
     // Present enter
     if (this->onClick(pinBtnOk) && !this->isEdit) {
       dbgLn(F("BTN OK pressed"));
-      this->isEdit = true;
+      if (this->cursor > 0) {
+        sound->enter();
+        this->isEdit = true;
+      }
     }
 
 
@@ -120,21 +126,25 @@ private:
     // Pressed next
     if (this->onClick(pinBtnNext)) {
       dbgLn(F("BTN Next pressed"));
+      sound->click();
       this->cursor++;
     }
     //
     // Pressed back
     if (this->onClick(pinBtnBack)) {
       dbgLn(F("BTN Back pressed"));
+      sound->click();
       this->cursor--;
     }
 
     if (this->onClick(pinBtnWell)) {
       dbgLn(F("BTN Well pressed"));
+      sound->mode();
       this->cursor = 5;
     }
 
     if (this->onClick(pinBtnMain)) {
+      sound->mode();
       dbgLn(F("BTN Main pressed"));
       this->cursor = 6;
     }
@@ -147,17 +157,18 @@ private:
     this->isDraw = true;
     if (!this->isEdit) return;
 
-    // dbgLn(F("Edit"));
     //
     // Pressed next
     if (this->onClick(pinBtnNext)) {
       dbgLn(F("Data next "));
+      sound->click();
       data->next();
     }
     //
     // Pressed back
     if (this->onClick(pinBtnBack)) {
       dbgLn(F("Data back "));
+      sound->click();
       data->back();
     }
 
@@ -165,6 +176,7 @@ private:
     if (this->onClick(pinBtnOk)) {
       this->isEdit = !this->isEdit;
       dbgLn(F("Data save "));
+      sound->save();
       data->save();
     }
     /*
@@ -208,7 +220,8 @@ private:
 
 
 public:
-  Draw() {
+  Draw(Tone* tn)
+    : sound(tn) {
   }
 
   bool isEditing() {
@@ -234,6 +247,7 @@ public:
       dbgLn();
       this->cursor = 0;
       this->isEdit = false;
+      sound->save();
     }
   }
   //
