@@ -34,12 +34,12 @@ contributes to overall resource optimization.
 
 ## Potential Components
 
-Arduino board (e.g., Arduino Mega2560) - I'm using Mega as primary device and AtMega8 as Slave device.
-Ultrasonic sensors - For medurment water levels in tanks of water.
-Liquid Crystal Display (LCD) - For diferent modes and level reads.
-Push buttons for user input
-LEDs for status indication 
-Buzzer for sound output
+* Arduino board (e.g., Arduino Mega2560) - I'm using Mega as primary device and AtMega8 as Slave device.
+* Ultrasonic sensors - For medurment water levels in tanks of water.
+* Liquid Crystal Display (LCD) - For diferent modes and level reads.
+* Push buttons for user input
+* LEDs for status indication 
+* Buzzer for sound output
 
 
 ## License
