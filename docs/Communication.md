@@ -8,7 +8,7 @@ This document outlines the setup for a long-range community communication system
 - Arduino Mega 2560
 - 12V Power Supply
 - 50-Meter Long Cable (2-Wire)
-- Tank Level Sensors (Not specified in this document)
+- Tank Level Sensors (JSN-SR04t-v2)
 
 ## Wiring Scheme
 
