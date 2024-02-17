@@ -12,4 +12,4 @@ This document outlines the setup for a long-range community communication system
 
 ## Wiring Scheme
 
-[Scheme communication](https://raw.githubusercontent.com/fire1/WaterSystem/main/docs/schematics/slave-to-master-long-range.png?token=GHSAT0AAAAAACLW5QRP332G7TGPVTAX3446ZOQK6DA)
+![Scheme communication](https://raw.githubusercontent.com/fire1/WaterSystem/main/docs/schematics/slave-to-master-long-range.png?token=GHSAT0AAAAAACLW5QRP332G7TGPVTAX3446ZOQK6DA)
