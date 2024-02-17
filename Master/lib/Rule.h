@@ -66,6 +66,10 @@ private:
     }
 #endif
 
+    if (this->well >= LevelSensorWellMin) {
+      Serial.println(F("Well tank is full!"));
+      return;
+    }
 
     //
     // TODO check levels for running the pumps
@@ -103,9 +107,9 @@ private:
       default:
       case 0:
         // noting
-        digitalWrite(pinWellPump, LOW); // Force disable immediately!
-        ctrlWell.setOn(false); // Disables the controll of the well pump
-        beatWell(0); // Disables the led heartbeat 
+        digitalWrite(pinWellPump, LOW);  // Force disable immediately!
+        ctrlWell.setOn(false);           // Disables the controll of the well pump
+        beatWell(0);                     // Disables the led heartbeat
         break;
 
       case 1:
@@ -123,7 +127,7 @@ private:
       case 3:
         // Now!
         pumpWell(8, 25);
-         // pumpWell(1, 4); // quick test mode
+        // pumpWell(1, 4); // quick test mode
         beatWell(400);
         break;
     }
