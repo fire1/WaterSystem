@@ -12,4 +12,4 @@ This document outlines the setup for a long-range community communication system
 
 ## Wiring Scheme
 
-todo
+[Scheme communication](https://github.com/fire1/WaterSystem/blob/main/docs/schematics/slave-to-master-long-range.png?raw=true)
