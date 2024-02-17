@@ -72,7 +72,7 @@ private:
 
     if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
       digitalWrite(pinWellPump, HIGH);
-      Serial.println(F("Ctrl pump Turning well ON "));
+      Serial.println(F("Ctrl well pump  On "));
       wellTimer = millis();
       ctrlWell.setOn(true);
     }
@@ -80,7 +80,7 @@ private:
     if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
       digitalWrite(pinWellPump, LOW);
       wellTimer = millis();
-      Serial.println(F("Ctrl pump Turning well OFF "));
+      Serial.println(F("Ctrl well pump  OFF "));
       ctrlWell.setOn(false);
     }
   }
@@ -101,7 +101,7 @@ private:
 
       case 1:
         // Easy
-        pumpWell(6, 180);
+        pumpWell(8, 180);
         beatWell(1500);
         break;
 
@@ -113,7 +113,7 @@ private:
 
       case 3:
         // Now!
-        pumpWell(10, 30);
+        pumpWell(8, 25);
         beatWell(400);
         break;
     }

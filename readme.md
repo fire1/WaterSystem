@@ -41,6 +41,12 @@ contributes to overall resource optimization.
 * LEDs for status indication 
 * Buzzer for sound output
 
+* Two water containers with ultrasonic sensors for water level monitoring.
+* Arduino board controlling the system, including pumps and sensor readings.
+* Pump 1 for drawing water from the well.
+* Pump 2 for raising water to a higher place.
+* An optional Atmega8 microcontroller for data processing in the raised tank.
+
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
