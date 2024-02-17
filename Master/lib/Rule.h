@@ -71,10 +71,10 @@ private:
     //
 
     if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
-      
-      dbg(F("CTRL well "));
+
+      dbg(F("CTRL well /"));
       dbg(stopMin);
-      dbg(F("min pump is Off "));
+      dbg(F("min/ pump is Off "));
       dbgLn();
 
       wellTimer = millis();
@@ -82,10 +82,10 @@ private:
     }
 
     if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
-      
-      dbg(F("CTRL well "));
+
+      dbg(F("CTRL well /"));
       dbg(workMin);
-      dbg(F("min pump  is On "));
+      dbg(F("min/ pump  is On "));
       dbgLn();
 
       wellTimer = millis();
@@ -102,9 +102,9 @@ private:
       default:
       case 0:
         // noting
-        digitalWrite(pinWellPump, LOW);
-        ctrlWell.setOn(false);
-        beatWell(0);
+        digitalWrite(pinWellPump, LOW); // Force disable immediately!
+        ctrlWell.setOn(false); // Disables the controll of the well pump
+        beatWell(0); // Disables the led heartbeat 
         break;
 
       case 1:
@@ -121,8 +121,8 @@ private:
 
       case 3:
         // Now!
-        pumpWell(1, 4);
-        // pumpWell(8, 25);
+        pumpWell(8, 25);
+         // pumpWell(1, 4); // quick test mode
         beatWell(400);
         break;
     }
