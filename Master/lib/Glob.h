@@ -79,7 +79,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 //
 // This value defines safe level point for max u-s sensor
 //  reads. Shoud be common for both sensors.
-#define LevelSensorBothMax 23
+#define LevelSensorBothMax 21
 #define LevelSensorWellMin 95
 #define LevelSensorMainMin 95
 

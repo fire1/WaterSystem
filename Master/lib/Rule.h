@@ -17,7 +17,7 @@ SoftwareSerial com(pinMainRx, -1);
 
 
 
-AsyncDelay refreshLevels;
+
 
 class Rule {
 private:
@@ -29,6 +29,7 @@ private:
   Data *pump2;
   Tone *sound;
   AsyncDelay beatLed;
+  AsyncDelay refreshLevels;
   uint16_t beatLedLast = 0;
 
   struct LevelSensorAverage {

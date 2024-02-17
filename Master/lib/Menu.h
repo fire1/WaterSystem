@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #ifndef Menu_h
 #define Menu_h
 
@@ -21,12 +22,17 @@ private:
   void
   drawLevel(byte level, byte min) {
 
-
     uint8_t bars = map(level, min, LevelSensorBothMax, 1, 10);
     // uint8_t bars = map(level, 100, 23, 1, 10);
+    if (bars > 10) {
+      bars = 10;
+    }
+
+    // Serial.println(bars);
     if (level > 0)
-      for (byte i = 0; i <= level; i++) {
-        lcd.write((uint8_t)0);
+      for (byte i = 0; i <= 10; i++) {
+        if (i < bars) lcd.write((uint8_t)0);
+        else lcd.print(F(" "));
       }
   }
 
@@ -34,10 +40,12 @@ private:
     * Display home screen
     */
   void home(DrawInterface* dr) {
+
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1 "));
     int level1 = rl->getWellLevel();
-    if (!level1)
+
+    if (level1 == 0 || level1 > LevelSensorWellMin)
       lcd.print(F("-?-"));
     else
       drawLevel(level1, LevelSensorWellMin);
@@ -45,7 +53,7 @@ private:
     lcd.setCursor(0, 1);
     lcd.print(F("Tank2 "));
     int level2 = rl->getMainLevel();
-    if (!level2)
+    if (level2 == 0 || level2 > LevelSensorMainMin)
       lcd.print(F("-?-"));
     else
       drawLevel(level2, LevelSensorMainMin);
