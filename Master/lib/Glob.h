@@ -6,7 +6,6 @@
 #include <LiquidCrystal.h>
 #include <AsyncDelay.h>
 #include <Wire.h>
-#include <DS3231.h>
 
 //
 // Pump controll pins

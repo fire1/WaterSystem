@@ -39,9 +39,18 @@ void setup() {
   // Prepare managment
   rl.begin();
 
+  Wire.begin();
   tn.begin();
+  if (!rtc.begin()) {
+    Serial.println(F("Couldn't find RTC"));
+    Serial.flush();
+  } else rtc.adjust(DateTime(__DATE__, __TIME__));  // adjust data / time
+  DateTime now = rtc.now();
 
-
+  Serial.print(now.hour(), DEC);
+  Serial.print(':');
+  Serial.print(now.minute(), DEC);
+  Serial.println();
 }
 
 void loop() {

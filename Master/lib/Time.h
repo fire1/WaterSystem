@@ -1,12 +1,13 @@
 #ifndef Time_h
 #define Time_h
 
-DS3231 rtc;
+#include <RTClib.h>
+ RTC_DS3231 rtc;
 
 //
 // Shortcut
 DateTime rtcNow() {
-  return RTClib::now();
+  return rtc.now();
 }
 
 //

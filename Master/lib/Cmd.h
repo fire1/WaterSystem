@@ -53,7 +53,7 @@ public:
       if (cmdName == F("show")) {
         switch (cmdData.toInt()) {
           case 100:
-            DateTime now = RTClib::now();
+            DateTime now = rtc.now();
             Serial.print(now.year(), DEC);
             Serial.print('/');
             Serial.print(now.month(), DEC);
