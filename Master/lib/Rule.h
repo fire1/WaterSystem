@@ -70,18 +70,26 @@ private:
     // TODO check levels for running the pumps
     //
 
-    if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
-      digitalWrite(pinWellPump, HIGH);
-      Serial.println(F("Ctrl well pump  On "));
+    if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
+      
+      dbg(F("CTRL well "));
+      dbg(stopMin);
+      dbg(F("min pump is Off "));
+      dbgLn();
+
       wellTimer = millis();
-      ctrlWell.setOn(true);
+      ctrlWell.setOn(false);
     }
 
-    if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
-      digitalWrite(pinWellPump, LOW);
+    if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
+      
+      dbg(F("CTRL well "));
+      dbg(workMin);
+      dbg(F("min pump  is On "));
+      dbgLn();
+
       wellTimer = millis();
-      Serial.println(F("Ctrl well pump  OFF "));
-      ctrlWell.setOn(false);
+      ctrlWell.setOn(true);
     }
   }
 
@@ -113,7 +121,8 @@ private:
 
       case 3:
         // Now!
-        pumpWell(8, 25);
+        pumpWell(1, 4);
+        // pumpWell(8, 25);
         beatWell(400);
         break;
     }
