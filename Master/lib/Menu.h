@@ -206,7 +206,12 @@ public:
       case 5: return this->pumpWell(dr);
       case 6: return this->pumpMain(dr);
 
-      case 255: return this->infoMenu();
+      // 
+      // This menu is active only when clock is connected!
+      case 255:
+        if (time->isConn()) this->infoMenu();
+        else dr->resetCursor();// return back to Home
+        break;
     }
   }
 };
