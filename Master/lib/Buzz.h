@@ -1,4 +1,3 @@
-#include "HardwareSerial.h"
 
 
 #ifndef Buzz_h

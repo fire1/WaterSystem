@@ -1,5 +1,4 @@
-#include "WString.h"
-#include "HardwareSerial.h"
+
 #ifndef Menu_h
 #define Menu_h
 

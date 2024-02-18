@@ -1,4 +1,4 @@
-#include "HardwareSerial.h"
+
 #ifndef Uart_h
 #define Uart_h
 
