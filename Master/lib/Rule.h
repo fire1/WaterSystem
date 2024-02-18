@@ -24,7 +24,8 @@ private:
 
 
   AsyncDelay beatLed;
-  AsyncDelay refreshLevels;
+  AsyncDelay refreshLevelsLong;
+  AsyncDelay refreshLevelsWork;
   uint16_t beatLedLast = 0;
 
   struct LevelSensorAverage {
@@ -44,6 +45,7 @@ private:
   uint8_t well;
   uint8_t main;
   bool isDaytime;
+  bool isAlarmOn = false;
 
 
   unsigned long calcMinutes(unsigned int minutes) {
@@ -57,7 +59,7 @@ private:
       //
       // Check for daytime each minutes
       if (spanMx.isActive())
-        isDaytime = time->isDaytime();  //pass state for daytime locally 
+        isDaytime = time->isDaytime();  //pass state for daytime locally
 
     } else {
       isDaytime = true;  // skip daytime check since there is no clock
@@ -84,11 +86,8 @@ private:
         Serial.println(F("Warning: Well tank is full!"));
       return;
     }
-
     //
-    // TODO check levels for running the pumps
-    //
-
+    // Turn pump OFF
     if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
 
       dbg(F("CTRL well /"));
@@ -99,9 +98,19 @@ private:
       wellTimer = millis();
       ctrlWell.setOn(false);
     }
-
+    //
+    // Start level read before real start
+    if (!ctrlWell.isOn() && (millis() - wellTimer >= (this->calcMinutes(stopMin) - (LevelRefreshTimeWork - 50)))) {
+      buzz->pump();
+      this->isAlarmOn = true;
+      refreshLevelsWork.start(LevelRefreshTimeWork, AsyncDelay::MILLIS);
+      dbg(F("Prepare levels /well/ "));
+      dbgLn();
+    }
+    //
+    // Turn pump on
     if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
-
+      this->isAlarmOn = false;
       dbg(F("CTRL well /"));
       dbg(workMin);
       dbg(F("min/ pump  is On "));
@@ -260,10 +269,20 @@ private:
       this->readMain();
     }
 
-    if (refreshLevels.isExpired()) {
+    if (refreshLevelsLong.isExpired()) {
       sensorWell.done = false;
       sensorMain.done = false;
-      refreshLevels.repeat();
+      refreshLevelsLong.repeat();
+    }
+
+    if (this->isAlarmOn && spanLg.isActive()) {
+      buzz->pump();
+    }
+
+    if (refreshLevelsWork.isExpired() && (ctrlWell.isOn() || ctrlMain.isOn())) {
+      sensorWell.done = false;
+      sensorMain.done = false;
+      refreshLevelsWork.repeat();
     }
   }
 
@@ -277,7 +296,7 @@ public:
 
   void begin() {
 
-    refreshLevels.start(LevelsRefreshTime, AsyncDelay::MILLIS);
+    refreshLevelsLong.start(LevelsRefreshTimeLong, AsyncDelay::MILLIS);
     com.begin(BaudSlaveRx);
 
     //

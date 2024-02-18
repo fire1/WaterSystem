@@ -20,7 +20,7 @@ private:
   // Define Melodies
   const Note MelodyClick[2] = {
     { 659, 15 },  // Note frequency and duration (in milliseconds)
-    { -1, 0 }    // End of melody marker
+    { -1, 0 }     // End of melody marker
   };
 
   const Note MelodyMode[4] = {
@@ -55,6 +55,17 @@ private:
     { -1, 0 }  // End of melody marker
   };
 
+  const Note MelodyPump[8] = {
+    { 1000, 150 }, 
+    { 0, 150 },
+    { 1000, 100 },
+    { 0, 100 },
+    { 1000, 50 },
+    { 0, 50 },
+    { 1000, 50 },
+    { -1, 0 }  // End of melody marker
+  };
+
 public:
   Buzz() = default;
 
@@ -84,6 +95,10 @@ public:
 
   void mode() {
     playMelody(MelodyMode);
+  }
+
+  void pump() {
+    playMelody(MelodyPump);
   }
 
 
