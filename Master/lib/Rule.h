@@ -17,8 +17,8 @@ private:
   SoftwareSerial com;
   unsigned long wellTimer = 0;
   Data *mode;
-  Data *pump1;
-  Data *pump2;
+  Data *modeWell;
+  Data *modeMain;
   Buzz *buzz;
   Time *time;
 
@@ -84,6 +84,7 @@ private:
     if (this->well >= LevelSensorWellMin) {
       if (spanMx.isActive())  // every second display warning
         Serial.println(F("Warning: Well tank is full!"));
+      ctrlWell.setOn(false);
       return;
     }
     //
@@ -100,12 +101,16 @@ private:
     }
     //
     // Start level read before real start
-    if (!ctrlWell.isOn() && (millis() - wellTimer >= (this->calcMinutes(stopMin) - (LevelRefreshTimeWork - 50)))) {
-      buzz->pump();
-      this->isAlarmOn = true;
-      refreshLevelsWork.start(LevelRefreshTimeWork, AsyncDelay::MILLIS);
-      dbg(F("Prepare levels /well/ "));
-      dbgLn();
+    if (!ctrlWell.isOn() && (millis() - wellTimer >= (this->calcMinutes(stopMin) - (LevelRefreshTimeWork * 2 - 50)))) {
+
+      if (spanLg.isActive()) {
+        buzz->pump();
+        this->readWell();
+
+        refreshLevelsWork.start(LevelRefreshTimeWork, AsyncDelay::MILLIS);
+        dbg(F("Prepare levels /well/ "));
+        dbgLn();
+      }
     }
     //
     // Turn pump on
@@ -275,9 +280,6 @@ private:
       refreshLevelsLong.repeat();
     }
 
-    if (this->isAlarmOn && spanLg.isActive()) {
-      buzz->pump();
-    }
 
     if (refreshLevelsWork.isExpired() && (ctrlWell.isOn() || ctrlMain.isOn())) {
       sensorWell.done = false;
@@ -289,7 +291,7 @@ private:
 
 public:
   Rule(Buzz *tn, Time *tm, Data *md, Data *p1, Data *p2)
-    : buzz(tn), time(tm), mode(md), pump1(p1), pump2(p2), com(pinMainRx, -1), beatLed(500, AsyncDelay::MILLIS) {
+    : buzz(tn), time(tm), mode(md), modeWell(p1), modeMain(p2), com(pinMainRx, -1), beatLed(500, AsyncDelay::MILLIS) {
   }
 
 
