@@ -95,10 +95,16 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #include "Pump.h"
 #include "Util.h"
 #include "Data.h"
+#include "Span.h"
 #include "Buzz.h"
 
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
+
+extern Span spanSm(199);
+extern Span spanMd(801);
+extern Span spanLg(1002);
+extern Span spanMx(10003);
 
 
 #include "Rule.h"

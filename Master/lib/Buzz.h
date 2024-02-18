@@ -20,7 +20,7 @@ private:
 
   // Define Melodies
   const Note MelodyClick[2] = {
-    { 659, 5 },  // Note frequency and duration (in milliseconds)
+    { 659, 15 },  // Note frequency and duration (in milliseconds)
     { -1, 0 }    // End of melody marker
   };
 

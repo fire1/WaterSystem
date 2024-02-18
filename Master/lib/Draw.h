@@ -8,10 +8,9 @@
 
 
 
-AsyncDelay refreshRate;
+// AsyncDelay refreshRate;
 AsyncDelay stopDisplay;
 
-const uint8_t timeRefresh = 400;
 
 
 
@@ -256,7 +255,7 @@ public:
   // Setup the menu
   void begin() {
 
-    refreshRate.start(timeRefresh, AsyncDelay::MILLIS);
+    // refreshRate.start(timeRefresh, AsyncDelay::MILLIS);
     stopDisplay.start(SuspendDisplayTime, AsyncDelay::MILLIS);
     //
     // Define simple joystick pins
@@ -298,9 +297,9 @@ public:
 
     this->input();
 
-    if (refreshRate.isExpired()) {
+    if (spanMd.isActive()) {
       lcd.clear();
-      refreshRate.repeat();
+
       this->isDraw = false;
       mn->draw(this);
     }

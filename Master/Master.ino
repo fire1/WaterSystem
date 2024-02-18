@@ -53,6 +53,10 @@ void loop() {
   buzz.hark();
   rule.hark();
   draw.draw(&menu);
+
+  spanSm.tick();
+  spanMd.tick();
+  spanLg.tick();
 }
 
 void loop_() {  // test sensors

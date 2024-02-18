@@ -8,21 +8,13 @@
 // OneWire setup (Power/Serial)
 // The OneWire Serial is desined to provide a power and
 //  communication from the serial slave sensor.
-SoftwareSerial com(pinMainRx, -1);
+
 
 // https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
 
-
-
-
-
-
-
-
 class Rule {
 private:
-
-
+  SoftwareSerial com;
   unsigned long wellTimer = 0;
   Data *mode;
   Data *pump1;
@@ -61,13 +53,14 @@ private:
     if (!isDaytime()) {
       //
       // Stop the system
-      Serial.println(F("It is not daytime!"));
+      Serial.println(F("Warning: It is not daytime!"));
       return;
     }
 #endif
 
     if (this->well >= LevelSensorWellMin) {
-      Serial.println(F("Well tank is full!"));
+      if (spanMx.isActive())  // every second display warning
+        Serial.println(F("Warning: Well tank is full!"));
       return;
     }
 
@@ -256,7 +249,7 @@ private:
 
 public:
   Rule(Buzz *tn, Data *md, Data *p1, Data *p2)
-    : buzz(tn), mode(md), pump1(p1), pump2(p2), beatLed(500, AsyncDelay::MILLIS) {
+    : buzz(tn), mode(md), pump1(p1), pump2(p2), com(pinMainRx, -1), beatLed(500, AsyncDelay::MILLIS) {
   }
 
 
