@@ -1,5 +1,22 @@
 # WaterSystem: Automated Water Pump Control
 
+```
+              _|=|__________
+             /  /            \                                       [~~~~]
+            /  /              \                                      [____]
+           /__/________________\                                     //
+            ||  || /--\ ||  ||                                      //
+            ||[]|| | .| ||[]||                                     //
+         () ||__||_|__|_||__||     ()          ___    __ [~~~~~~] //   ___
+        ( )|-|-|-|====|-|-|-|||-|  ( ) 	      (_(O)--^|| [______]//`--(O)_)
+       ^^^^^^^^^^^====^^^^^^^^^^^^^^^^^^^^^^^YYYY^^^^^||^^^^^^^^^^^^^^YYYY^^^^^^/
+                                                      ||
+                                                      ||
+                                                      ||
+                                                     {~~}
+                                                     {__}
+```
+
 The WaterSystem is an intelligent and automated solution designed for the precise control of water pumps in a fluid management 
 system. This project is specifically tailored for scenarios where multiple containers with varying water levels need to be 
 efficiently managed to ensure a continuous and optimal water supply.
