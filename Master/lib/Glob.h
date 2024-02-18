@@ -104,8 +104,7 @@ extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 extern Span spanSm(199);        // Loop span at Small
 extern Span spanMd(2501);       // Loop span Middle  /screen refresh/
 extern Span spanLg(4802);       // Loop span Large  / warning messages/
-extern Span spanMx(10003);      // Loop span at 10k loops
-extern Span spanMinite(60004);  // Loop span at 60k loops
+extern Span spanMx(250003);  // Loop span at 60k loops
 
 
 #include "Rule.h"

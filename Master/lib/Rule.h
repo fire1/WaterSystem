@@ -56,7 +56,7 @@ private:
     if (time->isConn()) {
       //
       // Check for daytime each minutes
-      if (spanMinite.isActive())
+      if (spanMx.isActive())
         isDaytime = time->isDaytime();  //pass state for daytime locally 
 
     } else {
