@@ -1,3 +1,6 @@
+#ifndef Init_h
+#define Init_h
+
 //
 // Define tanks mode names
 DefineData(
@@ -10,8 +13,8 @@ DefineData(
 
 //
 // Convert tank names  to data objects
-Data tk1(5, tankNames, 0);
-Data tk2(5, tankNames, 1);
+Data tank1(5, tankNames, 0);
+Data tank2(5, tankNames, 1);
 
 //
 // Define mode names
@@ -22,25 +25,29 @@ DefineData(
   "Fast",
   "Now!");
 
+Time time;
+
 //
 // Convert names to object data
-Data md(4, modeNames, 2);
+Data mode(4, modeNames, 2);
 
 
-Tone tn;
+Buzz buzz;
 
 //
 // Initialize managment driver
-Rule rl(&tn, &md, &tk1, &tk2);
+Rule rule(&buzz, &mode, &tank1, &tank2);
 
 //
 // Menu UI instance
-Menu mn(&rl, &tk1, &tk2, &md);
+Menu menu(&rule, &tank1, &tank2, &mode);
 
 //
 // Draw driver
-Draw ui(&tn);
+Draw draw(&buzz);
 
 //
 // Comands
-Cmd cd;
+Cmd cmd(&time);
+
+#endif

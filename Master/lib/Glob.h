@@ -95,7 +95,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #include "Pump.h"
 #include "Util.h"
 #include "Data.h"
-#include "Tone.h"
+#include "Buzz.h"
 
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);

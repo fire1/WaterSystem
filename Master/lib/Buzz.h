@@ -1,8 +1,8 @@
 #include "HardwareSerial.h"
 
 
-#ifndef Tone_h
-#define Tone_h
+#ifndef Buzz_h
+#define Buzz_h
 
 #include "Arduino.h"
 #include <AsyncDelay.h>
@@ -12,7 +12,7 @@ struct Note {
   int duration;  // in milliseconds
 };
 
-class Tone {
+class Buzz {
 private:
   const Note* currentMelody = nullptr;
   uint8_t currentNoteIndex = 0;
@@ -57,7 +57,7 @@ private:
   };
 
 public:
-  Tone() = default;
+  Buzz() = default;
 
   void begin() {
     pinMode(pinTone, OUTPUT);

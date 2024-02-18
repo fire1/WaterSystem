@@ -31,35 +31,28 @@ void setup() {
   // LED to indicate when recieving
   pinMode(pinLed, OUTPUT);
 
-  mn.begin();
+  menu.begin();
   //
   // Setup the menu
-  ui.begin();
+  draw.begin();
   //
   // Prepare managment
-  rl.begin();
-
-  Wire.begin();
-  tn.begin();
-  if (!rtc.begin()) {
-    Serial.println(F("Couldn't find RTC"));
-    Serial.flush();
-  } else rtc.adjust(DateTime(__DATE__, __TIME__));  // adjust data / time
-  DateTime now = rtc.now();
-
-  Serial.print(now.hour(), DEC);
-  Serial.print(':');
-  Serial.print(now.minute(), DEC);
-  Serial.println();
+  rule.begin();
+  //
+  // Setup sounds
+  buzz.begin();
+  //
+  // Establishe time connection
+  time.begin();
 }
 
 void loop() {
 
-  tn.hark();
+  cmd.hark();  // input commands from serial
 
-  cd.hark();
-  rl.hark();
-  ui.draw(&mn);
+  buzz.hark();
+  rule.hark();
+  draw.draw(&menu);
 }
 
 void loop_() {  // test sensors

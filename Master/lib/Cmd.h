@@ -10,14 +10,15 @@ const char CMD_SPR_EOL = '\n';
 
 class Cmd {
 private:
-
+  Time* time;
   String cmdName;
   String cmdData;
   bool isPrint = false;
 
 
 public:
-  Cmd() {}
+  Cmd(Time* t)
+    : time(t) {}
   void hark() {
 
     //
@@ -53,7 +54,7 @@ public:
       if (cmdName == F("show")) {
         switch (cmdData.toInt()) {
           case 100:
-            DateTime now = rtc.now();
+            DateTime now = time->now();
             Serial.print(now.year(), DEC);
             Serial.print('/');
             Serial.print(now.month(), DEC);

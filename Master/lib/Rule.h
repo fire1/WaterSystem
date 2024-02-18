@@ -27,7 +27,7 @@ private:
   Data *mode;
   Data *pump1;
   Data *pump2;
-  Tone *sound;
+  Buzz *buzz;
   AsyncDelay beatLed;
   AsyncDelay refreshLevels;
   uint16_t beatLedLast = 0;
@@ -255,8 +255,8 @@ private:
 
 
 public:
-  Rule(Tone *tn, Data *md, Data *p1, Data *p2)
-    : sound(tn), mode(md), pump1(p1), pump2(p2), beatLed(500, AsyncDelay::MILLIS) {
+  Rule(Buzz *tn, Data *md, Data *p1, Data *p2)
+    : buzz(tn), mode(md), pump1(p1), pump2(p2), beatLed(500, AsyncDelay::MILLIS) {
   }
 
 

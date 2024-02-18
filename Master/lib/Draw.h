@@ -18,7 +18,7 @@ const uint8_t timeRefresh = 400;
 
 class Draw : public DrawInterface {
 private:
-  Tone* sound;
+  Buzz* buzz;
 
   enum HoldState {
     None = 0,
@@ -116,7 +116,7 @@ private:
     if (this->onClick(pinBtnOk) && !this->isEdit) {
       dbgLn(F("BTN OK pressed"));
       if (this->cursor > 0) {
-        sound->enter();
+        buzz->enter();
         this->isEdit = true;
       }
     }
@@ -126,25 +126,25 @@ private:
     // Pressed next
     if (this->onClick(pinBtnNext)) {
       dbgLn(F("BTN Next pressed"));
-      sound->click();
+      buzz->click();
       this->cursor++;
     }
     //
     // Pressed back
     if (this->onClick(pinBtnBack)) {
       dbgLn(F("BTN Back pressed"));
-      sound->click();
+      buzz->click();
       this->cursor--;
     }
 
     if (this->onClick(pinBtnWell)) {
       dbgLn(F("BTN Well pressed"));
-      sound->mode();
+      buzz->mode();
       this->cursor = 5;
     }
 
     if (this->onClick(pinBtnMain)) {
-      sound->mode();
+      buzz->mode();
       dbgLn(F("BTN Main pressed"));
       this->cursor = 6;
     }
@@ -161,14 +161,14 @@ private:
     // Pressed next
     if (this->onClick(pinBtnNext)) {
       dbgLn(F("Data next "));
-      sound->click();
+      buzz->click();
       data->next();
     }
     //
     // Pressed back
     if (this->onClick(pinBtnBack)) {
       dbgLn(F("Data back "));
-      sound->click();
+      buzz->click();
       data->back();
     }
 
@@ -176,7 +176,7 @@ private:
     if (this->onClick(pinBtnOk)) {
       this->isEdit = !this->isEdit;
       dbgLn(F("Data save "));
-      sound->save();
+      buzz->save();
       data->save();
     }
     /*
@@ -220,8 +220,8 @@ private:
 
 
 public:
-  Draw(Tone* tn)
-    : sound(tn) {
+  Draw(Buzz* tn)
+    : buzz(tn) {
   }
 
   bool isEditing() {
@@ -249,7 +249,7 @@ public:
       dbgLn();
       this->cursor = 0;
       this->isEdit = false;
-      sound->save();
+      buzz->save();
     }
   }
   //
