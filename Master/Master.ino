@@ -57,6 +57,7 @@ void loop() {
   spanSm.tick();
   spanMd.tick();
   spanLg.tick();
+  spanMinite.tick();
 }
 
 void loop_() {  // test sensors

@@ -43,26 +43,40 @@ private:
   // Final average valuse from sensors
   uint8_t well;
   uint8_t main;
-
+  bool isDaytime;
 
 
   unsigned long calcMinutes(unsigned int minutes) {
     return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
   }
 
+  bool checkDaytime() {
+    //
+    // Wrapping time class locally
+    if (time->isConn()) {
+      //
+      // Check for daytime each minutes
+      if (spanMinite.isActive())
+        isDaytime = time->isDaytime();  //pass state for daytime locally 
+
+    } else {
+      isDaytime = true;  // skip daytime check since there is no clock
+    }
+
+    return isDaytime;
+  }
+
   //
   // Defines work amplitude for Pump1
   void pumpWell(uint8_t workMin, uint8_t stopMin) {
 
-    if (time->isConn())
-      if (!isDaytime()) {
-        //
-        // Stop the system
-        if (spanMx.isActive())  // every second display warning
-          Serial.println(F("Warning: It is not daytime!"));
-          
-        return;
-      }
+    if (!this->checkDaytime()) {
+      //
+      // Stop the system
+      if (spanMx.isActive())  // every second display warning
+        Serial.println(F("Warning: It is not daytime!"));
+      return;
+    }
 
 
     if (this->well >= LevelSensorWellMin) {
