@@ -20,6 +20,9 @@ private:
   Data *pump1;
   Data *pump2;
   Buzz *buzz;
+  Time *time;
+
+
   AsyncDelay beatLed;
   AsyncDelay refreshLevels;
   uint16_t beatLedLast = 0;
@@ -31,11 +34,13 @@ private:
   };
 
   //
-  // TODO make average read of sensors
+  // Average from sensors
   LevelSensorAverage
     sensorWell,
     sensorMain;
 
+  //
+  // Final average valuse from sensors
   uint8_t well;
   uint8_t main;
 
@@ -49,14 +54,16 @@ private:
   // Defines work amplitude for Pump1
   void pumpWell(uint8_t workMin, uint8_t stopMin) {
 
-#ifdef UseRtl
-    if (!isDaytime()) {
-      //
-      // Stop the system
-      Serial.println(F("Warning: It is not daytime!"));
-      return;
-    }
-#endif
+    if (time->isConn())
+      if (!isDaytime()) {
+        //
+        // Stop the system
+        if (spanMx.isActive())  // every second display warning
+          Serial.println(F("Warning: It is not daytime!"));
+          
+        return;
+      }
+
 
     if (this->well >= LevelSensorWellMin) {
       if (spanMx.isActive())  // every second display warning
@@ -248,8 +255,8 @@ private:
 
 
 public:
-  Rule(Buzz *tn, Data *md, Data *p1, Data *p2)
-    : buzz(tn), mode(md), pump1(p1), pump2(p2), com(pinMainRx, -1), beatLed(500, AsyncDelay::MILLIS) {
+  Rule(Buzz *tn, Time *tm, Data *md, Data *p1, Data *p2)
+    : buzz(tn), time(tm), mode(md), pump1(p1), pump2(p2), com(pinMainRx, -1), beatLed(500, AsyncDelay::MILLIS) {
   }
 
 

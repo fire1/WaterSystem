@@ -101,10 +101,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
-extern Span spanSm(199);
-extern Span spanMd(801);
-extern Span spanLg(1002);
-extern Span spanMx(10003);
+extern Span spanSm(199); // Loop span at 199ms
+extern Span spanMd(801); // Loop span at 801ms /screen refresh/
+extern Span spanLg(1002); // Loop span et 1sec / warning messages/
+extern Span spanMx(10003); // Loop span at 10sec
 
 
 #include "Rule.h"

@@ -36,11 +36,11 @@ Buzz buzz;
 
 //
 // Initialize managment driver
-Rule rule(&buzz, &mode, &tank1, &tank2);
+Rule rule(&buzz, &time, &mode, &tank1, &tank2);
 
 //
 // Menu UI instance
-Menu menu(&rule, &tank1, &tank2, &mode);
+Menu menu(&rule, &time, &tank1, &tank2, &mode);
 
 //
 // Draw driver

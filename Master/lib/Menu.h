@@ -1,3 +1,4 @@
+#include "WString.h"
 #include "HardwareSerial.h"
 #ifndef Menu_h
 #define Menu_h
@@ -11,8 +12,8 @@ private:
   Data* mode;
   Data* tank1;
   Data* tank2;
-
-  Rule* rl;
+  Rule* rule;
+  Time* time;
 
   /**
     * Draw level from 0 to 10 bars
@@ -43,7 +44,7 @@ private:
 
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1 "));
-    int level1 = rl->getWellLevel();
+    int level1 = rule->getWellLevel();
 
     if (level1 == 0 || level1 > LevelSensorWellMin)
       lcd.print(F("-?-"));
@@ -52,7 +53,7 @@ private:
 
     lcd.setCursor(0, 1);
     lcd.print(F("Tank2 "));
-    int level2 = rl->getMainLevel();
+    int level2 = rule->getMainLevel();
     if (level2 == 0 || level2 > LevelSensorMainMin)
       lcd.print(F("-?-"));
     else
@@ -122,13 +123,40 @@ private:
     lcd.blink();
   }
 
+  void infoMenu() {
+    lcd.setCursor(0, 0);
+    if (time->isConn()) {
+      DateTime now = time->now();
+
+      lcd.print(now.hour());
+
+      if (time->tickClock()) lcd.print(F(":"));  // simple ticking
+      else lcd.print(F(" "));
+
+      lcd.print(now.minute());
+
+      lcd.print(F(" "));
+      lcd.print(now.year());
+      lcd.print(F("-"));
+      lcd.print(now.month());
+      lcd.print(F("-"));
+      lcd.print(now.day());
+
+      lcd.setCursor(0, 1);
+      lcd.print(time->getTemp());
+      lcd.write((char)1);
+    } else {
+      lcd.print(F(" No clock..."));
+    }
+  }
+
 
 
 public:
   //
   // Construct menu
-  Menu(Rule* rl, Data* tk1, Data* tk2, Data* md)
-    : rl(rl), tank1(tk1), tank2(tk2), mode(md) {
+  Menu(Rule* rl, Time* tm, Data* tk1, Data* tk2, Data* md)
+    : rule(rl), time(tm), tank1(tk1), tank2(tk2), mode(md) {
   }
 
   void begin() {
@@ -137,8 +165,12 @@ public:
     lcd.begin(16, 2);
 
     byte charBarLevel[8] = { B11111, B11111, B11111, B11111, B11111, B11111, B11111, B00000 };
+    byte charCelsius[8] = { B00000, B01000, B00011, B00100, B00100, B00100, B00011, B00000 };
 
     lcd.createChar(0, charBarLevel);
+    lcd.createChar(1, charCelsius);
+
+
 
 
     //
@@ -173,6 +205,8 @@ public:
 
       case 5: return this->pumpWell(dr);
       case 6: return this->pumpMain(dr);
+
+      case 255: return this->infoMenu();
     }
   }
 };

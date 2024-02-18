@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include <avr/interrupt.h>
 #include "HardwareSerial.h"
 #ifndef Time_h
 #define Time_h
@@ -9,6 +11,7 @@ class Time {
 private:
   RTC_DS3231 rtc;
   bool isConnected = false;
+  bool tick = false;
 
 
 
@@ -21,6 +24,15 @@ public:
 
   DateTime now() {
     return rtc.now();
+  }
+
+  bool tickClock() {
+    this->tick = !this->tick;
+    return this->tick;
+  }
+
+  int getTemp() {
+    return (int)rtc.getTemperature();
   }
 
   //
