@@ -45,7 +45,7 @@ Menu menu(&read, &time, &tank1, &tank2, &mode);
 
 //
 // Draw driver
-Draw draw(&buzz);
+Draw draw(&read, &buzz);
 
 //
 // Comands

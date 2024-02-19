@@ -18,6 +18,7 @@ AsyncDelay stopDisplay;
 class Draw : public DrawInterface {
 private:
   Buzz* buzz;
+  Read* read;
 
   enum HoldState {
     None = 0,
@@ -191,6 +192,13 @@ private:
     //
     // Turn off the display
     if (stopDisplay.isExpired()) {
+
+      //
+      // When pumps are not working and display sleep
+      if (!ctrlWell.isOn() && !ctrlMain.isOn())
+        read->stopWorkRead();  // Stop fast read
+
+
       this->displayOn = false;
       this->isEdit = false;  // Close the edit menu
       this->cursor = 0;      // Reset the menu
@@ -213,14 +221,15 @@ private:
     stopDisplay.restart();
     lcd.display();
     digitalWrite(pinBacklight, this->displayOn);
+    read->startWorkRead();
   }
 
 
 
 
 public:
-  Draw(Buzz* tn)
-    : buzz(tn) {
+  Draw(Read* rd, Buzz* tn)
+    : read(rd), buzz(tn) {
   }
 
   bool isEditing() {
@@ -299,6 +308,8 @@ public:
 
     if (spanMd.isActive()) {
       lcd.clear();
+      if (cursor == 0)
+        read->startWorkRead();  // Start fast read
 
       this->isDraw = false;
       mn->draw(this);

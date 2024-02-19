@@ -3,6 +3,22 @@
 
 #include "Glob.h"
 
+
+volatile unsigned long startTime;
+volatile unsigned long endTime;
+volatile bool echoReceived = false;
+
+void echoInterrupt() {
+  if (digitalRead(pinWellEcho) == HIGH) {
+    // Rising edge detected
+    startTime = micros();  // Record the time when the rising edge is detected
+  } else {
+    // Falling edge detected
+    endTime = micros();   // Record the time when the falling edge is detected
+    echoReceived = true;  // Set flag indicating that the echo pulse has been received
+  }
+}
+
 class Read {
 
 private:
@@ -50,6 +66,8 @@ public:
     // Main tank Slave pins
     pinMode(pinMainPower, OUTPUT);
     digitalWrite(pinMainPower, LOW);
+
+    attachInterrupt(digitalPinToInterrupt(pinWellEcho), echoInterrupt, CHANGE);
   }
 
 
@@ -100,15 +118,18 @@ private:
   void readWell() {
 
     if (this->sensorWell.index < LevelSensorReads) {
-
       digitalWrite(pinWellSend, LOW);
       delayMicroseconds(2);
       digitalWrite(pinWellSend, HIGH);
       delayMicroseconds(10);
       digitalWrite(pinWellSend, LOW);
 
-      unsigned long duration = pulseIn(pinWellEcho, HIGH, 130000);  // read pulse with timeout for ~150cm
-
+      unsigned long duration = pulseIn(pinWellEcho, HIGH, 7100);  // read pulse with timeout for 7700~130cm / 7000 ~120cm
+      /*
+      dbg(sensorWell.index);
+      dbg(F(" / "));
+      dbgLn(duration);
+      */
       // Check for timeout
       if (duration == 0) {
         //     Serial.println("Timeout error: Sensor WELL reading exceeds range");
