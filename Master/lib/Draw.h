@@ -194,9 +194,8 @@ private:
     if (stopDisplay.isExpired()) {
 
       //
-      // When pumps are not working and display sleep
-      if (!ctrlWell.isOn() && !ctrlMain.isOn())
-        read->stopWorkRead();  // Stop fast read
+      // When display sleep
+      read->stopWorkRead();  // Stop fast read
 
 
       this->displayOn = false;
@@ -307,10 +306,11 @@ public:
     this->input();
 
     if (spanMd.isActive()) {
-      lcd.clear();
-      if (cursor == 0)
-        read->startWorkRead();  // Start fast read
+      
+      if (this->displayOn && this->cursor == 0)
+        read->startWorkRead();
 
+      lcd.clear();
       this->isDraw = false;
       mn->draw(this);
     }

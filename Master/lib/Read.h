@@ -72,6 +72,13 @@ public:
 
 
   void hark() {
+
+
+    if (!sensorWell.done) this->readWell();
+
+    if (!sensorMain.done) this->readMain();
+
+
     this->readAtIdle();  // Monitoring
     this->readAtWork();  // Pumping
   }
@@ -90,12 +97,18 @@ public:
   //
   // Sorter period for sensors
   void startWorkRead() {
-    if (!this->isWorkRead) this->startShortReadTimer();
-    this->isWorkRead = true;
+
+    if (!this->isWorkRead) {
+      this->resetLevels();
+      this->startShortReadTimer();
+      Serial.println("Start Work read");
+      this->isWorkRead = true;
+    }
   }
 
   void stopWorkRead() {
-    this->isWorkRead = false;
+    if (!ctrlWell.isOn() && !ctrlMain.isOn())
+      this->isWorkRead = false;
   }
 
   bool isWork() {
@@ -198,11 +211,6 @@ private:
   //
   // Monitors tank levels
   void readAtIdle() {
-
-    if (!sensorWell.done) this->readWell();
-
-    if (!sensorMain.done) this->readMain();
-
     //
     // When we idle pumps just will check levels
     if (timerIdle.isExpired()) {

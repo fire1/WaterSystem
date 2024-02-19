@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include "Arduino.h"
 
 #ifndef Rule_h
 #define Rule_h
@@ -63,7 +65,7 @@ private:
   //
   // Defines work amplitude for Pump1
   void pumpWell(uint8_t workMin, uint8_t stopMin) {
-
+    /*
     if (!this->checkDaytime()) {
       //
       // Stop the system
@@ -71,7 +73,7 @@ private:
         Serial.println(F("Warning: STOP It is not daytime!"));
       return;
     }
-
+*/
     //
     // Stop when is full well tank
     if (ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
@@ -131,7 +133,10 @@ private:
   //
   // Controlls pump1
   void handleDataMode() {
-
+    // if (spanMd.isActive()) {
+    //   uint8_t targetLevel = this->getTargetMode(this->modeWell, LevelSensorWellMin);
+    //   Serial.println(targetLevel);
+    // }
     switch (mode->value()) {
       default:
       case 0:
@@ -141,23 +146,26 @@ private:
 
       case 1:
         // Easy
-        pumpWell(8, 180);
         beatWell(1500);
+        pumpWell(8, 180);
         break;
 
       case 2:
         // Fast
-        pumpWell(10, 60);
         beatWell(800);
+        pumpWell(10, 60);
         break;
 
       case 3:
         // Now!
-        pumpWell(8, 25);
-        // pumpWell(1, 4); // quick test mode
         beatWell(400);
+        pumpWell(8, 25);
         break;
     }
+  }
+
+  uint8_t getTargetMode(Data *mode, const uint8_t levelMin) {
+    return map(mode->value(), 0, mode->length(), LevelSensorBothMax, levelMin);
   }
 
   void beatWell(int ms) {

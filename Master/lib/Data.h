@@ -1,3 +1,4 @@
+#include <stdint.h>
 // Data.h
 #ifndef Data_H
 #define Data_H
@@ -43,6 +44,12 @@ public:
   void setIndex(uint8_t index) {
     this->index = index;
     dbgLn(this->index);
+  }
+
+  //
+  // Returns length all available options
+  uint8_t length() {
+    return this->numOptions;
   }
 
 private:

@@ -65,9 +65,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define pinWellEcho 18
 #define pinWellSend 19
 
-// #define LevelsRefreshTime 900000 15min
-#define LevelRefreshTimeIdle 900000
-#define LevelRefreshTimeWork 9000
+
+ #define LevelRefreshTimeIdle 1800000 // 30min
+// #define LevelRefreshTimeIdle 900000  // 15min
+#define LevelRefreshTimeWork 12000
 
 #define pinMainPower 8  // Turn on (GND) power for slave
 #define pinMainRx 10    // Recive data pin from slave
@@ -84,7 +85,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorMainMin 95
 
 
-#define SuspendDisplayTime 120000  // 5min
+ #define SuspendDisplayTime 120000  // 2min
 //
 // Debounce time for the joystick
 #define BtnDebounceTime 50
