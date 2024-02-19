@@ -67,7 +67,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 // #define LevelsRefreshTime 900000 15min
 #define LevelRefreshTimeIdle 900000
-#define LevelRefreshTimeWork 5000
+#define LevelRefreshTimeWork 9000
 
 #define pinMainPower 8  // Turn on (GND) power for slave
 #define pinMainRx 10    // Recive data pin from slave
@@ -79,7 +79,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 //
 // This value defines safe level point for max u-s sensor
 //  reads. Shoud be common for both sensors.
-#define LevelSensorBothMax 21
+#define LevelSensorBothMax 20
 #define LevelSensorWellMin 95
 #define LevelSensorMainMin 95
 
@@ -103,7 +103,7 @@ extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
 extern Span spanSm(199);     // Loop span at Small
-extern Span spanMd(2501);    // Loop span Middle  /screen refresh/
+extern Span spanMd(2301);    // Loop span Middle  /screen refresh/
 extern Span spanLg(4802);    // Loop span Large  / warning messages/
 extern Span spanMx(250003);  // Loop span at 60k loops
 

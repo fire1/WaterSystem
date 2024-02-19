@@ -68,16 +68,19 @@ private:
       //
       // Stop the system
       if (spanMx.isActive())  // every second display warning
-        Serial.println(F("Warning: It is not daytime!"));
+        Serial.println(F("Warning: STOP It is not daytime!"));
       return;
     }
 
     //
     // Stop when is full well tank
-    if (read->getWellLevel() >= LevelSensorWellMin) {
-      if (spanMx.isActive())  // every second display warning
-        Serial.println(F("Warning: Well tank is full!"));
-
+    if (ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
+      Serial.println(F("Warning: STOP Well tank is full!"));
+      dbg(read->getWellLevel());
+      dbg(F("cm / "));
+      dbg(LevelSensorBothMax);
+      dbg(F("cm "));
+      dbgLn();
       ctrlWell.setOn(false);
       read->stopWorkRead();
       return;
@@ -133,7 +136,7 @@ private:
       default:
       case 0:
         // noting
-        beatWell(0);                     // Disables the led heartbeat
+        beatWell(0);  // Disables the led heartbeat
         break;
 
       case 1:
@@ -177,9 +180,6 @@ private:
       }
     }
   }
-
-
-  
 };
 
 

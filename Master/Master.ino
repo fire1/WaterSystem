@@ -42,6 +42,7 @@ void loop() {
 
   cmd.hark();  // input commands from serial
   buzz.hark();
+
   read.hark();
   rule.hark();
 

@@ -54,8 +54,8 @@ public:
 
 
   void hark() {
-    this->readAtIdle();
-    this->readAtWork();
+    this->readAtIdle();  // Monitoring
+    this->readAtWork();  // Pumping
   }
 
   //
@@ -78,6 +78,15 @@ public:
 
   void stopWorkRead() {
     this->isWorkRead = false;
+  }
+
+  bool isWork() {
+    return this->isWorkRead;
+  }
+
+  void resetLevels() {
+    sensorWell.done = false;
+    sensorMain.done = false;
   }
 
 private:
@@ -165,7 +174,8 @@ private:
       digitalWrite(pinMainPower, LOW);
     }
   }
-
+  //
+  // Monitors tank levels
   void readAtIdle() {
 
     if (!sensorWell.done) this->readWell();
@@ -175,8 +185,7 @@ private:
     //
     // When we idle pumps just will check levels
     if (timerIdle.isExpired()) {
-      sensorWell.done = false;
-      sensorMain.done = false;
+      this->resetLevels();
       timerIdle.repeat();
     }
   }
@@ -191,8 +200,7 @@ private:
     }
 
     if (this->isWorkRead && timerWork.isExpired()) {
-      sensorWell.done = false;
-      sensorMain.done = false;
+      this->resetLevels();
       timerWork.repeat();
     }
   }

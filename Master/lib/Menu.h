@@ -11,6 +11,7 @@ private:
   Data* tank1;
   Data* tank2;
   Time* time;
+  bool isLevelReset = false;
 
   /**
     * Draw level from 0 to 10 bars
@@ -88,7 +89,7 @@ private:
 
 
   void pumpWell(DrawInterface* dr) {
-
+    this->refreshLevel();
     dr->pump(&ctrlWell, &ctrlMain);
 
     lcd.setCursor(0, 0);
@@ -105,6 +106,7 @@ private:
   }
 
   void pumpMain(DrawInterface* dr) {
+    this->refreshLevel();
     dr->pump(&ctrlMain, &ctrlWell);
 
     lcd.setCursor(0, 0);
@@ -148,6 +150,13 @@ private:
   }
 
 
+  void refreshLevel() {
+    if (!read->isWork()) {
+      read->resetLevels();
+      read->startWorkRead();
+    }
+  }
+
 
 public:
   //
@@ -190,6 +199,7 @@ public:
 
       case 0:
       default:
+        this->isLevelReset = false;
         this->home(dr);
         dr->resetCursor();
 
