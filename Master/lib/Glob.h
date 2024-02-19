@@ -66,7 +66,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define pinWellSend 19
 
 // #define LevelsRefreshTime 900000 15min
-#define LevelsRefreshTimeLong 900000
+#define LevelRefreshTimeIdle 900000
 #define LevelRefreshTimeWork 5000
 
 #define pinMainPower 8  // Turn on (GND) power for slave
@@ -102,12 +102,12 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
-extern Span spanSm(199);        // Loop span at Small
-extern Span spanMd(2501);       // Loop span Middle  /screen refresh/
-extern Span spanLg(4802);       // Loop span Large  / warning messages/
+extern Span spanSm(199);     // Loop span at Small
+extern Span spanMd(2501);    // Loop span Middle  /screen refresh/
+extern Span spanLg(4802);    // Loop span Large  / warning messages/
 extern Span spanMx(250003);  // Loop span at 60k loops
 
-
+#include "Read.h"
 #include "Rule.h"
 #include "Menu.h"
 #include "Draw.h"

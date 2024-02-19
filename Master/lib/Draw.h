@@ -293,7 +293,7 @@ public:
 
   //
   // Drawse the menu and handles the inputs
-  void draw(Menu* mn) {
+  void menu(Menu* mn) {
 
     this->input();
 

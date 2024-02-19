@@ -34,13 +34,14 @@ Data mode(4, modeNames, 2);
 
 Buzz buzz;
 
+Read read;
 //
 // Initialize managment driver
-Rule rule(&buzz, &time, &mode, &tank1, &tank2);
+Rule rule(&read, &time, &buzz, &mode, &tank1, &tank2);
 
 //
 // Menu UI instance
-Menu menu(&rule, &time, &tank1, &tank2, &mode);
+Menu menu(&read, &time, &tank1, &tank2, &mode);
 
 //
 // Draw driver

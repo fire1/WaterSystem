@@ -4,14 +4,12 @@
 
 #include "Glob.h"
 
-
-
 class Menu {
 private:
+  Read* read;
   Data* mode;
   Data* tank1;
   Data* tank2;
-  Rule* rule;
   Time* time;
 
   /**
@@ -43,18 +41,18 @@ private:
 
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1 "));
-    int level1 = rule->getWellLevel();
+    int level1 = read->getWellLevel();
 
     if (level1 == 0 || level1 > LevelSensorWellMin)
-      lcd.print(F("-?-"));
+      lcd.print(F("[-?-]"));
     else
       drawLevel(level1, LevelSensorWellMin);
 
     lcd.setCursor(0, 1);
     lcd.print(F("Tank2 "));
-    int level2 = rule->getMainLevel();
+    int level2 = read->getMainLevel();
     if (level2 == 0 || level2 > LevelSensorMainMin)
-      lcd.print(F("-?-"));
+      lcd.print(F("[-?-]"));
     else
       drawLevel(level2, LevelSensorMainMin);
   }
@@ -154,8 +152,8 @@ private:
 public:
   //
   // Construct menu
-  Menu(Rule* rl, Time* tm, Data* tk1, Data* tk2, Data* md)
-    : rule(rl), time(tm), tank1(tk1), tank2(tk2), mode(md) {
+  Menu(Read* rd, Time* tm, Data* tk1, Data* tk2, Data* md)
+    : read(rd), time(tm), tank1(tk1), tank2(tk2), mode(md) {
   }
 
   void begin() {
@@ -168,7 +166,6 @@ public:
 
     lcd.createChar(0, charBarLevel);
     lcd.createChar(1, charCelsius);
-
 
 
 
@@ -205,11 +202,11 @@ public:
       case 5: return this->pumpWell(dr);
       case 6: return this->pumpMain(dr);
 
-      // 
+      //
       // This menu is active only when clock is connected!
       case 255:
         if (time->isConn()) this->infoMenu();
-        else dr->resetCursor();// return back to Home
+        else dr->resetCursor();  // return back to Home
         break;
     }
   }

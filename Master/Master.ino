@@ -25,53 +25,30 @@ void setup() {
   Serial.println(F("Starting Water system /MASTER/"));
   delay(10);
   //
-  // I2C start
-  Wire.begin();
-  //
   // LED to indicate when recieving
   pinMode(pinLed, OUTPUT);
-
+  //
+  // I2C start
+  Wire.begin();
+  read.begin();
   menu.begin();
-  //
-  // Setup the menu
   draw.begin();
-  //
-  // Prepare managment
   rule.begin();
-  //
-  // Setup sounds
   buzz.begin();
-  //
-  // Establishe time connection
   time.begin();
 }
 
 void loop() {
 
   cmd.hark();  // input commands from serial
-
   buzz.hark();
+  read.hark();
   rule.hark();
-  draw.draw(&menu);
+
+  draw.menu(&menu);
 
   spanSm.tick();
   spanMd.tick();
   spanLg.tick();
   spanMx.tick();
-}
-
-void loop_() {  // test sensors
-  //rl.hark();
-  /*
-  Serial.print(F(" Main: "));
-  Serial.print(rl.getMainLevel());
-
-  Serial.print(F(" Well: "));
-  Serial.print(rl.getWellLevel());
-
-  Serial.println();
-  //rl.testMain();
-  // rl.testWell();
-
-  delay(300);*/
 }

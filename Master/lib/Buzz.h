@@ -55,7 +55,7 @@ private:
     { -1, 0 }  // End of melody marker
   };
 
-  const Note MelodyPump[8] = {
+  const Note MelodyAlarm[8] = {
     { 1000, 150 }, 
     { 0, 150 },
     { 1000, 100 },
@@ -97,8 +97,8 @@ public:
     playMelody(MelodyMode);
   }
 
-  void pump() {
-    playMelody(MelodyPump);
+  void alarm() {
+    playMelody(MelodyAlarm);
   }
 
 
