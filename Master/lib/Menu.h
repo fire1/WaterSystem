@@ -7,9 +7,8 @@
 class Menu {
 private:
   Read* read;
-  Data* mode;
-  Data* tank1;
-  Data* tank2;
+  Data* modeWell;
+  Data* modeMain;
   Time* time;
   bool isLevelReset = false;
 
@@ -58,38 +57,30 @@ private:
       drawLevel(level2, LevelSensorMainMin);
   }
 
-  void menuMode(DrawInterface* dr) {
-    dr->edit(this->mode);
+  void menuWell(DrawInterface* dr) {
+    dr->edit(this->modeWell);
     lcd.setCursor(0, 0);
-    lcd.print(F("Pump "));
+    lcd.print(F("Pumpping "));
     lcd.setCursor(0, 1);
     lcd.print(F("Mode: "));
-    lcd.print(this->mode->getName());
+    lcd.print(this->modeWell->getName());
   }
 
 
-  void menuTank1(DrawInterface* dr) {
-    dr->edit(this->tank1);
+  void menuMain(DrawInterface* dr) {
+    dr->edit(this->modeMain);
     lcd.setCursor(0, 0);
-    lcd.print(F("Tank 1"));
+    lcd.print(F("Tank top "));
     lcd.setCursor(0, 1);
     lcd.print(F("Start: "));
-    lcd.print(this->tank1->getName());
+    lcd.print(this->modeMain->getName());
   }
 
-  void menuTank2(DrawInterface* dr) {
-    dr->edit(this->tank2);
 
-    lcd.setCursor(0, 0);
-    lcd.print(F("Tank 2"));
-    lcd.setCursor(0, 1);
-    lcd.print(F("Start: "));
-    lcd.print(this->tank2->getName());
-  }
 
 
   void pumpWell(DrawInterface* dr) {
-  
+
     dr->pump(&ctrlWell, &ctrlMain);
 
     lcd.setCursor(0, 0);
@@ -153,8 +144,8 @@ private:
 public:
   //
   // Construct menu
-  Menu(Read* rd, Time* tm, Data* tk1, Data* tk2, Data* md)
-    : read(rd), time(tm), tank1(tk1), tank2(tk2), mode(md) {
+  Menu(Read* rd, Time* tm, Data* mdW, Data* mdM)
+    : read(rd), time(tm), modeWell(mdW), modeMain(mdM) {
   }
 
   void begin() {
@@ -185,7 +176,11 @@ public:
 
     if (!dr->isEditing()) lcd.noBlink();
     else lcd.blink();
-
+    //
+    // Fresh tank levels
+    if (dr->getCursor() == 0 && dr->isDisplayOn()) {
+      read->startWorkRead();
+    } else read->stopWorkRead();  // Stop fast read
 
     switch (dr->getCursor()) {
 
@@ -193,12 +188,10 @@ public:
       default:
         this->home(dr);
         dr->resetCursor();
-
         break;
 
-      case 1: return this->menuMode(dr);
-      case 2: return this->menuTank1(dr);
-      case 3: return this->menuTank2(dr);
+      case 1: return this->menuWell(dr);
+      case 2: return this->menuMain(dr);
 
       case 5: return this->pumpWell(dr);
       case 6: return this->pumpMain(dr);

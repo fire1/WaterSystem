@@ -6,17 +6,9 @@
 #include <AsyncDelay.h>
 #include <LiquidCrystal.h>
 
-
-
-// AsyncDelay refreshRate;
-AsyncDelay stopDisplay;
-
-
-
-
-
 class Draw : public DrawInterface {
 private:
+  AsyncDelay stopDisplay;
   Buzz* buzz;
   Read* read;
 
@@ -160,14 +152,14 @@ private:
     //
     // Pressed next
     if (this->onClick(pinBtnNext)) {
-      dbgLn(F("Data next "));
+      //  dbgLn(F("Data next "));
       buzz->click();
       data->next();
     }
     //
     // Pressed back
     if (this->onClick(pinBtnBack)) {
-      dbgLn(F("Data back "));
+      //   dbgLn(F("Data back "));
       buzz->click();
       data->back();
     }
@@ -306,7 +298,7 @@ public:
     this->input();
 
     if (spanMd.isActive()) {
-      
+
       if (this->displayOn && this->cursor == 0)
         read->startWorkRead();
 
@@ -325,6 +317,11 @@ public:
   void resetCursor() {
     this->cursor = 0;
   }
+  bool isDisplayOn() {
+    return this->displayOn;
+  }
+
+  
 };
 
 #endif

@@ -1,20 +1,7 @@
 #ifndef Init_h
 #define Init_h
 
-//
-// Define tanks mode names
-DefineData(
-  tankNames,
-  "None",
-  "Full",
-  "High",
-  "Half",
-  "Lows");
 
-//
-// Convert tank names  to data objects
-Data tank1(5, tankNames, 0);
-Data tank2(5, tankNames, 1);
 
 //
 // Define mode names
@@ -25,23 +12,36 @@ DefineData(
   "Fast",
   "Now!");
 
-Time time;
-
 //
 // Convert names to object data
-Data mode(4, modeNames, 2);
+Data modeWellTank(4, modeNames, 2);
 
+//
+// Define tanks mode names
+DefineData(
+  tankNames,
+  "None",
+  "Full",
+  "Half",
+  "Void");
+
+//
+// Convert tank names  to data objects
+
+Data modeMainTank(5, tankNames, 1);
+
+Time time;
 
 Buzz buzz;
 
 Read read;
 //
 // Initialize managment driver
-Rule rule(&read, &time, &buzz, &mode, &tank1, &tank2);
+Rule rule(&read, &time, &buzz, &modeWellTank, &modeMainTank);
 
 //
 // Menu UI instance
-Menu menu(&read, &time, &tank1, &tank2, &mode);
+Menu menu(&read, &time, &modeWellTank, &modeMainTank);
 
 //
 // Draw driver

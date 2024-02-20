@@ -17,16 +17,17 @@ public:
 
   void next() {
     index = (index + 1) % numOptions;
-
+    /*
     dbg(F("Index "));
     dbg(numOptions);
     dbg(' ');
     dbgLn(this->index);
+    */
   }
 
   void back() {
     index = (index - 1 + numOptions) % numOptions;
-    dbgLn(this->index);
+    //dbgLn(this->index);
   }
 
   const char* getName() {
@@ -43,7 +44,7 @@ public:
 
   void setIndex(uint8_t index) {
     this->index = index;
-    dbgLn(this->index);
+    //  dbgLn(this->index);
   }
 
   //

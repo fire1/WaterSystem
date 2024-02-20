@@ -32,6 +32,7 @@ public:
   virtual void pump(Pump* p, Pump* s) = 0;
   virtual void resetCursor();
   virtual bool isEditing() = 0;
+  virtual bool isDisplayOn() = 0;
 };
 
 
@@ -66,9 +67,9 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define pinWellSend 19
 
 
- #define LevelRefreshTimeIdle 1800000 // 30min
+#define LevelRefreshTimeIdle 1800000  // 30min
 // #define LevelRefreshTimeIdle 900000  // 15min
-#define LevelRefreshTimeWork 12000
+#define LevelRefreshTimeWork 5000
 
 #define pinMainPower 8  // Turn on (GND) power for slave
 #define pinMainRx 10    // Recive data pin from slave
@@ -85,10 +86,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorMainMin 95
 
 
- #define SuspendDisplayTime 120000  // 2min
+#define SuspendDisplayTime 120000  // 2min
 //
 // Debounce time for the joystick
-#define BtnDebounceTime 50
+#define BtnDebounceTime 10
 #define BtnHoldTime 2000
 
 

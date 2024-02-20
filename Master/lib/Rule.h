@@ -10,7 +10,7 @@ class Rule {
 private:
 
   unsigned long wellTimer = 0;
-  Data *mode;
+
   Read *read;
   Data *modeWell;
   Data *modeMain;
@@ -20,14 +20,12 @@ private:
 
   AsyncDelay beatLed;
   uint16_t beatLedLast = 0;
-
-
   bool isDaytime = false;
   bool isAlarmOn = false;
 
 public:
-  Rule(Read *rd, Time *tm, Buzz *tn, Data *md, Data *p1, Data *p2)
-    : read(rd), time(tm), buzz(tn), mode(md), modeWell(p1), modeMain(p2), beatLed(500, AsyncDelay::MILLIS) {
+  Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW,  Data *mdM)
+    : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
   }
 
   void begin() {
@@ -91,6 +89,7 @@ private:
     //
     // Turn pump OFF by timeout of mode
     if (ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(workMin))) {
+      ctrlWell.setOn(false);
 
       dbg(F("CTRL well /"));
       dbg(stopMin);
@@ -98,20 +97,16 @@ private:
       dbgLn();
 
       wellTimer = millis();
-
-      ctrlWell.setOn(false);
       read->stopWorkRead();
     }
     //
     // Start level read before real start
     if (!ctrlWell.isOn() && (millis() - wellTimer >= (this->calcMinutes(stopMin) - (LevelRefreshTimeWork * 2 - 50)))) {
-
       if (spanLg.isActive()) {
-
         read->startWorkRead();
         buzz->alarm();
 
-        dbg(F("Prepare levels /well/ "));
+        dbg(F("Prepare levels /Well/ "));
         dbgLn();
       }
     }
@@ -129,7 +124,6 @@ private:
     }
   }
 
-
   //
   // Controlls pump1
   void handleDataMode() {
@@ -137,10 +131,10 @@ private:
     //   uint8_t targetLevel = this->getTargetMode(this->modeWell, LevelSensorWellMin);
     //   Serial.println(targetLevel);
     // }
-    switch (mode->value()) {
+    switch (modeWell->value()) {
       default:
       case 0:
-        // noting
+        // Noting
         beatWell(0);  // Disables the led heartbeat
         break;
 
@@ -163,6 +157,59 @@ private:
         break;
     }
   }
+
+  void pumpMain() {
+
+    uint8_t level = read->getMainLevel();
+    //
+    // Stop when Main is full
+    if (ctrlMain.isOn() && LevelSensorBothMax >= level) {
+      ctrlMain.setOn(false);
+      read->stopWorkRead();
+    }
+
+    if (!ctrlMain.isOn()) {
+
+      read->startWorkRead();
+
+      dbg(F("CTRL /Main/ at level "));
+      dbg(level);
+      dbg(F("cm turn ON"));
+      dbgLn();
+
+      ctrlMain.setOn(true);
+    }
+  }
+
+  void handleMainData() {
+    uint8_t level = read->getMainLevel();
+    if (level == 0) {
+      if (spanLg.isActive()) {
+        dbg(F("Warning: Main tank level not available!"));
+        dbgLn();
+      }
+      return;
+    }
+
+    // Mapping values from 20 to 95, like 20 is Full and 95 empty
+    switch (modeMain->value()) {
+      default:
+      case 0:  // Noting
+        break;
+      case 1:  // Full
+        if (level > 30)
+          return pumpMain();
+      case 2:  // Half
+        if (level > LevelSensorMainMin / 2)
+          return pumpMain();
+      case 3:  // Void
+        if (level > 80)
+          return pumpMain();
+    }
+  }
+
+
+
 
   uint8_t getTargetMode(Data *mode, const uint8_t levelMin) {
     return map(mode->value(), 0, mode->length(), LevelSensorBothMax, levelMin);
