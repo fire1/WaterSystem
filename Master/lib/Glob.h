@@ -7,6 +7,9 @@
 #include <AsyncDelay.h>
 #include <Wire.h>
 
+
+#define pinLed 13
+#define pinTone 9
 //
 // Pump controll pins
 #define pinWellPump A8
@@ -94,7 +97,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 
 
-#include "Time.h"
+
 #include "Pump.h"
 #include "Util.h"
 #include "Data.h"
@@ -109,6 +112,7 @@ extern Span spanMd(2301);    // Loop span Middle  /screen refresh/
 extern Span spanLg(4802);    // Loop span Large  / warning messages/
 extern Span spanMx(250003);  // Loop span at 60k loops
 
+#include "Time.h"
 #include "Read.h"
 #include "Rule.h"
 #include "Menu.h"

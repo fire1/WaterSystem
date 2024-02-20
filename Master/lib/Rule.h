@@ -24,7 +24,7 @@ private:
   bool isAlarmOn = false;
 
 public:
-  Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW,  Data *mdM)
+  Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
     : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
   }
 
@@ -35,7 +35,8 @@ public:
   }
 
   void hark() {
-    this->handleDataMode();
+    this->handleWellMode();
+    this->handleMainMode();
   }
 
 private:
@@ -63,7 +64,7 @@ private:
   //
   // Defines work amplitude for Pump1
   void pumpWell(uint8_t workMin, uint8_t stopMin) {
-    /*
+
     if (!this->checkDaytime()) {
       //
       // Stop the system
@@ -71,7 +72,7 @@ private:
         Serial.println(F("Warning: STOP It is not daytime!"));
       return;
     }
-*/
+
     //
     // Stop when is full well tank
     if (ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
@@ -126,7 +127,7 @@ private:
 
   //
   // Controlls pump1
-  void handleDataMode() {
+  void handleWellMode() {
     // if (spanMd.isActive()) {
     //   uint8_t targetLevel = this->getTargetMode(this->modeWell, LevelSensorWellMin);
     //   Serial.println(targetLevel);
@@ -181,10 +182,10 @@ private:
     }
   }
 
-  void handleMainData() {
+  void handleMainMode() {
     uint8_t level = read->getMainLevel();
     if (level == 0) {
-      if (spanLg.isActive()) {
+      if (spanMx.isActive()) {
         dbg(F("Warning: Main tank level not available!"));
         dbgLn();
       }

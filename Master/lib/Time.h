@@ -3,14 +3,14 @@
 #define Time_h
 
 #include <RTClib.h>
-
+#include "Glob.h"
 
 class Time {
 private:
   RTC_DS3231 rtc;
   bool isConnected = false;
   bool tick = false;
-
+  bool daytime = false;
 
 
 
@@ -59,6 +59,35 @@ public:
   //
   // Check if it is daytime, to run pumps only in the daytime
   bool isDaytime() {
+    return this->daytime;
+  }
+
+  //
+  // Function is used to check levels before weekend start, if level is lower then pumping is started.
+  bool isPrepareDay() {
+    const DateTime currentTime = this->now();
+    int currentDay = currentTime.dayOfTheWeek();
+
+    // Assume Saturday and Sunday are weekend days
+    const int weekendStartDay = 5;  // Friday
+
+    // Check if the current day is the day before a weekend
+    return currentDay == (weekendStartDay - 1);
+  }
+
+  void hark() {
+    if (spanMx.isActive()) {
+      this->daytime = resolveDaytime();
+    }
+
+    if (this->daytime) {
+      if (spanLg.isActive())
+        digitalWrite(pinLed, !digitalRead(pinLed));
+    }
+  }
+
+private:
+  bool resolveDaytime() {
     const DateTime currentTime = this->now();
     int currentHour = currentTime.hour();
     int currentMonth = currentTime.month();
@@ -78,19 +107,6 @@ public:
       // For other seasons (fall and spring), consider hours from 9 AM to 5 PM as daytime
       return (currentHour >= 9 && currentHour < 18);
     }
-  }
-
-  //
-  // Function is used to check levels before weekend start, if level is lower then pumping is started.
-  bool isPrepareDay() {
-    const DateTime currentTime = this->now();
-    int currentDay = currentTime.dayOfTheWeek();
-
-    // Assume Saturday and Sunday are weekend days
-    const int weekendStartDay = 5;  // Friday
-
-    // Check if the current day is the day before a weekend
-    return currentDay == (weekendStartDay - 1);
   }
 };
 

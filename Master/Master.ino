@@ -1,15 +1,5 @@
 
 
-
-//
-// Communication pins
-const byte pinRx = 10;         // Recive data pin for bank 2
-const byte pinB2 = 8;          // Turn on power for Bank 2
-const byte pinTx = -1;         // Just disable Tx pin
-const byte pinLed = 13;        // LED blinks
-const uint16_t rxBaud = 4800;  // This is the communication speed over serial
-const byte pinTone = 9;
-
 #define DEBUG
 //
 // Private libs
@@ -25,7 +15,7 @@ void setup() {
   Serial.println(F("Starting Water system /MASTER/"));
   delay(10);
   //
-  // LED to indicate when recieving
+  // global LED to indicate data/sleep
   pinMode(pinLed, OUTPUT);
   //
   // I2C start
@@ -42,6 +32,7 @@ void loop() {
 
   cmd.hark();  // input commands from serial
   buzz.hark();
+  time.hark();
 
   read.hark();
   rule.hark();
