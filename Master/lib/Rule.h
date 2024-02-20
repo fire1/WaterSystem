@@ -102,7 +102,7 @@ private:
     }
     //
     // Start level read before real start
-    if (!ctrlWell.isOn() && (millis() - wellTimer >= (this->calcMinutes(stopMin) - (LevelRefreshTimeWork * 2 - 50)))) {
+    if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= (this->calcMinutes(stopMin) - (LevelRefreshTimeWork * 2 - 50)))) {
       if (spanLg.isActive()) {
         read->startWorkRead();
         buzz->alarm();
@@ -113,7 +113,7 @@ private:
     }
     //
     // Turn pump on
-    if (!ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
+    if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= this->calcMinutes(stopMin))) {
       this->isAlarmOn = false;
       dbg(F("CTRL well /"));
       dbg(workMin);
@@ -169,7 +169,7 @@ private:
       read->stopWorkRead();
     }
 
-    if (!ctrlMain.isOn()) {
+    if (!ctrlMain.isOn() && !ctrlWell.isOn()) {
 
       read->startWorkRead();
 
@@ -183,8 +183,10 @@ private:
   }
 
   void handleMainMode() {
-    uint8_t level = read->getMainLevel();
-    if (level == 0) {
+    uint8_t levelMain = read->getMainLevel();
+    uint8_t levelWell = read->getWellLevel();
+
+    if (levelMain == 0) {
       if (spanMx.isActive()) {
         dbg(F("Warning: Main tank level not available!"));
         dbgLn();
@@ -192,19 +194,21 @@ private:
       return;
     }
 
+
+
     // Mapping values from 20 to 95, like 20 is Full and 95 empty
     switch (modeMain->value()) {
       default:
       case 0:  // Noting
         break;
       case 1:  // Full
-        if (level > 30)
+        if (levelMain > 30 && levelWell < 60)
           return pumpMain();
       case 2:  // Half
-        if (level > LevelSensorMainMin / 2)
+        if (levelMain > 47 && levelWell < 40)
           return pumpMain();
       case 3:  // Void
-        if (level > 80)
+        if (levelMain > 80 && levelWell < 30)
           return pumpMain();
     }
   }
