@@ -186,15 +186,10 @@ private:
     uint8_t levelMain = read->getMainLevel();
     uint8_t levelWell = read->getWellLevel();
 
-    if (levelMain == 0) {
-      if (spanMx.isActive()) {
-        dbg(F("Warning: Main tank level not available!"));
-        dbgLn();
-      }
+    //
+    // Stop this function when sensor is not avialable
+    if (levelMain == 0)
       return;
-    }
-
-
 
     // Mapping values from 20 to 95, like 20 is Full and 95 empty
     switch (modeMain->value()) {
@@ -202,7 +197,7 @@ private:
       case 0:  // Noting
         break;
       case 1:  // Full
-        if (levelMain > 30 && levelWell < 60)
+        if (levelMain > 32 && levelWell < 60)
           return pumpMain();
       case 2:  // Half
         if (levelMain > 47 && levelWell < 40)
