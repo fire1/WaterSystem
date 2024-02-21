@@ -1,3 +1,5 @@
+#include "HardwareSerial.h"
+#include <stdint.h>
 #ifndef Cmd_h
 #define Cmd_h
 //
@@ -14,6 +16,11 @@ private:
   String cmdName;
   String cmdData;
   bool isPrint = false;
+
+  struct OverwritesRead {
+    uint8_t well = 0;
+    uint8_t main = 0;
+  } overwriteRead;
 
 
 public:
@@ -101,11 +108,30 @@ public:
         output = F("Done!");
       }
 
+      if (cmdName == F("well")) {
+        this->overwriteRead.well = (uint8_t)cmdData.substring(0, 2).toInt();
+        Serial.println(this->overwriteRead.well);
+        output = F("Read /well/ overwritten!");
+      }
+
+      if (cmdName == F("main")) {
+        this->overwriteRead.main = (uint8_t)cmdData.substring(0, 2).toInt();
+        Serial.println(this->overwriteRead.main);
+        output = F("Read /main/ overwritten!");
+      }
 
       if (isPrint) {
         Serial.println("");
         Serial.println(output);
+        output = F("Done!");
       }
+    }
+  }
+
+  void read(Read* rd) {
+    if (this->overwriteRead.well || this->overwriteRead.main) {
+      rd->setWell(this->overwriteRead.well);
+      rd->setMain(this->overwriteRead.main);
     }
   }
 };

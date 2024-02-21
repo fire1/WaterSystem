@@ -65,13 +65,15 @@ private:
   // Defines work amplitude for Pump1
   void pumpWell(uint8_t workMin, uint8_t stopMin) {
 
+#ifdef CHECK_DAYTIME
     if (!this->checkDaytime()) {
       //
       // Stop the system
       if (spanMx.isActive())  // every second display warning
-        Serial.println(F("Warning: STOP It is not daytime!"));
+        Serial.println(F("Warning: STOP /well/ It is not daytime!"));
       return;
     }
+#endif
 
     //
     // Stop when is full well tank
@@ -132,6 +134,16 @@ private:
     //   uint8_t targetLevel = this->getTargetMode(this->modeWell, LevelSensorWellMin);
     //   Serial.println(targetLevel);
     // }
+
+    //
+    // Stop when Main is full
+    if (ctrlMain.isOn() && LevelSensorBothMax >= read->getMainLevel()) {
+      ctrlMain.setOn(false);
+
+      dbgLn(F("CTRL /Main/ turn off the pump"));
+      read->stopWorkRead();
+    }
+
     switch (modeWell->value()) {
       default:
       case 0:
@@ -161,13 +173,17 @@ private:
 
   void pumpMain() {
 
-    uint8_t level = read->getMainLevel();
-    //
-    // Stop when Main is full
-    if (ctrlMain.isOn() && LevelSensorBothMax >= level) {
-      ctrlMain.setOn(false);
-      read->stopWorkRead();
+#ifdef CHECK_DAYTIME
+    if (!this->checkDaytime()) {
+      //
+      // Stop the system
+      if (spanMx.isActive())  // every second display warning
+        Serial.println(F("Warning: STOP /main/ It is not daytime!"));
+      return;
     }
+#endif
+
+    uint8_t level = read->getMainLevel();
 
     if (!ctrlMain.isOn() && !ctrlWell.isOn()) {
 

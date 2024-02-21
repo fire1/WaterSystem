@@ -135,6 +135,7 @@ private:
       lcd.print(time->getTemp());
       lcd.write((char)1);
     } else {
+      lcd.setCursor(0, 0);
       lcd.print(F(" No clock..."));
     }
   }

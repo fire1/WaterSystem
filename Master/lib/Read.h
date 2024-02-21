@@ -1,3 +1,4 @@
+#include <stdint.h>
 #ifndef Read_h
 #define Read_h
 
@@ -67,7 +68,7 @@ public:
     pinMode(pinMainPower, OUTPUT);
     digitalWrite(pinMainPower, LOW);
 
-    attachInterrupt(digitalPinToInterrupt(pinWellEcho), echoInterrupt, CHANGE);
+    //  attachInterrupt(digitalPinToInterrupt(pinWellEcho), echoInterrupt, CHANGE);
   }
 
 
@@ -118,6 +119,16 @@ public:
   void resetLevels() {
     sensorWell.done = false;
     sensorMain.done = false;
+  }
+  //
+  // Overwrites value
+  void setWell(uint8_t value) {
+    this->well = value;
+  }
+  //
+  // Overwrites value
+  void setMain(uint8_t value) {
+    this->main = value;
   }
 
 private:

@@ -1,6 +1,8 @@
 
 
-#define DEBUG
+#define DEBUG  // Comment it to disable debugging
+//#define DAYTIME_CHECK // Comment it to disable daytime check for running pumps
+
 //
 // Private libs
 #include "lib/Glob.h"
@@ -35,6 +37,8 @@ void loop() {
   time.hark();
 
   read.hark();
+  cmd.read(&read);
+
   rule.hark();
 
   draw.menu(&menu);
