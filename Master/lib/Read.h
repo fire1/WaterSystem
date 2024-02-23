@@ -196,6 +196,7 @@ private:
           digitalWrite(pinLed, HIGH);
 
           uint8_t currentValue = com.read();
+          com.flush(); // guarantee that all data has been sent, and the buffer is empty.
 
           // Store value in the sensorMain struct
           sensorMain.average += currentValue;
