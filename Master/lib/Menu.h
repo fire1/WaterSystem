@@ -138,6 +138,14 @@ private:
       lcd.setCursor(0, 0);
       lcd.print(F(" No clock..."));
     }
+
+      lcd.setCursor(5, 1);
+      lcd.print(F("M"));
+      lcd.print(read->getMainLevel());
+      lcd.setCursor(11, 1);
+      lcd.print(F("W"));
+      lcd.print(read->getWellLevel());
+
   }
 
 

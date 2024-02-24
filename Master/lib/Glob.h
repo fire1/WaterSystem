@@ -108,7 +108,7 @@ extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
 extern Span spanSm(199);     // Loop span at Small
-extern Span spanMd(2301);    // Loop span Middle  /screen refresh/
+extern Span spanMd(2101);    // Loop span Middle  /screen refresh/
 extern Span spanLg(4802);    // Loop span Large  / warning messages/
 extern Span spanMx(250003);  // Loop span at 60k loops
 

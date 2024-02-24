@@ -75,7 +75,7 @@ public:
   void hark() {
 
 
-    if (!sensorWell.done) this->readWell();
+    // if (!sensorWell.done) this->readWell();
 
     if (!sensorMain.done) this->readMain();
 
@@ -196,7 +196,7 @@ private:
           digitalWrite(pinLed, HIGH);
 
           uint8_t currentValue = com.read();
-          com.flush(); // guarantee that all data has been sent, and the buffer is empty.
+          com.flush();  // guarantee that all data has been sent, and the buffer is empty.
 
           // Store value in the sensorMain struct
           sensorMain.average += currentValue;
@@ -217,7 +217,8 @@ private:
       dbg(F("Main tank average value: "));
       dbg(this->main);
       dbgLn();
-      digitalWrite(pinMainPower, LOW);
+      if (!this->isWorkRead)
+        digitalWrite(pinMainPower, LOW);
     }
   }
   //
