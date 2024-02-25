@@ -88,16 +88,29 @@ public:
   void test() {
     digitalWrite(pinLed, HIGH);
     digitalWrite(pinMainPower, HIGH);
-    if (com.available()) {
-      Serial.println(com.read());
-      Serial.flush();
+
+    uint8_t val = 0;
+    while (com.available() > 0)
+      val = com.readString().toInt();
+
+    if (val > 0) {
+
+      Serial.println(val);
     }
   }
+  //Serial.println();
+  //if (com.available() > 0) {
+  //  Serial.write(com.read());
+  //  Serial.println();
+  //  Serial.flush();
+  // }
+
 
   //
   // Ouput to pass  information from this methods
   //
-  uint8_t getWellLevel() {
+  uint8_t
+  getWellLevel() {
     return this->well;
   }
 
@@ -201,22 +214,23 @@ private:
   // https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
   void readMain() {
     if (sensorMain.index < LevelSensorReads) {
+
       if (digitalRead(pinMainPower)) {
-        digitalWrite(pinLed, LOW);
-
+        
+        uint8_t read = 0;
+        digitalWrite(pinLed, HIGH);
+        while (com.available() > 0) {
+          read = com.readString().toInt();
+        }
         // Check for available data and read value
-        if (com.available()) {
-          digitalWrite(pinLed, HIGH);
-
-          uint8_t currentValue = com.read();
-          //com.flush();  // guarantee that all data has been sent, and the buffer is empty.
+        if (read > 0) {
 
           // Store value in the sensorMain struct
-          sensorMain.average += currentValue;
-          sensorMain.index++;  // Increment index for next reading
+          sensorMain.average = read;
+          sensorMain.index = LevelSensorReads;  // Increment index for next reading
 
           dbg(F("RX: "));
-          dbgLn(currentValue);  // Print current value for debugging
+          dbgLn(read);  // Print current value for debugging
           digitalWrite(pinLed, LOW);
         }
         this->isReading = true;
@@ -225,7 +239,7 @@ private:
         digitalWrite(pinMainPower, HIGH);
       }
     } else {
-      this->main = sensorMain.average / sensorMain.index;
+      this->main = sensorMain.average;
       sensorMain.index = 0;
       sensorMain.average = 0;
       sensorMain.done = true;

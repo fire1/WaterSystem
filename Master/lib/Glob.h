@@ -86,7 +86,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 //  reads. Shoud be common for both sensors.
 #define LevelSensorBothMax 21
 #define LevelSensorWellMin 95
-#define LevelSensorMainMin 95
+#define LevelSensorMainMin 100
 
 
 #define SuspendDisplayTime 120000  // 2min
