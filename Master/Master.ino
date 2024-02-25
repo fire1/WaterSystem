@@ -30,6 +30,11 @@ void setup() {
   time.begin();
 }
 
+void loop_(){
+  read.test();
+}
+
+
 void loop() {
 
   cmd.hark();  // input commands from serial

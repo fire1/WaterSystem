@@ -41,6 +41,7 @@ private:
     sensorMain;
 
   bool isWorkRead = false;
+  bool isReading = false;
 
   //
   // Final average valuse from sensors
@@ -84,6 +85,15 @@ public:
     this->readAtWork();  // Pumping
   }
 
+  void test() {
+    digitalWrite(pinLed, HIGH);
+    digitalWrite(pinMainPower, HIGH);
+    if (com.available()) {
+      Serial.println(com.read());
+      Serial.flush();
+    }
+  }
+
   //
   // Ouput to pass  information from this methods
   //
@@ -119,6 +129,7 @@ public:
   void resetLevels() {
     sensorWell.done = false;
     sensorMain.done = false;
+    this->isReading = true;
   }
   //
   // Overwrites value
@@ -135,6 +146,7 @@ private:
 
   void startShortReadTimer() {
     timerWork.start(LevelRefreshTimeWork, AsyncDelay::MILLIS);
+    this->isReading = true;
   }
 
   //
@@ -147,7 +159,7 @@ private:
       digitalWrite(pinWellSend, HIGH);
       delayMicroseconds(10);
       digitalWrite(pinWellSend, LOW);
-
+      this->isReading = true;
       unsigned long duration = pulseIn(pinWellEcho, HIGH, 7100);  // read pulse with timeout for 7700~130cm / 7000 ~120cm
       /*
       dbg(sensorWell.index);
@@ -173,6 +185,7 @@ private:
       sensorWell.index = 0;
       sensorWell.average = 0;
       sensorWell.done = true;
+      this->isReading = false;
       dbg(F("Well tank average value: "));
       dbg(this->well);
       dbgLn();
@@ -196,7 +209,7 @@ private:
           digitalWrite(pinLed, HIGH);
 
           uint8_t currentValue = com.read();
-          com.flush();  // guarantee that all data has been sent, and the buffer is empty.
+          //com.flush();  // guarantee that all data has been sent, and the buffer is empty.
 
           // Store value in the sensorMain struct
           sensorMain.average += currentValue;
@@ -206,7 +219,9 @@ private:
           dbgLn(currentValue);  // Print current value for debugging
           digitalWrite(pinLed, LOW);
         }
+        this->isReading = true;
       } else {
+        this->isReading = true;
         digitalWrite(pinMainPower, HIGH);
       }
     } else {
@@ -215,6 +230,7 @@ private:
       sensorMain.average = 0;
       sensorMain.done = true;
       dbg(F("Main tank average value: "));
+      this->isReading = false;
       dbg(this->main);
       dbgLn();
       if (!this->isWorkRead)
@@ -238,13 +254,18 @@ private:
     // In case something is runned manually
     if ((ctrlMain.isOn() || ctrlWell.isOn()) && !this->isWorkRead) {
       this->isWorkRead = true;
+      this->isReading = true;
       this->startShortReadTimer();
     }
 
     if (this->isWorkRead && timerWork.isExpired()) {
       this->resetLevels();
+      this->isReading = true;
       timerWork.repeat();
     }
+
+    if (spanMx.isActive() && !this->isWorkRead && digitalRead(pinMainPower))
+      digitalWrite(pinMainPower, LOW);
   }
 };
 
