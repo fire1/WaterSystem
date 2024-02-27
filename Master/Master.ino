@@ -3,6 +3,8 @@
 #define DEBUG  // Comment it to disable debugging
 //#define DAYTIME_CHECK // Comment it to disable daytime check for running pumps
 
+//#define WELL_MEASURE_DEFAULT
+#define WELL_MEASURE_UART_47K
 //
 // Private libs
 #include "lib/Glob.h"
@@ -30,7 +32,7 @@ void setup() {
   time.begin();
 }
 
-void loop_(){
+void loop_() {
   read.test();
 }
 

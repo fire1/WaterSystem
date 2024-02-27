@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <stdint.h>
 #ifndef Read_h
 #define Read_h
@@ -9,16 +10,6 @@ volatile unsigned long startTime;
 volatile unsigned long endTime;
 volatile bool echoReceived = false;
 
-void echoInterrupt() {
-  if (digitalRead(pinWellEcho) == HIGH) {
-    // Rising edge detected
-    startTime = micros();  // Record the time when the rising edge is detected
-  } else {
-    // Falling edge detected
-    endTime = micros();   // Record the time when the falling edge is detected
-    echoReceived = true;  // Set flag indicating that the echo pulse has been received
-  }
-}
 
 class Read {
 
@@ -30,7 +21,9 @@ private:
 
   struct LevelSensorAverage {
     uint8_t index = 0;
+    uint8_t readings[LevelSensorReads];
     uint32_t average = 0;
+    uint8_t error = 0;
     bool done = false;
   };
 
@@ -59,11 +52,19 @@ public:
     //
     //
     timerIdle.start(LevelRefreshTimeIdle, AsyncDelay::MILLIS);
+
+#ifdef WELL_MEASURE_DEFAULT
     //
-    // Well tank sensor pins
+    // Well tank sensor default mode
     pinMode(pinWellEcho, INPUT);
     pinMode(pinWellSend, OUTPUT);
     digitalWrite(pinWellSend, LOW);
+#endif
+
+#ifdef WELL_MEASURE_UART_47K
+    Serial3.begin(9600);
+#endif
+
     //
     // Main tank Slave pins
     pinMode(pinMainPower, OUTPUT);
@@ -76,9 +77,9 @@ public:
   void hark() {
 
 
-    // if (!sensorWell.done) this->readWell();
+    if (!sensorWell.done && sensorWell.error <= DisableSensorError) this->readWell();
 
-    if (!sensorMain.done) this->readMain();
+    if (!sensorMain.done && sensorMain.error <= DisableSensorError) this->readMain();
 
 
     this->readAtIdle();  // Monitoring
@@ -91,7 +92,7 @@ public:
 
     uint8_t val = 0;
     while (com.available() > 0)
-      val = com.readString().toInt();
+      val = com.read();
 
     if (val > 0) {
 
@@ -141,7 +142,10 @@ public:
 
   void resetLevels() {
     sensorWell.done = false;
+    sensorWell.error = 0;
     sensorMain.done = false;
+    sensorMain.error = 0;
+
     this->isReading = true;
   }
   //
@@ -166,7 +170,13 @@ private:
   // Read well tank
   void readWell() {
 
-    if (this->sensorWell.index < LevelSensorReads) {
+
+    if (!sensorWell.done) {
+
+      dbg(F("Well read "));
+      uint8_t distance = 0;
+#ifdef WELL_MEASURE_DEFAULT
+
       digitalWrite(pinWellSend, LOW);
       delayMicroseconds(2);
       digitalWrite(pinWellSend, HIGH);
@@ -174,34 +184,56 @@ private:
       digitalWrite(pinWellSend, LOW);
       this->isReading = true;
       unsigned long duration = pulseIn(pinWellEcho, HIGH, 7100);  // read pulse with timeout for 7700~130cm / 7000 ~120cm
-      /*
-      dbg(sensorWell.index);
-      dbg(F(" / "));
-      dbgLn(duration);
-      */
       // Check for timeout
       if (duration == 0) {
-        //     Serial.println("Timeout error: Sensor WELL reading exceeds range");
-        // Handle timeout (e.g., set distance to maximum or other logic)
+        sensorWell.error++;
         return;
       }
 
-      float distance = (duration * .0343) / 2;
+      distance = (duration * .0343) / 2;
+      dbg(F("Default "));
+#endif
 
+#ifdef WELL_MEASURE_UART_47K
+      byte frame[3];
+      if (Serial3.available()) {
+        this->isReading = false;
+        // dbg(F(" /reciving/ "));
+        byte startByte, dataHigh, dataLow, dataSum = 0;
 
-      // Store distance reading
-      sensorWell.average += distance;
-      sensorWell.index++;  // Increment index for next reading
+        startByte = Serial3.read();
+        Serial3.readBytes(frame, 3);
+        dataHigh = frame[0];
+        dataLow = frame[1];
+        dataSum = frame[2];
+        //
+        // Verify recived data
+        if (startByte == 255 && (dataHigh + dataLow) != (dataSum + verifyCorrection)) {
+          sensorWell.error++;
+          return;
+        } else {
+          distance = ((dataHigh << 8) + dataLow) * 0.1;
+          Serial3.flush();
+        }
+        digitalWrite(pinLed, LOW);
+      }
 
-    } else {
-      this->well = sensorWell.average / sensorWell.index;
-      sensorWell.index = 0;
-      sensorWell.average = 0;
-      sensorWell.done = true;
-      this->isReading = false;
-      dbg(F("Well tank average value: "));
-      dbg(this->well);
-      dbgLn();
+      if (!this->isReading) {
+        digitalWrite(pinLed, HIGH);
+        Serial3.write(startUartCommand);
+        this->isReading = true;
+        //   dbg(F(" /sending/ "));
+      }
+
+      dbg(F("UART "));
+#endif
+
+      dbg(distance);
+
+      pushAverage(sensorWell, distance);
+      this->well = sensorWell.average;
+      dbg(F(" AVR "));
+      dbgLn(this->well);
     }
   }
 
@@ -213,42 +245,32 @@ private:
   //  communication from the serial slave sensor.
   // https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
   void readMain() {
-    if (sensorMain.index < LevelSensorReads) {
+    if (!sensorMain.done) {
 
       if (digitalRead(pinMainPower)) {
-        
-        uint8_t read = 0;
+
+        uint8_t distance = 0;
         digitalWrite(pinLed, HIGH);
-        while (com.available() > 0) {
-          read = com.readString().toInt();
+        if (com.available() > 0) {
+          distance = com.read();
+          com.stopListening();
         }
+        //
         // Check for available data and read value
-        if (read > 0) {
-
-          // Store value in the sensorMain struct
-          sensorMain.average = read;
-          sensorMain.index = LevelSensorReads;  // Increment index for next reading
-
-          dbg(F("RX: "));
-          dbgLn(read);  // Print current value for debugging
+        if (distance > 0) {
+          pushAverage(sensorMain, distance);
+          this->main = sensorMain.average;
+          dbg(F("Main read UAR "));
+          dbg(distance);
+          dbg(F(" AVR "));
+          dbgLn(this->main);
           digitalWrite(pinLed, LOW);
-        }
-        this->isReading = true;
+          digitalWrite(pinMainPower, LOW);
+        } else sensorMain.error++;
       } else {
-        this->isReading = true;
         digitalWrite(pinMainPower, HIGH);
+        com.listen();
       }
-    } else {
-      this->main = sensorMain.average;
-      sensorMain.index = 0;
-      sensorMain.average = 0;
-      sensorMain.done = true;
-      dbg(F("Main tank average value: "));
-      this->isReading = false;
-      dbg(this->main);
-      dbgLn();
-      if (!this->isWorkRead)
-        digitalWrite(pinMainPower, LOW);
     }
   }
   //
@@ -280,6 +302,30 @@ private:
 
     if (spanMx.isActive() && !this->isWorkRead && digitalRead(pinMainPower))
       digitalWrite(pinMainPower, LOW);
+  }
+
+  //
+  // Pushes new value to average buffer
+  void pushAverage(LevelSensorAverage &sensor, int newValue) {
+    // Subtract the oldest reading from the total
+    sensor.average -= sensor.readings[sensor.index];
+    // Store the new reading
+    sensor.readings[sensor.index] = newValue;
+    // Move to the next position in the array
+    sensor.index = (sensor.index + 1) % LevelSensorReads;
+
+    // Update the total by summing all readings
+    sensor.average = 0;
+    for (int i = 0; i < LevelSensorReads; ++i) {
+      sensor.average += sensor.readings[i];
+    }
+
+    // Calculate the average
+    sensor.average /= LevelSensorReads;
+
+    // Mark data as done and clear any problems
+    sensor.done = true;
+    sensor.error = 0;
   }
 };
 

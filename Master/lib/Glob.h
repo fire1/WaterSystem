@@ -65,9 +65,19 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define pinBtnNext 37
 
 //
-// Define Ultrasonic mesurment pins
-#define pinWellEcho 18
-#define pinWellSend 19
+//  Ultrasonic Standart read mesurment pinns,
+//    it is not recommended sice uses too much time to measure
+#ifdef WELL_MEASURE_DEFAULT
+#define pinWellEcho 15  // Echo pin
+#define pinWellSend 14  // Trigger pin
+#endif
+//
+// For this mode a 45Kohm resistor is solder for R19
+#ifdef WELL_MEASURE_UART_47K   // For UART Serial I'm using Serial3 port RX3 pin 15 and TX3 pin 14
+#define startUartCommand 0x01  // All available commands to transmit are 0x01, 0x00, 0x55
+#define verifyCorrection 1     // Some of the sensors sends +/-  1/2 values, in my case is +1 in order to work verification.
+#endif
+
 
 
 #define LevelRefreshTimeIdle 1800000  // 30min
@@ -90,6 +100,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 
 #define SuspendDisplayTime 120000  // 2min
+#define DisableSensorError 3
 //
 // Debounce time for the joystick
 #define BtnDebounceTime 10
