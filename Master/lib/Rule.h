@@ -301,7 +301,9 @@ private:
       Serial.println(F("Warning: Overeating temperature for  SSR!"));
       ctrlMain.setOn(false);
       ctrlWell.setOn(false);
-      buzz.alarm();
+
+      if (spanMd.isActive())
+        buzz.alarm();
     }
   }
 };
