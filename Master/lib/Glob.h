@@ -1,3 +1,4 @@
+#include <stdint.h>
 #ifndef Global_h
 #define Global_h
 
@@ -12,8 +13,20 @@
 #define pinTone 9
 //
 // Pump controll pins
-#define pinWellPump A8
-#define pinMainPump A9
+#define pinWellPump A10  // Well pump pin putput
+#define pinMainPump A11  // Main pump pin output
+//
+// Cooling control and monitorin
+#define pinTmpRss A9  // Temperature input
+#define pinFanRss 2   // Temperature fan for RSS
+#define stopMaxTemp 85
+
+const float TempPullupResistor = 10000;
+const float TempTermistorValue = 5000;
+const float TempTermistorT1Val = 298.15;
+const float TempVoltageBValue = 3470;
+const int TempSampleReads = 10;
+
 
 //
 // Baud rate for Slave

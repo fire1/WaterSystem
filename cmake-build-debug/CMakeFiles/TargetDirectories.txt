@@ -1,0 +1,3 @@
+C:/Users/fire1/Documents/Arduino/WaterSystem/cmake-build-debug/CMakeFiles/Arduino_lib.dir
+C:/Users/fire1/Documents/Arduino/WaterSystem/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/fire1/Documents/Arduino/WaterSystem/cmake-build-debug/CMakeFiles/rebuild_cache.dir

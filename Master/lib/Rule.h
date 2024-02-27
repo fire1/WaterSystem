@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #include <stdint.h>
 #include "Arduino.h"
 
@@ -17,6 +18,14 @@ private:
   Buzz *buzz;
   Time *time;
 
+  struct Temperature {
+    float summary = 0;
+    int index = 0;
+    float mean;
+  } TempRead;
+
+  float heat = 0;
+
 
   AsyncDelay beatLed;
   uint16_t beatLedLast = 0;
@@ -32,11 +41,18 @@ public:
     pinMode(pinLedBeat, OUTPUT);
     pinMode(pinWellPump, OUTPUT);
     pinMode(pinMainPump, OUTPUT);
+    pinMode(pinTmpRss, INPUT);
+    pinMode(pinFanRss, OUTPUT);
   }
 
   void hark() {
     this->handleWellMode();
     this->handleMainMode();
+
+    if (spanSm.isActive())
+      this->readTemp();
+
+    this->handleHeatProtection();
   }
 
 private:
@@ -249,6 +265,43 @@ private:
       if (ms == beatLedLast && ms != 0) {
         beatLed.repeat();
       }
+    }
+  }
+
+  void readTemp() {
+
+    if (TempRead.index < TempSampleReads) {
+      TempRead.summary += analogRead(pinTmpRss);
+      TempRead.index++;
+    }
+
+    if (TempRead.index >= TempSampleReads) {
+      TempRead.mean = TempRead.summary / TempRead.index;
+      TempRead.index = 1;
+      TempRead.summary = TempRead.mean;
+
+      //
+      // Calculation based on
+      //  https://solarduino.com/how-to-use-ntc-thermistor-to-measure-temperature/
+      float R2 = (TempPullupResistor * TempRead.mean) / (1023 - TempRead.mean);
+      float a, b, c, d, e = 2.718281828;
+
+      a = 1 / TempTermistorT1Val;
+      b = log10(TempTermistorValue / R2);
+      c = b / log10(e);
+      d = c / TempVoltageBValue;
+      float T2 = 1 / (a - d);
+      this->heat = T2 - 273.15;  // from Kelvin to Celsius
+    }
+  }
+  //
+  // Handles the overheating protection
+  void handleHeatProtection() {
+    if (this->heat > stopMaxTemp) {
+      Serial.println(F("Warning: Overeating temperature for  SSR!"));
+      ctrlMain.setOn(false);
+      ctrlWell.setOn(false);
+      buzz.alarm();
     }
   }
 };
