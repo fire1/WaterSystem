@@ -176,7 +176,7 @@ private:
 
     if (!sensorWell.done) {
 
-    //  dbg(F("Well read "));
+      //  dbg(F("Well read "));
       uint8_t distance = 0;
 #ifdef WELL_MEASURE_DEFAULT
 
@@ -194,7 +194,7 @@ private:
       }
 
       distance = (duration * .0343) / 2;
-     // dbg(F("Default "));
+      // dbg(F("Default "));
 #endif
 
 #ifdef WELL_MEASURE_UART_47K
@@ -236,12 +236,12 @@ private:
       //dbg(F("UART "));
 #endif
 
-      dbg(distance);
+
       if (distance == 0) {
         sensorWell.error++;
         return;
       }
-
+      dbg(distance);
       pushAverage(sensorWell, distance);
       this->well = sensorWell.average;
       dbg(F(" AVR "));
