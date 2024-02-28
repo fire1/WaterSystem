@@ -6,6 +6,7 @@
 
 class Menu {
 private:
+  Rule* rule;
   Read* read;
   Data* modeWell;
   Data* modeMain;
@@ -131,30 +132,59 @@ private:
       lcd.print(F("-"));
       lcd.print(now.day());
 
-      lcd.setCursor(0, 1);
-      lcd.print(time->getTemp());
-      lcd.write((char)1);
     } else {
       lcd.setCursor(0, 0);
       lcd.print(F(" No clock..."));
     }
 
-      lcd.setCursor(5, 1);
-      lcd.print(F("M"));
-      lcd.print(read->getMainLevel());
-      lcd.setCursor(11, 1);
-      lcd.print(F("W"));
-      lcd.print(read->getWellLevel());
+    lcd.setCursor(3, 1);
+    lcd.print(rule->getHeat());
+    lcd.write((char)1);
 
+    lcd.setCursor(7, 1);
+    lcd.print(F("W"));
+    lcd.print(read->getWellLevel());
+
+    lcd.setCursor(11, 1);
+    lcd.print(F("M"));
+    lcd.print(read->getMainLevel());
   }
 
+  void warnHeat() {
+    lcd.setCursor(0, 0);
+    lcd.print(F(" Overheating!"));
+
+    lcd.setCursor(1, 1);
+    lcd.print(rule->getHeat());
+    lcd.write((char)1);
+
+    lcd.print(F(" FAN:"));
+    lcd.print(rule->getFanSpeed());
+  }
+
+  void infoHeat() {
+    lcd.setCursor(0, 0);
+    if (time->isConn()) {
+      lcd.print(time->getTemp());
+      lcd.write((char)1);
+    }
+
+    lcd.setCursor(5, 0);
+    lcd.print(F("SSR: "))
+      lcd.print(rule->getHeat());
+    lcd.write((char)1);
+
+    lcd.setCursor(0, 1);
+    lcd.print(F("Fan: "));
+    lcd.print(rule->getFanSpeed());
+  }
 
 
 public:
   //
   // Construct menu
-  Menu(Read* rd, Time* tm, Data* mdW, Data* mdM)
-    : read(rd), time(tm), modeWell(mdW), modeMain(mdM) {
+  Menu(Rule* ru, Read* rd, Time* tm, Data* mdW, Data* mdM)
+    : rule(ru), read(rd), time(tm), modeWell(mdW), modeMain(mdM) {
   }
 
   void begin() {
@@ -204,13 +234,15 @@ public:
 
       case 5: return this->pumpWell(dr);
       case 6: return this->pumpMain(dr);
+      case 7: return this->warnHeat();
+
+      case 254:
+        return this->infoHeat();
 
       //
       // This menu is active only when clock is connected!
       case 255:
-        if (time->isConn()) this->infoMenu();
-        else dr->resetCursor();  // return back to Home
-        break;
+        return this->infoMenu();
     }
   }
 };

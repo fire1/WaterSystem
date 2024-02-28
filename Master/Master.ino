@@ -44,7 +44,9 @@ void loop() {
   time.hark();
 
   read.hark();
+#ifdef DEBUG
   cmd.read(&read);
+#endif
 
   rule.hark();
 

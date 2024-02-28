@@ -25,6 +25,7 @@ private:
   } TempRead;
 
   float heat = 0;
+  uint8_t fan = 0;
 
 
   AsyncDelay beatLed;
@@ -52,9 +53,17 @@ public:
     if (spanSm.isActive())
       this->readTemp();
 
-    this->handleHeatProtection();
+    this->handleHeat();
   }
 
+  int getHeat() {
+    return this->heat;
+  }
+
+
+  uint8_t getFanSpeed() {
+    return this->fan;
+  }
 private:
 
   unsigned long calcMinutes(unsigned int minutes) {
@@ -296,7 +305,7 @@ private:
   }
   //
   // Handles the overheating protection
-  void handleHeatProtection() {
+  void handleHeat() {
     if (this->heat > stopMaxTemp) {
       Serial.println(F("Warning: Overeating temperature for  SSR!"));
       ctrlMain.setOn(false);
@@ -304,6 +313,17 @@ private:
 
       if (spanMd.isActive())
         buzz.alarm();
+    }
+
+    if (spanSm.isActive()) {
+      int pwm = map(this->heat, 35, stopMaxTemp, 100, 265);  // map temp over pwm with thresholds
+      //
+      // Set on/off points
+      if (pwm > 255) pwm = 255;
+      if (pwm < 100) pwm = 0;
+
+      this->fan = pwm;
+      analogWrite(pinFanRss, thid->fan);
     }
   }
 };
