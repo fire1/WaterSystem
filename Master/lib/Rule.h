@@ -39,11 +39,14 @@ public:
   }
 
   void begin() {
+
     pinMode(pinLedBeat, OUTPUT);
     pinMode(pinWellPump, OUTPUT);
     pinMode(pinMainPump, OUTPUT);
     pinMode(pinTmpRss, INPUT);
     pinMode(pinFanRss, OUTPUT);
+
+    analogWrite(pinFanRss, 255);
   }
 
   void hark() {
@@ -307,23 +310,31 @@ private:
   // Handles the overheating protection
   void handleHeat() {
     if (this->heat > stopMaxTemp) {
-      Serial.println(F("Warning: Overeating temperature for  SSR!"));
+      if (spanLg.isActive())
+        Serial.println(F("Warning: Overeating temperature for  SSR!"));
+        
       ctrlMain.setOn(false);
       ctrlWell.setOn(false);
 
       if (spanMd.isActive())
-        buzz.alarm();
+        buzz->alarm();
     }
 
     if (spanSm.isActive()) {
       int pwm = map(this->heat, 35, stopMaxTemp, 100, 265);  // map temp over pwm with thresholds
+
       //
       // Set on/off points
       if (pwm > 255) pwm = 255;
       if (pwm < 100) pwm = 0;
-
+      /*
+      Serial.print("t:");
+      Serial.print(this->heat);
+      Serial.print(" pwm ");
+      Serial.println(pwm);
+*/
       this->fan = pwm;
-      analogWrite(pinFanRss, thid->fan);
+      analogWrite(pinFanRss, this->fan);
     }
   }
 };

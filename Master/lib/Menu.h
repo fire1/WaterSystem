@@ -137,11 +137,8 @@ private:
       lcd.print(F(" No clock..."));
     }
 
-    lcd.setCursor(3, 1);
-    lcd.print(rule->getHeat());
-    lcd.write((char)1);
 
-    lcd.setCursor(7, 1);
+    lcd.setCursor(3, 1);
     lcd.print(F("W"));
     lcd.print(read->getWellLevel());
 
@@ -170,7 +167,7 @@ private:
     }
 
     lcd.setCursor(5, 0);
-    lcd.print(F("SSR: "))
+    lcd.print(F("SSR: "));
       lcd.print(rule->getHeat());
     lcd.write((char)1);
 

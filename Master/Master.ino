@@ -21,15 +21,18 @@ void setup() {
   //
   // global LED to indicate data/sleep
   pinMode(pinLed, OUTPUT);
-  //
-  // I2C start
-  Wire.begin();
+
+
   read.begin();
   menu.begin();
   draw.begin();
   rule.begin();
   buzz.begin();
-  time.begin();
+
+  //
+  // I2C start
+  //Wire.begin();
+  // time.begin();
 }
 
 void loop_() {
@@ -39,15 +42,17 @@ void loop_() {
 
 void loop() {
 
-  cmd.hark();  // input commands from serial
+  //cmd.hark();  // input commands from serial
   buzz.hark();
   time.hark();
 
   read.hark();
+
+  /*
 #ifdef DEBUG
   cmd.read(&read);
 #endif
-
+*/
   rule.hark();
 
   draw.menu(&menu);

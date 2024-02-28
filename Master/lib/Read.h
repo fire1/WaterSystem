@@ -63,6 +63,9 @@ public:
 
 #ifdef WELL_MEASURE_UART_47K
     Serial3.begin(9600);
+    pinMode(14, OUTPUT);
+    pinMode(15, INPUT);
+
 #endif
 
     //
@@ -77,9 +80,9 @@ public:
   void hark() {
 
 
-    if (!sensorWell.done && sensorWell.error <= DisableSensorError) this->readWell();
+    if (!sensorWell.done && sensorWell.error < DisableSensorError) this->readWell();
 
-    if (!sensorMain.done && sensorMain.error <= DisableSensorError) this->readMain();
+    if (!sensorMain.done && sensorMain.error < DisableSensorError) this->readMain();
 
 
     this->readAtIdle();  // Monitoring
@@ -173,7 +176,7 @@ private:
 
     if (!sensorWell.done) {
 
-      dbg(F("Well read "));
+    //  dbg(F("Well read "));
       uint8_t distance = 0;
 #ifdef WELL_MEASURE_DEFAULT
 
@@ -191,44 +194,53 @@ private:
       }
 
       distance = (duration * .0343) / 2;
-      dbg(F("Default "));
+     // dbg(F("Default "));
 #endif
 
 #ifdef WELL_MEASURE_UART_47K
-      byte frame[3];
-      if (Serial3.available()) {
-        this->isReading = false;
-        // dbg(F(" /reciving/ "));
-        byte startByte, dataHigh, dataLow, dataSum = 0;
 
-        startByte = Serial3.read();
-        Serial3.readBytes(frame, 3);
-        dataHigh = frame[0];
-        dataLow = frame[1];
-        dataSum = frame[2];
-        //
-        // Verify recived data
-        if (startByte == 255 && (dataHigh + dataLow) != (dataSum + verifyCorrection)) {
-          sensorWell.error++;
-          return;
-        } else {
-          distance = ((dataHigh << 8) + dataLow) * 0.1;
-          Serial3.flush();
+      byte frame[3];
+      if (this->isReading)
+        if (Serial3.available()) {
+          this->isReading = false;
+          byte startByte, dataHigh, dataLow, dataSum = 0;
+          startByte = Serial3.read();
+          if (startByte != 255) return;
+
+          dbg(F(" /reciving/ "));
+
+          Serial3.readBytes(frame, 3);
+          dataHigh = frame[0];
+          dataLow = frame[1];
+          dataSum = frame[2];
+          //Serial3.flush();
+          //
+          // Verify recived data
+          if ((dataHigh + dataLow) != (dataSum + verifyCorrection)) {
+            sensorWell.error++;
+            return;
+          } else {
+            distance = ((dataHigh << 8) + dataLow) * 0.1;
+            Serial3.flush();
+          }
+          digitalWrite(pinLed, LOW);
         }
-        digitalWrite(pinLed, LOW);
-      }
 
       if (!this->isReading) {
-        digitalWrite(pinLed, HIGH);
+        Serial3.setTimeout(100);
         Serial3.write(startUartCommand);
         this->isReading = true;
-        //   dbg(F(" /sending/ "));
+        dbgLn(F(" /sending UART/ "));
       }
 
-      dbg(F("UART "));
+      //dbg(F("UART "));
 #endif
 
       dbg(distance);
+      if (distance == 0) {
+        sensorWell.error++;
+        return;
+      }
 
       pushAverage(sensorWell, distance);
       this->well = sensorWell.average;
@@ -246,7 +258,6 @@ private:
   // https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
   void readMain() {
     if (!sensorMain.done) {
-
       if (digitalRead(pinMainPower)) {
 
         uint8_t distance = 0;

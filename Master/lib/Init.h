@@ -41,7 +41,7 @@ Rule rule(&read, &time, &buzz, &modeWellTank, &modeMainTank);
 
 //
 // Menu UI instance
-Menu menu(&read, &time, &modeWellTank, &modeMainTank);
+Menu menu(&rule, &read, &time, &modeWellTank, &modeMainTank);
 
 //
 // Draw driver
