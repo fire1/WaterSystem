@@ -2,4 +2,6 @@
 .idea
 .pio
 cmake-build-debug
-src
+src/main.cpp
+src/lib/
+
