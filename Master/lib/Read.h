@@ -221,7 +221,7 @@ private:
             return;
           } else {
             distance = ((dataHigh << 8) + dataLow) * 0.1;
-            Serial3.flush();
+           // Serial3.flush();
           }
           digitalWrite(pinLed, LOW);
         }
