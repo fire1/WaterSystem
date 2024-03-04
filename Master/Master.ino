@@ -6,7 +6,7 @@
 //#define DAYTIME_CHECK // Comment it to disable daytime check for running pumps
 //#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
 #define WELL_MEASURE_UART_47K // Uses Serial UART to communicate with the sensor
-//#define ENABLE_CMD_INPUT // Enables Serial input listener for commands
+#define ENABLE_CMD// Enables Serial input listener for commands
 //#define ENABLE_CLOCK // Enables DS3231 clock usage
 
 
@@ -42,21 +42,14 @@ void loop() {
 #ifdef ENABLE_CLOCK
     time.hark();
 #endif
-
-    cmd.hark();  // input commands from serial
+#ifdef ENABLE_CMD
+    cmd.hark(&read);  // input commands from serial
+#endif
     buzz.hark();
-
     rule.hark();
-
     draw.menu(&menu);
-
     read.hark();
 
-    //
-    // Overwrites values from Serial
-#ifdef ENABLE_CMD_INPUT
-    cmd.read(&read);
-#endif
 
     spanSm.tick();
     spanMd.tick();
