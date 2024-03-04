@@ -2,7 +2,6 @@
 
 //
 // Definition setup
-
 #define DEBUG  // Comment it to disable debugging
 //#define DAYTIME_CHECK // Comment it to disable daytime check for running pumps
 //#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
@@ -18,8 +17,7 @@
 
 
 void setup() {
-
-    //0
+    //
     // Setup the normal serial link to the PC
     Serial.begin(9600);
     Serial.println(F("Starting Water system /MASTER/"));

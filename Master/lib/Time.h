@@ -4,7 +4,8 @@
 
 #include <RTClib.h>
 #include "Glob.h"
-#include <Wire.h>
+
+const uint8_t ClockMaxConnectAttempts = 10;
 
 class Time {
 private:
@@ -39,10 +40,23 @@ public:
     }
 
     void begin() {
+        Serial.println(F("Starting clock ..."));
         Wire.begin();
-        delay(50); // Fixes respond from rtc.begin()
-        if (!rtc.begin()) {
+        delay(100);
+        uint8_t attempts = 0;
+        while (!rtc.begin() && attempts < ClockMaxConnectAttempts) {
+            attempts++;
+            delay(50); // Add a short delay between attempts to avoid overwhelming the RTC
+            Serial.print(" - ");
+        }
+
+        if (attempts < ClockMaxConnectAttempts) {
+            this->isConnected = true;
+        }
+
+        if (!this->isConnected) {
             Serial.println(F("Couldn't find RTC"));
+            return;
         } else if (rtc.lostPower()) {
             Serial.println("RTC lost power, let's set the time!");
             rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
