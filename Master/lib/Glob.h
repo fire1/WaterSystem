@@ -110,12 +110,12 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorBothMax 21
 #define LevelSensorWellMin 95
 #define LevelSensorMainMin 100
-
+#define TimeoutPowerSlave 5000 // time to wait for powering up the main sensor
 
 
 #define SuspendDisplayTime 120000  // 2min
-#define DisableSensorError 10
-#define TimeoutPowerSlave SuspendDisplayTime // time to wait for powering up the main sensor
+#define DisableSensorError 20
+
 //
 // Debounce time for the joystick
 #define BtnDebounceTime 10

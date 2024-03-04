@@ -80,7 +80,7 @@ public:
 
 
     void hark() {
-        if (millis() < 2000) return;
+        if (millis() < 200) return;
 
         if (spanLg.isActive()) {
             if (sensorWell.error >= DisableSensorError)
@@ -96,13 +96,18 @@ public:
         }
 
 
-        if (!sensorWell.done && sensorWell.error < DisableSensorError) this->readWell();
+        if (!sensorWell.done /*&& sensorWell.error < DisableSensorError*/) this->readWell();
 
         if (!sensorMain.done /*&& sensorMain.error < DisableSensorError*/) this->readMain();
 
 
         this->readAtIdle();  // Monitoring
         this->readAtWork();  // Pumping
+
+        if (powerMain.isExpired() && digitalRead(pinMainPower)) {
+            digitalWrite(pinMainPower, LOW);
+            dbgLn("Turning Off Main sensor power.");
+        }
     }
 
     void test() {
@@ -199,6 +204,7 @@ private:
               sensorWell.error++;
               return;
             }
+            sensorWell.error=0;
 
             distance = (duration * .0343) / 2;
             // dbg(F("Default "));
@@ -209,14 +215,17 @@ private:
             byte frame[3];
             if (this->isWellRead)
               if (Serial3.available()) {
+                  digitalWrite(pinLed,HIGH);
                 this->isWellRead = false;
                 byte startByte, dataHigh, dataLow, dataSum = 0;
                 startByte = Serial3.read();
                 if (startByte != 255) return;
 
-                dbg(F(" /reciving/ "));
+                dbg(F(" /UART/ Reciving "));
 
                 Serial3.readBytes(frame, 3);
+                digitalWrite(pinLed,LOW);
+
                 dataHigh = frame[0];
                 dataLow = frame[1];
                 dataSum = frame[2];
@@ -228,17 +237,16 @@ private:
                   return;
                 } else {
                   distance = ((dataHigh << 8) + dataLow) * 0.1;
-                 // Serial3.flush();
+                 sensorWell.error=0;
                 }
                 digitalWrite(pinLed, LOW);
               }
 
             if (!this->isWellRead && spanLg.isActive()) {
-                dbgLn(sensorWell.error);
               Serial3.setTimeout(100);
               Serial3.write(startUartCommand);
               this->isWellRead = true;
-              dbgLn(F(" /sending UART/ "));
+              dbgLn(F(" /UART/ Sending  "));
             }
 
 #endif
@@ -281,25 +289,18 @@ private:
                         dbg(F(" AVR "));
                         dbgLn(this->main);
                         sensorMain.error = 0;
-                        digitalWrite(pinLed, LOW);
                     } else {
                         sensorMain.error++;
-                        digitalWrite(pinLed, LOW);
                     }
-
+                    digitalWrite(pinLed, LOW);
                 }
-
             } else {
-                digitalWrite(pinLed, LOW);
                 digitalWrite(pinMainPower, HIGH);
                 com.listen();
             }
             powerMain.start(TimeoutPowerSlave, AsyncDelay::MILLIS);
         }
-        if (powerMain.isExpired()) {
-            digitalWrite(pinMainPower, LOW);
-            Serial.println("Off main");
-        }
+
     }
 
     //
