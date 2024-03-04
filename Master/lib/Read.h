@@ -19,6 +19,7 @@ private:
     SoftwareSerial com;
     AsyncDelay timerIdle;
     AsyncDelay timerWork;
+    AsyncDelay powerMain;
 
     struct LevelSensorAverage {
         uint8_t index = 0;
@@ -79,11 +80,25 @@ public:
 
 
     void hark() {
+        if (millis() < 2000) return;
+
+        if (spanLg.isActive()) {
+            if (sensorWell.error >= DisableSensorError)
+                Serial.println(F("Warning: Unable to read well sensor!"));
+            if (sensorMain.error >= DisableSensorError)
+                Serial.println(F("Warning: Unable to read main sensor!"));
+        }
+
+
+        if (spanMx.isActive()) {
+            sensorWell.error = 0;
+            sensorMain.error = 0;
+        }
 
 
         if (!sensorWell.done && sensorWell.error < DisableSensorError) this->readWell();
 
-        if (!sensorMain.done && sensorMain.error < DisableSensorError) this->readMain();
+        if (!sensorMain.done /*&& sensorMain.error < DisableSensorError*/) this->readMain();
 
 
         this->readAtIdle();  // Monitoring
@@ -103,19 +118,12 @@ public:
             Serial.println(val);
         }
     }
-    //Serial.println();
-    //if (com.available() > 0) {
-    //  Serial.write(com.read());
-    //  Serial.println();
-    //  Serial.flush();
-    // }
 
 
     //
     // Ouput to pass  information from this methods
     //
-    uint8_t
-    getWellLevel() {
+    uint8_t getWellLevel() {
         return this->well;
     }
 
@@ -257,30 +265,40 @@ private:
     // https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
     void readMain() {
         if (!sensorMain.done) {
-            if (digitalRead(pinMainPower)) {
-
-                uint8_t distance = 0;
-                digitalWrite(pinLed, HIGH);
+            if (digitalRead(pinMainPower) && com.isListening()) {
                 if (com.available() > 0) {
+                    uint8_t distance = 0;
+                    digitalWrite(pinLed, HIGH);
                     distance = com.read();
                     com.stopListening();
+                    //
+                    // Check for available data and read value
+                    if (distance > 10) {
+                        pushAverage(sensorMain, distance);
+                        this->main = sensorMain.average;
+                        dbg(F("Main read UAR "));
+                        dbg(distance);
+                        dbg(F(" AVR "));
+                        dbgLn(this->main);
+                        sensorMain.error = 0;
+                        digitalWrite(pinLed, LOW);
+                    } else {
+                        sensorMain.error++;
+                        digitalWrite(pinLed, LOW);
+                    }
+
                 }
-                //
-                // Check for available data and read value
-                if (distance > 0) {
-                    pushAverage(sensorMain, distance);
-                    this->main = sensorMain.average;
-                    dbg(F("Main read UAR "));
-                    dbg(distance);
-                    dbg(F(" AVR "));
-                    dbgLn(this->main);
-                    digitalWrite(pinLed, LOW);
-                    digitalWrite(pinMainPower, LOW);
-                } else sensorMain.error++;
+
             } else {
+                digitalWrite(pinLed, LOW);
                 digitalWrite(pinMainPower, HIGH);
                 com.listen();
             }
+            powerMain.start(TimeoutPowerSlave, AsyncDelay::MILLIS);
+        }
+        if (powerMain.isExpired()) {
+            digitalWrite(pinMainPower, LOW);
+            Serial.println("Off main");
         }
     }
 
@@ -309,9 +327,6 @@ private:
             this->resetLevels();
             timerWork.repeat();
         }
-
-        if (spanMx.isActive() && !this->isWorkRead && digitalRead(pinMainPower))
-            digitalWrite(pinMainPower, LOW);
     }
 
     //

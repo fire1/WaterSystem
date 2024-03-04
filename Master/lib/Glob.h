@@ -112,8 +112,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorMainMin 100
 
 
+
 #define SuspendDisplayTime 120000  // 2min
-#define DisableSensorError 3
+#define DisableSensorError 10
+#define TimeoutPowerSlave SuspendDisplayTime // time to wait for powering up the main sensor
 //
 // Debounce time for the joystick
 #define BtnDebounceTime 10
@@ -133,7 +135,7 @@ extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
 extern Span spanSm(199);     // Loop span at Small
 extern Span spanMd(2101);    // Loop span Middle  /screen refresh/
-extern Span spanLg(4802);    // Loop span Large  / warning messages/
+extern Span spanLg(5802);    // Loop span Large  / warning messages/
 extern Span spanMx(250003);  // Loop span at 60k loops
 
 #include "Time.h"
