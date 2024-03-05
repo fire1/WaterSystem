@@ -30,4 +30,15 @@
 #define E_ADDR_TK1 0 // Address for Tank 1
 #define E_ADDR_TK2 1 // Address for Tank 2
 
+uint16_t indexLed = 0;
+void handleLedOffState(){
+    if (indexLed > 1000) {
+        digitalWrite(pinLed, LOW);
+        indexLed = 0;
+    }
+    if (bitRead(PINH, 7)) // reads state of pin 13
+        indexLed++;
+}
+
+
 #endif

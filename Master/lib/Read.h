@@ -82,14 +82,6 @@ public:
     void hark() {
         if (millis() < 200) return;
 
-        if (spanLg.isActive()) {
-            if (sensorWell.error >= DisableSensorError)
-                Serial.println(F("Warning: Unable to read well sensor!"));
-            if (sensorMain.error >= DisableSensorError)
-                Serial.println(F("Warning: Unable to read main sensor!"));
-        }
-
-
         if (spanMx.isActive()) {
             sensorWell.error = 0;
             sensorMain.error = 0;
@@ -108,6 +100,14 @@ public:
             digitalWrite(pinMainPower, LOW);
             dbgLn("Turning Off Main sensor power.");
         }
+/*
+        if (spanLg.isActive()) {
+            if (sensorWell.error >= DisableSensorError)
+                Serial.println(F("Warning: Unable to read well sensor!"));
+            if (sensorMain.error >= DisableSensorError)
+                Serial.println(F("Warning: Unable to read main sensor!"));
+        }
+        */
     }
 
     void test() {
@@ -234,6 +234,7 @@ private:
                 // Verify recived data
                 if ((dataHigh + dataLow) != (dataSum + verifyCorrection)) {
                   sensorWell.error++;
+                  digitalWrite(pinLed, LOW);
                   return;
                 } else {
                   distance = ((dataHigh << 8) + dataLow) * 0.1;
