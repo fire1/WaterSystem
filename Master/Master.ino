@@ -51,7 +51,7 @@ void loop() {
     spanLg.tick();
     spanMx.tick();
 
-    handleLedOffState();
+   // handleLedOffState();
 
 }
 

@@ -304,28 +304,29 @@ private:
         distance = 0;
         if (this->isWellReadSent && Serial3.available()) {
             digitalWrite(pinLed, HIGH);
-            byte startByte, dataHigh, dataLow, dataSum = 0;
+            byte startByte, dataTop, dataLow, dataSum = 0;
             startByte = Serial3.read();
             if (startByte != 255) return true;
 
-            dbg(F(" /UART/ Reciving "));
+            dbg(F(" /UART/ Receiving "));
 
             byte readFrames[3];
             Serial3.readBytes(readFrames, 3);
             digitalWrite(pinLed, LOW);
 
-            dataHigh = readFrames[0];
+            dataTop = readFrames[0];
             dataLow = readFrames[1];
             dataSum = readFrames[2];
 
             //
             // Verify received data
-            if ((dataHigh + dataLow) != (dataSum + verifyCorrection)) {
-                digitalWrite(pinLed, LOW);
-                distance = 0;
+            if ((dataTop + dataLow) != (dataSum + verifyCorrection)) {
+                //
+                // Nothing to do, distance is already 0
             } else
-                distance = ((dataHigh << 8) + dataLow) * 0.1;
+                distance = ((dataTop << 8) + dataLow) * 0.1;
 
+            digitalWrite(pinLed, LOW);
             return true; // finish the reading
         } else if (spanLg.isActive()) {
             Serial3.setTimeout(100);
