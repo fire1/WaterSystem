@@ -36,7 +36,7 @@ private:
             sensorMain;
 
     bool isWorkRead = false;
-    bool isWellRead;
+    bool isWellReadSent;
 
     //
     // Final average valuse from sensors
@@ -187,81 +187,23 @@ private:
     // Read well tank
     void readWell() {
         if (!sensorWell.done) {
-
-            //  dbg(F("Well read "));
-            uint8_t distance = 0;
-#ifdef WELL_MEASURE_DEFAULT
-
-            digitalWrite(pinWellSend, LOW);
-            delayMicroseconds(2);
-            digitalWrite(pinWellSend, HIGH);
-            delayMicroseconds(10);
-            digitalWrite(pinWellSend, LOW);
-            this->isWellRead = true;
-            unsigned long duration = pulseIn(pinWellEcho, HIGH, 7100);  // read pulse with timeout for 7700~130cm / 7000 ~120cm
-            // Check for timeout
-            if (duration == 0) {
-              sensorWell.error++;
-              return;
-            }
-            sensorWell.error=0;
-
-            distance = (duration * .0343) / 2;
-            // dbg(F("Default "));
-#endif
-
-#ifdef WELL_MEASURE_UART_47K
-
-            byte frame[3];
-            if (this->isWellRead)
-              if (Serial3.available()) {
-                  digitalWrite(pinLed,HIGH);
-                this->isWellRead = false;
-                byte startByte, dataHigh, dataLow, dataSum = 0;
-                startByte = Serial3.read();
-                if (startByte != 255) return;
-
-                dbg(F(" /UART/ Reciving "));
-
-                Serial3.readBytes(frame, 3);
-                digitalWrite(pinLed,LOW);
-
-                dataHigh = frame[0];
-                dataLow = frame[1];
-                dataSum = frame[2];
-                //Serial3.flush();
-                //
-                // Verify recived data
-                if ((dataHigh + dataLow) != (dataSum + verifyCorrection)) {
-                  sensorWell.error++;
-                  digitalWrite(pinLed, LOW);
-                  return;
-                } else {
-                  distance = ((dataHigh << 8) + dataLow) * 0.1;
-                 sensorWell.error=0;
+            // Read well sensor has two variants of reading distance.
+            // The default type for the module is not recommended since disturbs main loop.
+            // Soldering 47k Ohm resistor for R19 on the module is HIGHLY recommended,
+            // this will enable UART of the module.
+            uint16_t distance;
+            if (onReadWellSensorDistance(distance)) {
+                if (distance == 0) {
+                    sensorWell.error++;
+                    return;
                 }
-                digitalWrite(pinLed, LOW);
-              }
-
-            if (!this->isWellRead && spanLg.isActive()) {
-              Serial3.setTimeout(100);
-              Serial3.write(startUartCommand);
-              this->isWellRead = true;
-              dbgLn(F(" /UART/ Sending  "));
+                dbg(distance);
+                pushAverage(sensorWell, distance);
+                this->well = sensorWell.average;
+                dbg(F(" AVR "));
+                dbgLn(this->well);
             }
 
-#endif
-
-
-            if (distance == 0) {
-                sensorWell.error++;
-                return;
-            }
-            dbg(distance);
-            pushAverage(sensorWell, distance);
-            this->well = sensorWell.average;
-            dbg(F(" AVR "));
-            dbgLn(this->well);
         }
     }
 
@@ -282,14 +224,13 @@ private:
                     com.stopListening();
                     //
                     // Check for available data and read value
-                    if (distance > 10) {
+                    if (distance > 0) {
                         pushAverage(sensorMain, distance);
                         this->main = sensorMain.average;
                         dbg(F("Main read UAR "));
                         dbg(distance);
                         dbg(F(" AVR "));
                         dbgLn(this->main);
-                        sensorMain.error = 0;
                     } else {
                         sensorMain.error++;
                     }
@@ -354,6 +295,73 @@ private:
         sensor.done = true;
         sensor.error = 0;
     }
+
+    //
+    // Using UART Serial, resistor 47K soldiered on the module
+#ifdef WELL_MEASURE_UART_47K
+
+    bool onReadWellSensorDistance(uint16_t &distance) {
+        distance = 0;
+        if (this->isWellReadSent && Serial3.available()) {
+            digitalWrite(pinLed, HIGH);
+            byte startByte, dataHigh, dataLow, dataSum = 0;
+            startByte = Serial3.read();
+            if (startByte != 255) return true;
+
+            dbg(F(" /UART/ Reciving "));
+
+            byte readFrames[3];
+            Serial3.readBytes(readFrames, 3);
+            digitalWrite(pinLed, LOW);
+
+            dataHigh = readFrames[0];
+            dataLow = readFrames[1];
+            dataSum = readFrames[2];
+
+            //
+            // Verify received data
+            if ((dataHigh + dataLow) != (dataSum + verifyCorrection)) {
+                digitalWrite(pinLed, LOW);
+                distance = 0;
+            } else
+                distance = ((dataHigh << 8) + dataLow) * 0.1;
+
+            return true; // finish the reading
+        } else if (spanLg.isActive()) {
+            Serial3.setTimeout(100);
+            Serial3.write(startUartCommand);
+            this->isWellReadSent = true;
+            dbgLn(F(" /UART/ Sending  "));
+        }
+        return false;
+    }
+
+#endif
+    //
+    // Using pulseIn method, but not recommended since using delay
+#ifdef WELL_MEASURE_DEFAULT
+
+    bool onReadWellSensorDistance(uint16_t &distance) {
+        digitalWrite(pinWellSend, LOW);
+        delayMicroseconds(2);
+        digitalWrite(pinWellSend, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(pinWellSend, LOW);
+        //
+        // read pulse with timeout for 7700~130cm / 7000 ~120cm
+        unsigned long duration = pulseIn(pinWellEcho, HIGH, 7100);
+
+        // Check for timeout accure
+        if (duration == 0)
+            distance = 0;
+        else
+            distance = (duration * .0343) / 2;
+        return true;
+
+    }
+
+#endif
+
 };
 
 #endif
