@@ -1,5 +1,6 @@
 #ifndef Util_h
 #define Util_h
+#include <Arduino.h>
 
 //
 // Simple debug privider
@@ -38,6 +39,16 @@ void handleLedOffState(){
     }
     if (bitRead(PINH, 7)) // reads state of pin 13
         indexLed++;
+}
+
+void welcomeSerialMessage(){
+    Serial.begin(9600);
+    Serial.println();
+    Serial.println(F("-------------------------------"));
+    Serial.println(F("Starting Water system /MASTER/"));
+    Serial.println(F("-------------------------------"));
+    Serial.println();
+    delay(10);
 }
 
 

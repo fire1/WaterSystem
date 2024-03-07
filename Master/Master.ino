@@ -8,18 +8,13 @@
 
 void setup() {
     //
-    // Setup the normal serial link to the PC
-    Serial.begin(9600);
-    Serial.println();
-    Serial.println(F("-------------------------------"));
-    Serial.println(F("Starting Water system /MASTER/"));
-    Serial.println(F("-------------------------------"));
-    Serial.println();
-    delay(10);
+    // Initialize Serial
+    welcomeSerialMessage();
     //
     // global LED to indicate data/sleep
     pinMode(pinLed, OUTPUT);
-
+    //
+    // Initialize classes
     read.begin();
     menu.begin();
     draw.begin();
@@ -31,27 +26,21 @@ void setup() {
 #endif
 }
 
-
 void loop() {
-
-#ifdef ENABLE_CLOCK
     time.hark();
-#endif
 #ifdef ENABLE_CMD
     cmd.hark(&read);  // input commands from serial
 #endif
+
     buzz.hark();
     rule.hark();
     draw.menu(&menu);
     read.hark();
 
-
     spanSm.tick();
     spanMd.tick();
     spanLg.tick();
     spanMx.tick();
-
-   // handleLedOffState();
 
 }
 
