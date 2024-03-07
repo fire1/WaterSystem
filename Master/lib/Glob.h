@@ -22,7 +22,10 @@
 // Cooling control and monitorin
 #define pinTmpRss A9  // Temperature input
 #define pinFanRss 2   // Temperature fan for RSS
-#define stopMaxTemp 85
+//
+// Designed for AC loads has maximum junction temperature of 150°C
+// Operating junction temperature range. -40 to +125. °C
+#define stopMaxTemp 100
 
 const float TempPullupResistor = 10000;
 const float TempTermistorValue = 5000;

@@ -23,7 +23,7 @@ public:
     Cmd(Time *t)
             : time(t) {}
 
-    void hark(Read *read) {
+    void hark(Read *read, Rule *rule) {
 
         //
         // Default message
@@ -139,6 +139,24 @@ public:
                 read->setMain(mainValue);
                 Serial.println(mainValue);
                 output = F("Read /main/ overwritten!");
+            }
+
+            if (cmdName == F("cool")) {
+                uint8_t pwm = (uint8_t) cmdData.toInt();
+                rule->setFan(pwm);
+                output = F(" Sets cooling fan to: ");
+                output += rule->getFanSpeed();
+            }
+
+            if (cmdName == F("heat")) {
+                uint8_t temp = (int) cmdData.toInt();
+                rule->setHeat(temp);
+
+                Serial.print(F("Seting heat at: "));
+                Serial.println(temp);
+
+                output = F(" Fan speed at: ");
+                output += rule->getFanSpeed();
             }
 
 

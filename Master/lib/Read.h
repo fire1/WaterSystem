@@ -60,7 +60,6 @@ public:
         // Well tank sensor default mode
         pinMode(pinWellEcho, INPUT);
         pinMode(pinWellSend, OUTPUT);
-        digitalWrite(pinWellSend, LOW);
 #endif
 
 #ifdef WELL_MEASURE_UART_47K
@@ -90,11 +89,16 @@ public:
 
         if (!sensorWell.done /*&& sensorWell.error < DisableSensorError*/) this->readWell();
 
-        if (!sensorMain.done /*&& sensorMain.error < DisableSensorError*/) this->readMain();
+        if (!sensorMain.done /*&& sensorMain.error < DisableSensorError*/) {
+            powerMain.start(TimeoutPowerSlave, AsyncDelay::MILLIS); // Set power downtime for main sensor
+            this->readMain();
+        }
 
 
         this->readAtIdle();  // Monitoring
         this->readAtWork();  // Pumping
+
+
 
         if (powerMain.isExpired() && digitalRead(pinMainPower)) {
             digitalWrite(pinMainPower, LOW);
@@ -215,34 +219,31 @@ private:
     //  communication from the serial slave sensor.
     // https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
     void readMain() {
-        if (!sensorMain.done) {
-            if (digitalRead(pinMainPower) && com.isListening()) {
-                if (com.available() > 0) {
-                    uint8_t distance = 0;
-                    digitalWrite(pinLed, HIGH);
-                    distance = com.read();
-                    com.stopListening();
-                    //
-                    // Check for available data and read value
-                    if (distance > 0) {
-                        pushAverage(sensorMain, distance);
-                        this->main = sensorMain.average;
-                        dbg(F("Main read UAR "));
-                        dbg(distance);
-                        dbg(F(" AVR "));
-                        dbgLn(this->main);
-                    } else {
-                        sensorMain.error++;
-                    }
-                    digitalWrite(pinLed, LOW);
+        if (sensorMain.done) return;
+        if (digitalRead(pinMainPower) && com.isListening()) {
+            if (com.available() > 0) {
+                uint8_t distance = 0;
+                digitalWrite(pinLed, HIGH);
+                distance = com.read();
+                com.stopListening();
+                //
+                // Check for available data and read value
+                if (distance > 0) {
+                    pushAverage(sensorMain, distance);
+                    this->main = sensorMain.average;
+                    dbg(F("Main read UAR "));
+                    dbg(distance);
+                    dbg(F(" AVR "));
+                    dbgLn(this->main);
+                } else {
+                    sensorMain.error++;
                 }
-            } else {
-                digitalWrite(pinMainPower, HIGH);
-                com.listen();
+                digitalWrite(pinLed, LOW);
             }
-            powerMain.start(TimeoutPowerSlave, AsyncDelay::MILLIS);
+        } else {
+            if (!com.isListening()) com.listen();
+            digitalWrite(pinMainPower, HIGH);
         }
-
     }
 
     //
