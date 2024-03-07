@@ -116,8 +116,9 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorReads 3
 
 //
-// This value defines safe level point for max u-s sensor
-//  reads. Shoud be common for both sensors.
+// This value defines safe level
+// point for max u-s sensor reads.
+// Should be common for both sensors.
 #define LevelSensorBothMax 21
 #define LevelSensorWellMin 95
 #define LevelSensorMainMin 100
@@ -132,19 +133,22 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define BtnDebounceTime 10
 #define BtnHoldTime 2000
 
-
+//
+// Constructing
 #include "Pump.h"
 #include "Util.h"
 #include "Data.h"
 #include "Span.h"
 #include "Buzz.h"
 
+//
+// Pump controlling
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
 extern Span spanSm(199);     // Loop span at Small
 extern Span spanMd(2101);    // Loop span Middle  /screen refresh/
-extern Span spanLg(5802);    // Loop span Large  / warning messages/
+extern Span spanLg(5802);    // Loop span Large   /warning messages/
 extern Span spanMx(250003);  // Loop span at 60k loops
 
 #include "Time.h"
