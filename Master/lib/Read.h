@@ -99,7 +99,6 @@ public:
         this->readAtWork();  // Pumping
 
 
-
         if (powerMain.isExpired() && digitalRead(pinMainPower)) {
             digitalWrite(pinMainPower, LOW);
             dbgLn("Turning Off Main sensor power.");
@@ -273,8 +272,8 @@ private:
         }
     }
 
-    //
-    // Pushes new value to average buffer
+//
+// Pushes new value to average buffer
     void pushAverage(LevelSensorAverage &sensor, int newValue) {
         // Subtract the oldest reading from the total
         sensor.average -= sensor.readings[sensor.index];
@@ -283,13 +282,11 @@ private:
         // Move to the next position in the array
         sensor.index = (sensor.index + 1) % LevelSensorReads;
 
-        // Update the total by summing all readings
+        // Calculate the average
         sensor.average = 0;
         for (int i = 0; i < LevelSensorReads; ++i) {
             sensor.average += sensor.readings[i];
         }
-
-        // Calculate the average
         sensor.average /= LevelSensorReads;
 
         // Mark data as done and clear any problems
