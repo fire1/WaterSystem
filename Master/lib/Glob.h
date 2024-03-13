@@ -128,7 +128,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define TimeoutPowerSlave 5000 // time to wait for powering up the main sensor
 
 
-#define SuspendDisplayTime 120000  // 2min
+#define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
 
 //
