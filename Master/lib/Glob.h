@@ -20,7 +20,7 @@
 #define pinMainPump A11  // Main pump pin output
 //
 // Cooling control and monitorin
-#define pinTmpRss A9  // Temperature input
+#define pinTmpRss A9  // Temperature input / NTC-MF52AT
 #define pinFanRss 2   // Temperature fan for RSS
 //
 // Designed for AC loads has maximum junction temperature of 150°C
@@ -122,9 +122,9 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 // This value defines safe level
 // point for max u-s sensor reads.
 // Should be common for both sensors.
-#define LevelSensorBothMax 21
-#define LevelSensorWellMin 95
-#define LevelSensorMainMin 100
+#define LevelSensorBothMax 22
+#define LevelSensorWellMin 110
+#define LevelSensorMainMin 105
 #define TimeoutPowerSlave 5000 // time to wait for powering up the main sensor
 
 
