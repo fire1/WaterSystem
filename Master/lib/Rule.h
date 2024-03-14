@@ -193,19 +193,19 @@ private:
       case 1:
         // Easy
         beatWell(1500);
-        pumpWell(8, 180);
+        pumpWell(15, 180);
         break;
 
       case 2:
         // Fast
         beatWell(800);
-        pumpWell(10, 60);
+        pumpWell(15, 60);
         break;
 
       case 3:
         // Now!
         beatWell(400);
-        pumpWell(8, 25);
+        pumpWell(15, 20);
         break;
     }
   }
