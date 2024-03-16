@@ -5,47 +5,48 @@
 
 class Pump {
 private:
-  bool on = false;
-  byte pin;
-  byte btn;
-  byte led;
+    bool on = false;
+    byte pin;
+    byte btn;
+    byte led;
 
-  void handlePins() {
-    if (this->on) {
-      digitalWrite(led, LOW);
-      digitalWrite(pin, HIGH);
-    } else {
-      digitalWrite(led, HIGH);
-      digitalWrite(pin, LOW);
+
+    void handleLed() {
+        if (this->on) digitalWrite(led, LOW); else digitalWrite(led, HIGH);
     }
-  }
 
 
 public:
-  Pump(byte p, byte b, byte l)
-    : pin(p), btn(b), led(l) {
-  }
+    Pump(byte p, byte b, byte l)
+            : pin(p), btn(b), led(l) {
+    }
 
-  bool isOn() {
-    return this->on;
-  }
+    bool isOn() {
+        return this->on;
+    }
 
-  void setOn(bool state) {
-    this->on = state;
-    this->handlePins();
-  }
-  void toggle() {
-    this->on = !this->on;
-    this->handlePins();
-  }
+    void setOn(bool state) {
+        this->on = state;
+        this->handleLed();
+    }
 
-  byte getPin() {
-    return this->pin;
-  }
+    void toggle() {
+        this->on = !this->on;
+        this->handleLed();
+    }
 
-  byte getBtn() {
-    return this->btn;
-  }
+    byte getPin() {
+        return this->pin;
+    }
+
+    byte getBtn() {
+        return this->btn;
+    }
+
+    void ctrl() {
+        if (this->on) digitalWrite(pin, HIGH); else digitalWrite(pin, LOW);
+    }
+
 };
 
 #endif

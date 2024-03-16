@@ -8,9 +8,9 @@ class Menu {
 private:
     Rule *rule;
     Read *read;
+    Time *time;
     Data *modeWell;
     Data *modeMain;
-    Time *time;
     bool isLevelReset = false;
 
     /**
@@ -18,8 +18,7 @@ private:
       * @param level The level of the tank, from 100 /empty/ and 20 /full/
       * @param min An accured min value /100/
       */
-    void
-    drawLevel(byte level, byte min) {
+    void drawLevel(byte level, byte min) {
 
         uint8_t bars = map(level, min, LevelSensorBothMax, 1, 10);
         // uint8_t bars = map(level, 100, 23, 1, 10);
@@ -45,7 +44,7 @@ private:
         int level1 = read->getWellLevel();
 
         if (level1 == 0 || level1 > LevelSensorWellMin)
-            lcd.print(F("[-?-]"));
+            lcd.print(F("[-?-]     "));
         else
             drawLevel(level1, LevelSensorWellMin);
 
@@ -53,90 +52,128 @@ private:
         lcd.print(F("Tank2 "));
         int level2 = read->getMainLevel();
         if (level2 == 0 || level2 > LevelSensorMainMin)
-            lcd.print(F("[-?-]"));
+            lcd.print(F("[-?-]     "));
         else
             drawLevel(level2, LevelSensorMainMin);
     }
 
+/**
+ * Menu tank well
+ * @param dr
+ */
     void menuWell(DrawInterface *dr) {
         dr->edit(this->modeWell);
         lcd.setCursor(0, 0);
-        lcd.print(F("Pumpping "));
+        lcd.print(F("Pumpping        "));
         lcd.setCursor(0, 1);
         lcd.print(F("Mode: "));
         lcd.print(this->modeWell->getName());
+        lcd.print(F("      "));
     }
 
-
+/**
+ * Main tank menu
+ * @param dr
+ */
     void menuMain(DrawInterface *dr) {
         dr->edit(this->modeMain);
         lcd.setCursor(0, 0);
-        lcd.print(F("Tank top "));
+        lcd.print(F("Tank top        "));
         lcd.setCursor(0, 1);
         lcd.print(F("Start: "));
         lcd.print(this->modeMain->getName());
+        lcd.print(F("      "));
     }
 
-
+/**
+ * Pump menu Well tank
+ * @param dr
+ */
     void pumpWell(DrawInterface *dr) {
 
         dr->pump(&ctrlWell, &ctrlMain);
 
         lcd.setCursor(0, 0);
-        lcd.print(F("Compressor: "));
+        lcd.print(F("Compressor:     "));
 
         lcd.setCursor(0, 1);
         lcd.print(F("         >> "));
         if (ctrlWell.isOn())
-            lcd.print(F("ON"));
+            lcd.print(F("ON  "));
         else
-            lcd.print(F("OFF"));
+            lcd.print(F("OFF  "));
 
         lcd.blink();
     }
 
+/**
+ * Pumping menu Main tank
+ * @param dr
+ */
     void pumpMain(DrawInterface *dr) {
         dr->pump(&ctrlMain, &ctrlWell);
 
         lcd.setCursor(0, 0);
-        lcd.print(F("Pump to up: "));
+        lcd.print(F("Pump to up:     "));
 
         lcd.setCursor(0, 1);
         lcd.print(F("         >> "));
         if (ctrlMain.isOn())
-            lcd.print(F("ON"));
+            lcd.print(F("ON  "));
         else
-            lcd.print(F("OFF"));
+            lcd.print(F("OFF  "));
 
         lcd.blink();
     }
 
+/**
+ * Info menu
+ */
     void infoMenu() {
         lcd.setCursor(0, 0);
         if (time->isConn()) {
+            // format 00-00 0000-00-00
             DateTime now = time->now();
+            if (now.hour() < 10)
+                lcd.print(F("0"));
 
             lcd.print(now.hour());
 
-            if (time->tickClock()) lcd.print(F(":"));  // simple ticking
+            if (time->tickClock())
+                lcd.print(F(":"));  // simple ticking
             else lcd.print(F(" "));
 
-            lcd.print(now.minute());
+            if (now.minute() < 10)
+                lcd.print(F("0"));
 
             lcd.print(F(" "));
             lcd.print(now.year());
+
             lcd.print(F("-"));
+            if (now.month() < 10)
+                lcd.print(F("0"));
+
             lcd.print(now.month());
             lcd.print(F("-"));
+
+            if (now.day() < 10)
+                lcd.print(F("0"));
+
             lcd.print(now.day());
 
         } else {
             lcd.setCursor(0, 0);
-            lcd.print(F(" No clock..."));
+            lcd.print(F(" No clock...    "));
         }
 
+        if (time->isDaytime()) {
+            lcd.write((char) 2);
+        } else {
+            lcd.write((char) 3);
+        }
+        lcd.print(F(" "));
 
-        lcd.setCursor(3, 1);
+        lcd.setCursor(0, 1);
         lcd.print(F("W"));
         lcd.print(read->getWellLevel());
 
@@ -145,18 +182,28 @@ private:
         lcd.print(read->getMainLevel());
     }
 
+/**
+ * Heat warning
+ */
     void warnHeat() {
         lcd.setCursor(0, 0);
-        lcd.print(F(" Overheating!"));
+        lcd.print(F(" Overheating!   "));
 
-        lcd.setCursor(1, 1);
-        lcd.print(rule->getHeat());
+        int temp = rule->getHeat();
+        lcd.setCursor(0, 1);
+        lcd.print(F(" "));
+        if (temp > -1 && temp < 10) lcd.print(F(" "));
+        lcd.print(temp);
         lcd.write((char) 1);
+
 
         lcd.print(F(" FAN:"));
         lcd.print(rule->getFanSpeed());
     }
 
+/**
+ * Heat information
+ */
     void infoHeat() {
         lcd.setCursor(0, 0);
         if (time->isConn()) {
@@ -166,7 +213,7 @@ private:
 
         lcd.setCursor(5, 0);
         lcd.print(F("SSR: "));
-        lcd.print(rule->getHeat());
+        lcd.print(formatNumTemp(rule->getHeat()));
         lcd.write((char) 1);
 
         lcd.setCursor(0, 1);
@@ -174,6 +221,20 @@ private:
         lcd.print(rule->getFanSpeed());
     }
 
+    /**
+     * Formats numbers to proper display format
+     * @param value
+     * @return
+     */
+    char *formatNumTemp(int value) {
+        char buffer[4];
+        if (value < 0) {
+            sprintf(buffer, "-%02d", -value);
+        } else
+            sprintf(buffer, "%03d", value);
+
+        return buffer;
+    }
 
 public:
     //
@@ -184,7 +245,7 @@ public:
 
     void begin() {
         //
-        // Setup the display type
+        // Start the display
         lcd.begin(16, 2);
 
         byte charBarLevel[8] = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B00000};
@@ -206,11 +267,13 @@ public:
         lcd.setCursor(0, 1);
         lcd.print(F("  Water system "));
         lcd.blink();
-        delay(1500);
+        delay(1000);
     }
 
-    //
-    //Draw menu
+/**
+ * Draw the menu
+ * @param dr
+ */
     void draw(DrawInterface *dr) {
 
         if (!dr->isEditing()) lcd.noBlink();

@@ -309,7 +309,6 @@ public:
             if (this->displayOn && this->cursor == 0)
                 read->startWorkRead();
 
-            lcd.clear();
             this->isDraw = false;
             mn->draw(this);
         }

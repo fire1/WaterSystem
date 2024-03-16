@@ -37,10 +37,17 @@ void loop() {
     draw.menu(&menu);
     read.hark();
 
+
+    if (spanSm.isActive()) {
+        ctrlWell.ctrl();
+        ctrlMain.ctrl();
+    }
+
     spanSm.tick();
     spanMd.tick();
     spanLg.tick();
     spanMx.tick();
+
 
 }
 
