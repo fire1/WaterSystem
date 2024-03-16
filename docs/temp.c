@@ -1,3 +1,7 @@
+// 
+// source link https://www.instructables.com/NTC-Temperature-Sensor-With-Arduino/
+//
+
 #include <LiquidCrystal.h>
 
 float Vin=5.0;     // [V]        
