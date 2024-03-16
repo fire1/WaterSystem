@@ -6,4 +6,5 @@
 * Show time to the next run of well pumping.
 * Fix temperature readings.
 * Fix conflicts with on/off as once per cycle.
+* Individual max definition, well max needs to be 19cm
 
