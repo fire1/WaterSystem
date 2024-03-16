@@ -116,13 +116,13 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 //
 // Defines how meny time to read sensors
 //  before defining tank state.
-#define LevelSensorReads 3
+#define LevelSensorReads 6
 
 //
 // This value defines safe level
 // point for max u-s sensor reads.
 // Should be common for both sensors.
-#define LevelSensorBothMax 22
+#define LevelSensorBothMax 20
 #define LevelSensorWellMin 110
 #define LevelSensorMainMin 105
 #define TimeoutPowerSlave 5000 // time to wait for powering up the main sensor
