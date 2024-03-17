@@ -11,6 +11,7 @@ private:
     Time *time;
     Data *modeWell;
     Data *modeMain;
+    char formatBuffer[4];
     bool isLevelReset = false;
 
     /**
@@ -145,6 +146,7 @@ private:
 
             if (now.minute() < 10)
                 lcd.print(F("0"));
+            lcd.print(now.minute());
 
             lcd.print(F(" "));
             lcd.print(now.year());
@@ -163,9 +165,11 @@ private:
 
         } else {
             lcd.setCursor(0, 0);
-            lcd.print(F(" No clock...    "));
+            lcd.print(F("No clock...     "));
         }
 
+
+        lcd.setCursor(0, 1);
         if (time->isDaytime()) {
             lcd.write((char) 2);
         } else {
@@ -173,13 +177,13 @@ private:
         }
         lcd.print(F(" "));
 
-        lcd.setCursor(0, 1);
-        lcd.print(F("W"));
-        lcd.print(read->getWellLevel());
 
-        lcd.setCursor(11, 1);
+        lcd.print(F("W"));
+        lcd.print(formatUint8(read->getWellLevel()));
+        lcd.print(F(" "));
         lcd.print(F("M"));
-        lcd.print(read->getMainLevel());
+        lcd.print(formatUint8(read->getMainLevel()));
+
     }
 
 /**
@@ -206,19 +210,23 @@ private:
  */
     void infoHeat() {
         lcd.setCursor(0, 0);
-        if (time->isConn()) {
-            lcd.print(time->getTemp());
-            lcd.write((char) 1);
-        }
 
-        lcd.setCursor(5, 0);
-        lcd.print(F("SSR: "));
+        if (time->isConn()) {
+            lcd.print(formatNumTemp(time->getTemp()));
+        } else lcd.print(F("---"));
+        lcd.write((char) 1);
+
+        lcd.print(F(" "));
+        lcd.print(F("SSR:"));
         lcd.print(formatNumTemp(rule->getHeat()));
         lcd.write((char) 1);
+        lcd.print(F("   "));
 
         lcd.setCursor(0, 1);
         lcd.print(F("Fan: "));
-        lcd.print(rule->getFanSpeed());
+        lcd.print(formatUint8(rule->getFanSpeed()));
+        lcd.print(F("        "));
+
     }
 
     /**
@@ -227,13 +235,23 @@ private:
      * @return
      */
     char *formatNumTemp(int value) {
-        char buffer[4];
-        if (value < 0) {
-            sprintf(buffer, "-%02d", -value);
-        } else
-            sprintf(buffer, "%03d", value);
 
-        return buffer;
+        if (value < 0) {
+            sprintf(formatBuffer, "-%02d", -value);
+        } else
+            sprintf(formatBuffer, " %02d", value);
+
+        return formatBuffer;
+    }
+
+    /**
+     * Formats uint8_t numbers to be displayed.
+     * @param value
+     * @return
+     */
+    char *formatUint8(uint8_t value) {
+        sprintf(formatBuffer, "%03d", value);
+        return formatBuffer;
     }
 
 public:
@@ -251,7 +269,7 @@ public:
         byte charBarLevel[8] = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B00000};
         byte charCelsius[8] = {B00000, B01000, B00011, B00100, B00100, B00100, B00011, B00000};
         byte charDayIcon[8] = {B00000, B10101, B01010, B10001, B01010, B10101, B00000, B00000};
-        byte charNightIcon[8] = {B00000, B00100, B01110, B11011, B01110, B00100, B00000, B00000};
+        byte charNightIcon[8] = {B00000, B01110, B10101, B11011, B10101, B01110, B00000, B00000};
 
         lcd.createChar(0, charBarLevel);
         lcd.createChar(1, charCelsius);

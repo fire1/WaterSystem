@@ -71,7 +71,13 @@ public:
 //
 // LCD display setup
 #define pinBacklight 29
-const uint8_t pinRs = 22, pinEn = 23, pinD4 = 24, pinD5 = 25, pinD6 = 26, pinD7 = 27;
+const uint8_t
+        pinRs = 22,
+        pinEn = 23,
+        pinD4 = 24,
+        pinD5 = 25,
+        pinD6 = 26,
+        pinD7 = 27;
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 //
