@@ -111,7 +111,7 @@ private:
 
     //
     // Defines work amplitude for Pump1
-    void pumpWell(uint8_t workMin, uint8_t stopMin) {
+    void pumpWell(uint8_t workMin, uint16_t stopMin) {
 
 #ifdef CHECK_DAYTIME
         if (!this->checkDaytime()) {
@@ -206,9 +206,17 @@ private:
         if (ctrlMain.isOn() && LevelSensorBothMax >= read->getMainLevel()) {
             ctrlMain.setOn(false);
 
-            dbgLn(F("CTRL /Main/ turn off the pump"));
+            dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
             read->stopWorkRead();
         }
+
+        if (ctrlMain.isOn() && 85 <= read->getWellLevel()) {
+            ctrlMain.setOn(false);
+
+            dbgLn(F("CTRL /Main/ turn off /Well empty/"));
+            read->stopWorkRead();
+        }
+
 
         switch (modeWell->value()) {
             default:
@@ -220,13 +228,14 @@ private:
             case 1:
                 // Easy
                 beatWell(1500);
-                pumpWell(15, 180);
+                pumpWellSchedule(ScheduleWellOnMainEasy);
+
                 break;
 
             case 2:
                 // Fast
                 beatWell(800);
-                pumpWell(15, 60);
+                pumpWellSchedule(ScheduleWellOnMainFast);
                 break;
 
             case 3:
@@ -237,6 +246,25 @@ private:
         }
     }
 
+    void pumpWellSchedule(const PumpSchedule &schedule) {
+        uint8_t main = read->getMainLevel();
+        uint16_t stop = 180;
+
+        if (main > 18) {
+            for (int i = 0; i < schedule.intervals; ++i) {
+                if (schedule.levels[i] > main) {
+                    stop = schedule.stops[i];
+                    break;  // Exit loop once stop is found
+                }
+            }
+        }
+
+        pumpWell(schedule.workMin, stop);
+    }
+
+    /**
+     * Just turns on the pump to main
+     */
     void pumpMain() {
 
 #ifdef CHECK_DAYTIME
@@ -249,14 +277,14 @@ private:
         }
 #endif
 
-        uint8_t level = read->getMainLevel();
+        uint8_t main = read->getMainLevel();
 
         if (!ctrlMain.isOn() && !ctrlWell.isOn()) {
 
             read->startWorkRead();
 
             dbg(F("CTRL /Main/ at level "));
-            dbg(level);
+            dbg(main);
             dbg(F("cm turn ON"));
             dbgLn();
 

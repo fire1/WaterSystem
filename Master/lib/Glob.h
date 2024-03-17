@@ -66,10 +66,16 @@ public:
     virtual bool isDisplayOn() = 0;
 };
 
-
+const uint8_t PumpScheduleMaxIntervals = 8;
+struct PumpSchedule {
+    uint8_t workMin;
+    uint8_t intervals;
+    uint8_t levels[PumpScheduleMaxIntervals];
+    uint16_t stops[PumpScheduleMaxIntervals];
+};
 
 //
-// LCD display setup
+// LCD setup
 #define pinBacklight 29
 const uint8_t
         pinRs = 22,
@@ -133,6 +139,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorMainMin 105
 #define TimeoutPowerSlave 5000 // time to wait for powering up the main sensor
 
+//
+// Schedules for pumping well
+const PumpSchedule ScheduleWellOnMainEasy = {12, 4, {80, 65, 50, 30}, {40, 360, 1440, 2880}};
+const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 35}, {30, 60, 1440}};
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
