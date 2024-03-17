@@ -106,7 +106,7 @@ private:
             lcd.print(F("ON  "));
         else
             lcd.print(F("OFF  "));
-
+        lcd.setCursor(15, 1);
         lcd.blink();
     }
 
@@ -126,7 +126,7 @@ private:
             lcd.print(F("ON  "));
         else
             lcd.print(F("OFF  "));
-
+        lcd.setCursor(15, 1);
         lcd.blink();
     }
 
