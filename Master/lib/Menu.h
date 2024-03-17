@@ -181,11 +181,14 @@ private:
         lcd.print(F(" "));
 
 
-        lcd.print(F("W"));
+        lcd.print(F("W"));// well tank level cm
         lcd.print(formatUint8(read->getWellLevel()));
         lcd.print(F(" "));
-        lcd.print(F("M"));
+        lcd.print(F("M")); // main tank level cm
         lcd.print(formatUint8(read->getMainLevel()));
+        lcd.print(F(" "));
+        lcd.write((char) 4);
+        lcd.print(formatMsToTime(rule->getActionTimer()));
 
     }
 
@@ -257,6 +260,41 @@ private:
         return formatBuffer;
     }
 
+    /**
+     * Formats given ms to time
+     * @param milliseconds
+     * @return
+     */
+    char *formatMsToTime(unsigned long milliseconds) {
+        unsigned long seconds = milliseconds / 1000;
+        unsigned long minutes = seconds / 60;
+        unsigned long hours = minutes / 60;
+        unsigned long days = hours / 24;
+        unsigned long remainingHours = hours % 24;
+        unsigned long remainingMinutes = minutes % 60;
+        unsigned long remainingSeconds = seconds % 60;
+
+        // Determine the appropriate time unit
+        char timeUnit;
+        int timeValue;
+        if (days > 0) {
+            timeValue = days;
+            timeUnit = 'd';
+        } else if (hours > 0) {
+            timeValue = remainingHours;
+            timeUnit = 'h';
+        } else if (minutes > 0) {
+            timeValue = remainingMinutes;
+            timeUnit = 'm';
+        } else {
+            timeValue = remainingSeconds;
+            timeUnit = 's';
+        }
+
+        sprintf(formatBuffer, "%02d%c", timeValue, timeUnit);
+        return formatBuffer;
+    }
+
 public:
     //
     // Construct menu
@@ -273,11 +311,13 @@ public:
         byte charCelsius[8] = {B00000, B01000, B00011, B00100, B00100, B00100, B00011, B00000};
         byte charDayIcon[8] = {B00000, B10101, B01010, B10001, B01010, B10101, B00000, B00000};
         byte charNightIcon[8] = {B00000, B01110, B10101, B11011, B10101, B01110, B00000, B00000};
+        byte charClockIcon[8] = {B00000, B01110, B10101, B10111, B10001, B01110, B00000, B00000};
 
         lcd.createChar(0, charBarLevel);
         lcd.createChar(1, charCelsius);
         lcd.createChar(2, charDayIcon);
         lcd.createChar(3, charNightIcon);
+        lcd.createChar(4, charClockIcon);
 
 
 
