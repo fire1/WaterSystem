@@ -58,24 +58,25 @@ private:
             drawLevel(level2, LevelSensorMainMin);
     }
 
-/**
- * Menu tank well
- * @param dr
- */
+    /**
+     * Menu tank well
+     * @param dr
+     */
     void menuWell(DrawInterface *dr) {
         dr->edit(this->modeWell);
         lcd.setCursor(0, 0);
-        lcd.print(F("Pumpping        "));
+        lcd.print(F("Pumping         "));
         lcd.setCursor(0, 1);
         lcd.print(F("Mode: "));
         lcd.print(this->modeWell->getName());
         lcd.print(F("      "));
+        lcd.setCursor(10, 1);
     }
 
-/**
- * Main tank menu
- * @param dr
- */
+    /**
+     * Main tank menu
+     * @param dr
+     */
     void menuMain(DrawInterface *dr) {
         dr->edit(this->modeMain);
         lcd.setCursor(0, 0);
@@ -84,12 +85,14 @@ private:
         lcd.print(F("Start: "));
         lcd.print(this->modeMain->getName());
         lcd.print(F("      "));
+        lcd.setCursor(11, 1);
+
     }
 
-/**
- * Pump menu Well tank
- * @param dr
- */
+    /**
+     * Pump menu Well tank
+     * @param dr
+     */
     void pumpWell(DrawInterface *dr) {
 
         dr->pump(&ctrlWell, &ctrlMain);
@@ -107,10 +110,10 @@ private:
         lcd.blink();
     }
 
-/**
- * Pumping menu Main tank
- * @param dr
- */
+    /**
+     * Pumping menu Main tank
+     * @param dr
+     */
     void pumpMain(DrawInterface *dr) {
         dr->pump(&ctrlMain, &ctrlWell);
 
@@ -127,9 +130,9 @@ private:
         lcd.blink();
     }
 
-/**
- * Info menu
- */
+    /**
+     * Info menu
+     */
     void infoMenu() {
         lcd.setCursor(0, 0);
         if (time->isConn()) {
@@ -186,28 +189,28 @@ private:
 
     }
 
-/**
- * Heat warning
- */
+    /**
+     * Heat warning
+     */
     void warnHeat() {
         lcd.setCursor(0, 0);
         lcd.print(F(" Overheating!   "));
 
-        int temp = rule->getHeat();
         lcd.setCursor(0, 1);
-        lcd.print(F(" "));
-        if (temp > -1 && temp < 10) lcd.print(F(" "));
-        lcd.print(temp);
+
+        int temp = rule->getHeat();
+
+        lcd.print(formatNumTemp(temp));
         lcd.write((char) 1);
 
-
         lcd.print(F(" FAN:"));
-        lcd.print(rule->getFanSpeed());
+        lcd.print(formatUint8(rule->getFanSpeed()));
+        lcd.print(F("   "));
     }
 
-/**
- * Heat information
- */
+    /**
+     * Heat information
+     */
     void infoHeat() {
         lcd.setCursor(0, 0);
 
@@ -223,9 +226,9 @@ private:
         lcd.print(F("   "));
 
         lcd.setCursor(0, 1);
-        lcd.print(F("Fan: "));
+        lcd.print(F(" Fan: "));
         lcd.print(formatUint8(rule->getFanSpeed()));
-        lcd.print(F("        "));
+        lcd.print(F("       "));
 
     }
 
@@ -322,11 +325,14 @@ public:
             case 7:
                 return this->warnHeat();
 
+
+                //
+                // Backward menu 2
             case 254:
                 return this->infoHeat();
 
                 //
-                // This menu is active only when clock is connected!
+                // Backward menu 1
             case 255:
                 return this->infoMenu();
         }
