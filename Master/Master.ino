@@ -54,5 +54,9 @@ void loop() {
 //
 // Rest of the junk, kept as tests
 void loop_() {
-    read.test();
+    //read.test();
+    if (spanSm.isActive()) rule.hark();
+
+
+    spanSm.tick();
 }

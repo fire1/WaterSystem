@@ -27,6 +27,8 @@ private:
     float heat = 0;
     uint8_t fan = 0;
 
+    float TempBeta = 0.0;    // initial parameters [K]
+    float TempRinf = 0.0;    // initial parameters [ohm]
 
     AsyncDelay beatLed;
     uint16_t beatLedLast = 0;
@@ -50,7 +52,12 @@ public:
         analogWrite(pinFanRss, 255);
 
         this->timePrepareTurnOn = LevelRefreshTimeWork * LevelSensorReads - 50;
+
+        TempBeta = (log(TempRT1 / TempRT2)) / ((1 / TempT1) - (1 / TempT2));
+        TempRinf = TempR0 * exp(-TempBeta / TempT0);
     }
+
+
 
     void hark() {
         this->handleWellMode();
@@ -358,45 +365,15 @@ private:
         TempRead.summary = TempRead.mean;
 
 
-        int temp = map(TempRead.mean, 419, 289, 15, 90);
-        this->heat = temp;
-/*
-    Serial.print(" TMP:  ");
-    Serial.print(TempRead.mean);
-    Serial.print(" / ");
+        float Vout = TempVin * ((float) (TempRead.mean) / 1024.0); // calc for ntc
+        float Rout = (TempRt * Vout / (TempVin - Vout));
 
-    Serial.print(temp);
-    Serial.println();
-*/
+        float TempK = (TempBeta / log(Rout / TempRinf)); // calc for temperature
+        this->heat = TempK - 273.15;
 
+        //Serial.println(this->heat);
     }
 
-    void readTemp_() {
-
-        if (TempRead.index < TempSampleReads) {
-            TempRead.summary += analogRead(pinTmpRss);
-            TempRead.index++;
-        }
-
-        if (TempRead.index >= TempSampleReads) {
-            TempRead.mean = TempRead.summary / TempRead.index;
-            TempRead.index = 1;
-            TempRead.summary = TempRead.mean;
-
-            //
-            // Calculation based on
-            //  https://solarduino.com/how-to-use-ntc-thermistor-to-measure-temperature/
-            float R2 = (TempPullupResistor * TempRead.mean) / (1023 - TempRead.mean);
-            float a, b, c, d, e = 2.718281828;
-
-            a = 1 / TempTermistorT1Val;
-            b = log10(TempTermistorValue / R2);
-            c = b / log10(e);
-            d = c / TempVoltageBValue;
-            float T2 = 1 / (a - d);
-            this->heat = T2 - 273.15;  // from Kelvin to Celsius
-        }
-    }
 
     //
     // Handles the overheating protection

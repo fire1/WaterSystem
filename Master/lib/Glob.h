@@ -26,12 +26,20 @@
 // Designed for AC loads has maximum junction temperature of 150°C
 // Operating junction temperature range. -40 to +125. °C
 #define stopMaxTemp 100
-
-const float TempPullupResistor = 10000;
-const float TempTermistorValue = 5000;
-const float TempTermistorT1Val = 298.15;
-const float TempVoltageBValue = 3470;
 const int TempSampleReads = 10;
+
+// source link https://www.instructables.com/NTC-Temperature-Sensor-With-Arduino/
+const float TempVin = 5.0;     // [V]
+const float TempRt = 10000;    // Resistor t [ohm]
+const float TempR0 = 5000;    // value of rct in T0 [ohm] / original 1000
+const float TempT0 = 298.15;   // use T0 in Kelvin [K]
+// use the datasheet to get this data.
+const float TempT1 = 273.15;      // [K] in datasheet 0º C
+const float TempT2 = 373.15;      // [K] in datasheet 100° C
+const float TempRT1 = 35563;   // [ohms]  resistance in T1
+const float TempRT2 = 549;    // [ohms]   resistance in T2
+
+
 
 
 //
@@ -141,8 +149,8 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 //
 // Schedules for pumping well
-const PumpSchedule ScheduleWellOnMainEasy = {12, 4, {80, 65, 50, 30}, {40, 360, 1440, 2880}};
-const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 35}, {30, 60, 1440}};
+const PumpSchedule ScheduleWellOnMainEasy = {12, 4, {80, 65, 50, 30}, {35, 360, 1440, 2880}};
+const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 45}, {30, 60, 1440}};
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
