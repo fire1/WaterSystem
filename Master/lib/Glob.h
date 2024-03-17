@@ -19,7 +19,7 @@
 #define pinWellPump A10  // Well pump pin putput
 #define pinMainPump A11  // Main pump pin output
 //
-// Cooling control and monitorin
+// Cooling control and monitoring
 #define pinTmpRss A9  // Temperature input / NTC-MF52AT
 #define pinFanRss 2   // Temperature fan for RSS
 //
