@@ -23,7 +23,7 @@ public:
     Cmd(Time *t)
             : time(t) {}
 
-    void hark(Read *read, Rule *rule, Heat *heat) {
+    void hark(Read *read, Draw *draw, Heat *heat) {
 
         //
         // Default message
@@ -149,7 +149,7 @@ public:
             }
 
             if (cmdName == F("heat")) {
-                uint8_t temp = (int) cmdData.toInt();
+                const uint8_t temp = (int) cmdData.toInt();
                 heat->setHeat(temp);
 
                 Serial.print(F("Setting heat at: "));
@@ -157,6 +157,13 @@ public:
 
                 output = F(" Fan speed at: ");
                 output += heat->getFanSpeed();
+            }
+
+            if (cmdName == F("warn")) {
+                const uint8_t screen = (uint8_t) cmdData.toInt();
+                draw->warn(screen);
+                output = F("Warning screen: ");
+                output += screen;
             }
 
 

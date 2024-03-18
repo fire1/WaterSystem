@@ -59,6 +59,8 @@ public:
     virtual bool isEditing() = 0;
 
     virtual bool isDisplayOn() = 0;
+
+    virtual void warn(uint8_t i, bool buzz = true) = 0;
 };
 
 const uint8_t PumpScheduleMaxIntervals = 8;
@@ -141,6 +143,12 @@ const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 45}, {30, 60, 1440}
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
+#define NotifyTimeoutTime 2500
+
+//
+// Notification screens
+const uint8_t WarnMenu_Heat = 7;
+
 
 //
 // Debounce time for the joystick

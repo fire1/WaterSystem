@@ -6,6 +6,7 @@
 
 #include <AsyncDelay.h>
 #include <LiquidCrystal.h>
+#include "Glob.h"
 
 class Draw : public DrawInterface {
 private:
@@ -13,6 +14,7 @@ private:
     Buzz *buzz;
     Read *read;
     AsyncDelay sleepLed;
+    AsyncDelay notifyTimeout;
 
     enum HoldState {
         None = 0,
@@ -28,6 +30,7 @@ private:
     bool isEdit = false;
     bool isHold = false;
     bool isDraw = false;
+    bool isNotify = false;
 
     /**
     * Method to capture button presses
@@ -204,8 +207,9 @@ private:
         digitalWrite(pinBacklight, this->displayOn);
     }
 
-    //
-    // Weaks up the display
+/**
+ * Weak-up the display
+ */
     void weakUpDisplay() {
         this->displayOn = true;
         this->cursor = 0;
@@ -215,6 +219,9 @@ private:
         read->startWorkRead();
     }
 
+/**
+ * Handles the pin 13 led indication when display is suspended
+ */
     void handleSleepLed() {
         if (!this->displayOn && sleepLed.isExpired()) {
             digitalWrite(pinLed, !digitalRead(pinLed));
@@ -223,8 +230,19 @@ private:
 
     }
 
+/**
+ * Resets menu when notification is displayed
+ */
+    void handleNotification() {
+        if (this->isNotify && !this->displayOn)this->weakUpDisplay();
+
+        if (this->isNotify && this->notifyTimeout.isExpired()) {
+            this->resetCursor();
+        }
+    }
 
 public:
+
     Draw(Read *rd, Buzz *tn)
             : read(rd), buzz(tn) {
     }
@@ -320,6 +338,20 @@ public:
 
     uint8_t getCursor() {
         return this->cursor;
+    }
+
+/**
+ * Notification handler
+ * @param index
+ * @param isSoundEnabled
+ */
+    void warn(uint8_t index, bool isSoundEnabled=true) {
+        notifyTimeout.start(NotifyTimeoutTime, AsyncDelay::MILLIS);
+        this->cursor = index;
+        this->isNotify = true;
+
+        if (isSoundEnabled)
+            buzz->enter();
     }
 
     void resetCursor() {

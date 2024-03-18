@@ -296,6 +296,8 @@ private:
     }
 
 public:
+
+
     //
     // Construct menu
     Menu(Rule *ru, Read *rd, Time *tm, Heat *ht, Data *mdW, Data *mdM)
@@ -331,6 +333,8 @@ public:
         delay(1000);
     }
 
+
+
 /**
  * Draw the menu
  * @param dr
@@ -362,7 +366,7 @@ public:
                 return this->pumpWell(dr);
             case 6:
                 return this->pumpMain(dr);
-            case 7:
+            case WarnMenu_Heat:
                 return this->warnHeat();
 
 

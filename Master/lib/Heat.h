@@ -27,6 +27,7 @@ private:
     int8_t heat = 0;
     uint8_t fan = 0;
 
+    bool isAlarmOn = false;
     const float beta = (log(TempRT1 / TempRT2)) / ((1 / TempT1) - (1 / TempT2));
     const float rInf = TempR0 * exp(-beta / TempT0);
 
@@ -41,6 +42,15 @@ private:
 public:
     Heat(Buzz *bz) : buzz(bz) {
 
+    }
+
+    /**
+     * Handle the display
+     * @param dr
+     */
+    void warn(DrawInterface *dr) {
+        if (this->isAlarmOn)
+            dr->warn(WarnMenu_Heat, false);
     }
 
     void begin() {
@@ -128,9 +138,11 @@ private:
             ctrlWell.setOn(false);
         }
 
+        this->isAlarmOn = (this->heat >= this->edgeWorkingTemp);
 
-        if (this->heat >= edgeWorkingTemp && spanMd.isActive())
+        if (this->isAlarmOn && spanMd.isActive()) {
             buzz->alarm();
+        }
         int pwm;
 
         if (this->heat > 30 && this->heat < 75) {
