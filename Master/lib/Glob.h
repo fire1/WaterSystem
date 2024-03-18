@@ -143,7 +143,7 @@ const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 45}, {30, 60, 1440}
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
-#define NotifyTimeoutTime 2500
+#define WarnScreenTimeout 5000
 
 //
 // Notification screens

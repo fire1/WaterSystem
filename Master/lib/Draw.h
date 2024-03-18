@@ -14,7 +14,7 @@ private:
     Buzz *buzz;
     Read *read;
     AsyncDelay sleepLed;
-    AsyncDelay notifyTimeout;
+    AsyncDelay warnTimeout;
 
     enum HoldState {
         None = 0,
@@ -30,7 +30,7 @@ private:
     bool isEdit = false;
     bool isHold = false;
     bool isDraw = false;
-    bool isNotify = false;
+    bool isWarn = false;
 
     /**
     * Method to capture button presses
@@ -233,12 +233,17 @@ private:
 /**
  * Resets menu when notification is displayed
  */
-    void handleNotification() {
-        if (this->isNotify && !this->displayOn)this->weakUpDisplay();
+    void handleWarnMenu() {
+        if (!this->isWarn) return;
 
-        if (this->isNotify && this->notifyTimeout.isExpired()) {
+        if (!this->displayOn)
+            this->weakUpDisplay();
+
+        if (this->warnTimeout.isExpired()) {
             this->resetCursor();
+            this->isWarn = false;
         }
+
     }
 
 public:
@@ -333,7 +338,7 @@ public:
 
         this->suspendDisplay();
         this->handleSleepLed();
-
+        this->handleWarnMenu();
     }
 
     uint8_t getCursor() {
@@ -345,13 +350,13 @@ public:
  * @param index
  * @param isSoundEnabled
  */
-    void warn(uint8_t index, bool isSoundEnabled=true) {
-        notifyTimeout.start(NotifyTimeoutTime, AsyncDelay::MILLIS);
+    void warn(uint8_t index, bool isSoundEnabled = true) {
+        warnTimeout.start(WarnScreenTimeout, AsyncDelay::MILLIS);
         this->cursor = index;
-        this->isNotify = true;
+        this->isWarn = true;
 
         if (isSoundEnabled)
-            buzz->enter();
+            buzz->warn();
     }
 
     void resetCursor() {
