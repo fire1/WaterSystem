@@ -16,6 +16,8 @@ private:
     AsyncDelay sleepLed;
     AsyncDelay warnTimeout;
 
+    String warnMsg;
+
     enum HoldState {
         None = 0,
         Tick = 1,
@@ -345,11 +347,11 @@ public:
         return this->cursor;
     }
 
-/**
- * Notification handler
- * @param index
- * @param isSoundEnabled
- */
+    /**
+     * Notification handler
+     * @param index
+     * @param isSoundEnabled
+     */
     void warn(uint8_t index, bool isSoundEnabled = true) {
         warnTimeout.start(WarnScreenTimeout, AsyncDelay::MILLIS);
         this->cursor = index;
@@ -357,6 +359,25 @@ public:
 
         if (isSoundEnabled)
             buzz->warn();
+    }
+
+    /**
+     * Warns with message string
+     * @param index
+     * @param msg
+     */
+    void warn(uint8_t index, String msg) {
+
+        warnTimeout.start(WarnScreenTimeout, AsyncDelay::MILLIS);
+        this->isWarn = true;
+        this->cursor = index;
+        this->warnMsg = msg;
+
+        buzz->warn();
+    }
+
+    String getWarnMsg() {
+        return this->warnMsg;
     }
 
     void resetCursor() {

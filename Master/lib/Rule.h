@@ -24,6 +24,9 @@ private:
     bool isAlarmOn = false;
     uint32_t timePrepareTurnOn;
     unsigned long timerNextAction = 0;
+
+    uint8_t warnCase = 0;
+
 public:
     Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
             : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
@@ -40,13 +43,34 @@ public:
     }
 
 
-
     void hark() {
         this->handleWellMode();
         this->handleMainMode();
     }
 
+/**
+ * Display warning message
+ * @param dr
+ */
+    void warn(DrawInterface *dr) {
+        if (this->warnCase == 0)return;
+        String msg;
+        switch (warnCase) {
+            case 1:
+                msg += F(" Top tank full! ");
+                break;
+            case 2:
+                msg += F("Well tank empty!");
+                break;
+            case 3:
+                msg += F(" Well tank full!");
+                break;
+        }
 
+        dr->warn(WarnMenu_Rule, msg);
+        this->warnCase = 0;
+
+    }
 
     unsigned long getActionTimer() {
         if (timerNextAction > 0)
@@ -310,8 +334,6 @@ private:
             }
         }
     }
-
-
 
 
 };

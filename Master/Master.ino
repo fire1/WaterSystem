@@ -31,14 +31,21 @@ void loop() {
 #ifdef ENABLE_CMD
     cmd.hark(&read, &draw, &heat);  // input commands from serial
 #endif
-
+    //
+    // Listeners
     buzz.hark();
     rule.hark();
-    draw.menu(&menu);
     read.hark();
     heat.hark();
 
+    //
+    // Display menu
+    draw.menu(&menu);
+
+    //
+    // Warnings
     heat.warn(&draw);
+    rule.warn(&draw);
 
     if (spanSm.isActive()) {
         ctrlWell.ctrl();

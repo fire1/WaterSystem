@@ -235,6 +235,14 @@ private:
 
     }
 
+    void warnRule(DrawInterface *dr) {
+        lcd.setCursor(0, 0);
+        lcd.print(F(" Pumping STOP!  "));
+        lcd.setCursor(0, 1);
+        lcd.print(dr->getWarnMsg());
+
+    }
+
     /**
      * Formats numbers to proper display format
      * @param value
@@ -334,7 +342,6 @@ public:
     }
 
 
-
 /**
  * Draw the menu
  * @param dr
@@ -368,6 +375,8 @@ public:
                 return this->pumpMain(dr);
             case WarnMenu_Heat:
                 return this->warnHeat();
+            case WarnMenu_Rule:
+                return this->warnRule(dr);
 
 
                 //

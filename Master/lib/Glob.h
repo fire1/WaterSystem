@@ -61,6 +61,10 @@ public:
     virtual bool isDisplayOn() = 0;
 
     virtual void warn(uint8_t i, bool buzz = true) = 0;
+
+    virtual void warn(uint8_t i, String msg) = 0;
+
+    virtual String getWarnMsg() = 0;
 };
 
 const uint8_t PumpScheduleMaxIntervals = 8;
@@ -148,6 +152,7 @@ const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 45}, {30, 60, 1440}
 //
 // Notification screens
 const uint8_t WarnMenu_Heat = 7;
+const uint8_t WarnMenu_Rule = 8;
 
 
 //
