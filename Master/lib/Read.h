@@ -327,10 +327,10 @@ private:
             digitalWrite(pinLed, LOW);
             return true; // finish the reading
         } else if (spanLg.isActive()) {
-            Serial3.setTimeout(100);
+            Serial3.setTimeout(50);
             Serial3.write(startUartCommand);
             this->isWellReadSent = true;
-            dbgLn(F(" /UART/ Sending  "));
+           // dbgLn(F(" /UART/ Sending  "));
         }
         return false;
     }

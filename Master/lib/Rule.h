@@ -25,7 +25,7 @@ private:
     uint32_t timePrepareTurnOn;
     unsigned long timerNextAction = 0;
 
-    uint8_t warnCase = 0;
+    String warnCase = "";
 
 public:
     Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
@@ -48,33 +48,21 @@ public:
         this->handleMainMode();
     }
 
-/**
- * Display warning message
- * @param dr
- */
+    /**
+     * Display warning message
+     * @param dr
+     */
     void warn(DrawInterface *dr) {
-        if (this->warnCase == 0)return;
-        String msg = "";
-        switch (this->warnCase) {
-            case 1:
-                msg += F(" Top tank FULL! ");
-                break;
-            case 2:
-                msg += F(" Well tank VOID!");
-                break;
-            case 3:
-                msg += F(" Well tank FULL!");
-                break;
-            case 4:
-                msg += F(" Not a daytime! ");
-                break;
-        }
-
-        dr->warn(WarnMenu_Rule, msg);
-        this->warnCase = 0;
+        if (this->warnCase.length() == 0) return;
+        dr->warn(WarnMenu_Rule, this->warnCase);
+        this->warnCase = "";
 
     }
 
+    /**
+     * Action timer for next action
+     * @return
+     */
     unsigned long getActionTimer() {
         if (timerNextAction > 0)
             return timerNextAction - millis();
@@ -83,10 +71,27 @@ public:
 
 private:
 
+    /**
+     * Sets warning massage to be displayed.
+     * @param msg
+     */
+    void setWarn(String msg) {
+        this->warnCase = msg;
+    }
+
+    /**
+     * Converts minutes to millis
+     * @param minutes
+     * @return
+     */
     unsigned long calcMinutes(unsigned int minutes) {
         return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
     }
 
+    /**
+     * Safe way to check for daytime
+     * @return
+     */
     bool checkDaytime() {
         //
         // Wrapping time class locally
@@ -103,26 +108,17 @@ private:
         return this->isDaytime;
     }
 
-    //
-    // Defines work amplitude for Pump1
+    /**
+     * Pumping well amplitude
+     * @param workMin
+     * @param stopMin
+     */
     void pumpWell(uint8_t workMin, uint16_t stopMin) {
-
-#ifdef CHECK_DAYTIME
-        if (!this->checkDaytime()) {
-            this->timerNextAction=0;
-            this->warnCase=4;
-          //
-          // Stop the system
-          if (spanMx.isActive())  // every second display warning
-            Serial.println(F("Warning: STOP /well/ It is not daytime!"));
-          return;
-        }
-#endif
 
         //
         // Stop when is full well tank
         if (ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
-            this->warnCase = 3;
+            setWarn(F(" Well tank FULL!"));
             Serial.println(F("Warning: STOP Well tank is full!"));
             dbg(read->getWellLevel());
             dbg(F("cm / "));
@@ -150,11 +146,7 @@ private:
             Serial.println(this->timerNextAction);
             dbgLn();
 
-
             read->stopWorkRead();
-            //
-            // Set next
-
         }
         //
         // Prepare, read levels before start
@@ -182,34 +174,39 @@ private:
             Serial.println(this->timerNextAction);
             dbgLn();
 
-
+//#ifdef CHECK_DAYTIME
+            if (!this->checkDaytime()) {
+                this->timerNextAction = 0;
+                setWarn(F("Not a daytime?"));
+                Serial.println(F("Warning: STOP /well/ It is not daytime!"));
+                return;
+            }
+//#endif
             ctrlWell.setOn(true);
-
-
         }
     }
 
     //
     // Controls pump1
     void handleWellMode() {
-        // if (spanMd.isActive()) {
-        //   uint8_t targetLevel = this->getTargetMode(this->modeWell, LevelSensorWellMin);
-        //   Serial.println(targetLevel);
-        // }
 
         //
         // Stop when Main is full
         if (ctrlMain.isOn() && LevelSensorBothMax >= read->getMainLevel()) {
             ctrlMain.setOn(false);
-            this->warnCase = 1; // Warn for Full top tank
+
+            setWarn(F(" Top tank FULL! "));
             dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
+
             read->stopWorkRead();
         }
 
         if (ctrlMain.isOn() && LevelSensorStopWell <= read->getWellLevel()) {
             ctrlMain.setOn(false);
-            this->warnCase = 2; // Warn for empty well tank
+
+            setWarn(F(" Well tank VOID!"));
             dbgLn(F("CTRL /Main/ turn off /Well empty/"));
+
             read->stopWorkRead();
         }
 
@@ -242,6 +239,10 @@ private:
         }
     }
 
+    /**
+     * Pump schedule for the well mode
+     * @param schedule
+     */
     void pumpWellSchedule(const PumpSchedule &schedule) {
         uint8_t main = read->getMainLevel();
         uint16_t stop = 180;
@@ -263,21 +264,8 @@ private:
      */
     void pumpMain() {
 
-#ifdef CHECK_DAYTIME
-        if (!this->checkDaytime()) {
-            this->warnCase=4;
-          //
-          // Stop the system
-          if (spanMx.isActive())  // every second display warning
-            Serial.println(F("Warning: STOP /main/ It is not daytime!"));
-          return;
-        }
-#endif
-
         uint8_t main = read->getMainLevel();
-
         if (!ctrlMain.isOn() && !ctrlWell.isOn()) {
-
             read->startWorkRead();
 
             dbg(F("CTRL /Main/ at level "));
@@ -304,22 +292,21 @@ private:
             case 0:  // Noting
                 break;
             case 1:  // Full
-                if (levelMain > 32 && levelWell < 60)
+                if (levelMain > 32 && levelWell < 70)
                     return pumpMain();
             case 2:  // Half
-                if (levelMain > 47 && levelWell < 40)
+                if (levelMain > 47 && levelWell < 55)
                     return pumpMain();
             case 3:  // Void
-                if (levelMain > 80 && levelWell < 30)
+                if (levelMain > 80 && levelWell < 40)
                     return pumpMain();
         }
     }
 
-
-    uint8_t getTargetMode(Data *mode, const uint8_t levelMin) {
-        return map(mode->value(), 0, mode->length(), LevelSensorBothMax, levelMin);
-    }
-
+    /**
+     * Led beet for indicating the modes
+     * @param ms
+     */
     void beatWell(int ms) {
 
         if (ms == 0) {

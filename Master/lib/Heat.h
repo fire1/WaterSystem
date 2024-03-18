@@ -28,6 +28,7 @@ private:
     uint8_t fan = 0;
 
     bool isAlarmOn = false;
+    bool isReading = true;
     const float beta = (log(TempRT1 / TempRT2)) / ((1 / TempT1) - (1 / TempT2));
     const float rInf = TempR0 * exp(-beta / TempT0);
 
@@ -61,7 +62,7 @@ public:
     }
 
     void hark() {
-        if (spanSm.isActive())
+        if (this->isReading && spanSm.isActive())
             this->read();
 
 
@@ -78,8 +79,10 @@ public:
 
     void setHeat(int8_t value) {
         this->heat = value;
+        this->isReading = false;
         this->handle();
     }
+
 
     void setFan(uint8_t pwm) {
         this->fan = pwm;
