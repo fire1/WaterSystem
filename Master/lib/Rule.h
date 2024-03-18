@@ -54,8 +54,8 @@ public:
  */
     void warn(DrawInterface *dr) {
         if (this->warnCase == 0)return;
-        String msg;
-        switch (warnCase) {
+        String msg = "";
+        switch (this->warnCase) {
             case 1:
                 msg += F(" Top tank FULL! ");
                 break;
@@ -64,6 +64,9 @@ public:
                 break;
             case 3:
                 msg += F(" Well tank FULL!");
+                break;
+            case 4:
+                msg += F(" Not a daytime! ");
                 break;
         }
 
@@ -107,6 +110,7 @@ private:
 #ifdef CHECK_DAYTIME
         if (!this->checkDaytime()) {
             this->timerNextAction=0;
+            this->warnCase=4;
           //
           // Stop the system
           if (spanMx.isActive())  // every second display warning
@@ -118,6 +122,7 @@ private:
         //
         // Stop when is full well tank
         if (ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
+            this->warnCase = 3;
             Serial.println(F("Warning: STOP Well tank is full!"));
             dbg(read->getWellLevel());
             dbg(F("cm / "));
@@ -196,14 +201,14 @@ private:
         // Stop when Main is full
         if (ctrlMain.isOn() && LevelSensorBothMax >= read->getMainLevel()) {
             ctrlMain.setOn(false);
-
+            this->warnCase = 1; // Warn for Full top tank
             dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
             read->stopWorkRead();
         }
 
-        if (ctrlMain.isOn() && 85 <= read->getWellLevel()) {
+        if (ctrlMain.isOn() && LevelSensorStopWell <= read->getWellLevel()) {
             ctrlMain.setOn(false);
-
+            this->warnCase = 2; // Warn for empty well tank
             dbgLn(F("CTRL /Main/ turn off /Well empty/"));
             read->stopWorkRead();
         }
@@ -260,6 +265,7 @@ private:
 
 #ifdef CHECK_DAYTIME
         if (!this->checkDaytime()) {
+            this->warnCase=4;
           //
           // Stop the system
           if (spanMx.isActive())  // every second display warning
