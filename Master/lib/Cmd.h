@@ -23,7 +23,7 @@ public:
     Cmd(Time *t)
             : time(t) {}
 
-    void hark(Read *read, Rule *rule) {
+    void hark(Read *read, Rule *rule, Heat *heat) {
 
         //
         // Default message
@@ -143,20 +143,20 @@ public:
 
             if (cmdName == F("cool")) {
                 uint8_t pwm = (uint8_t) cmdData.toInt();
-                rule->setFan(pwm);
+                heat->setFan(pwm);
                 output = F(" Sets cooling fan to: ");
-                output += rule->getFanSpeed();
+                output += heat->getFanSpeed();
             }
 
             if (cmdName == F("heat")) {
                 uint8_t temp = (int) cmdData.toInt();
-                rule->setHeat(temp);
+                heat->setHeat(temp);
 
-                Serial.print(F("Seting heat at: "));
+                Serial.print(F("Setting heat at: "));
                 Serial.println(temp);
 
                 output = F(" Fan speed at: ");
-                output += rule->getFanSpeed();
+                output += heat->getFanSpeed();
             }
 
 

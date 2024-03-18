@@ -9,10 +9,10 @@ private:
     Rule *rule;
     Read *read;
     Time *time;
+    Heat *heat;
     Data *modeWell;
     Data *modeMain;
     char formatBuffer[4];
-    bool isLevelReset = false;
 
     /**
       * Draw level from 0 to 10 bars
@@ -201,13 +201,13 @@ private:
 
         lcd.setCursor(0, 1);
 
-        int temp = rule->getHeat();
+        int temp = heat->getTemperature();
 
         lcd.print(formatNumTemp(temp));
         lcd.write((char) 1);
 
         lcd.print(F(" FAN:"));
-        lcd.print(formatUint8(rule->getFanSpeed()));
+        lcd.print(formatUint8(heat->getFanSpeed()));
         lcd.print(F("   "));
     }
 
@@ -224,13 +224,13 @@ private:
 
         lcd.print(F(" "));
         lcd.print(F("SSR:"));
-        lcd.print(formatNumTemp(rule->getHeat()));
+        lcd.print(formatNumTemp(heat->getTemperature()));
         lcd.write((char) 1);
         lcd.print(F("   "));
 
         lcd.setCursor(0, 1);
         lcd.print(F(" Fan: "));
-        lcd.print(formatUint8(rule->getFanSpeed()));
+        lcd.print(formatUint8(heat->getFanSpeed()));
         lcd.print(F("       "));
 
     }
@@ -298,8 +298,8 @@ private:
 public:
     //
     // Construct menu
-    Menu(Rule *ru, Read *rd, Time *tm, Data *mdW, Data *mdM)
-            : rule(ru), read(rd), time(tm), modeWell(mdW), modeMain(mdM) {
+    Menu(Rule *ru, Read *rd, Time *tm, Heat *ht, Data *mdW, Data *mdM)
+            : rule(ru), read(rd), time(tm), heat(ht), modeWell(mdW), modeMain(mdM) {
     }
 
     void begin() {

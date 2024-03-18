@@ -29,7 +29,7 @@ void setup() {
 void loop() {
     time.hark();
 #ifdef ENABLE_CMD
-    cmd.hark(&read, &rule);  // input commands from serial
+    cmd.hark(&read, &rule, &heat);  // input commands from serial
 #endif
 
     buzz.hark();
