@@ -57,13 +57,13 @@ public:
         String msg;
         switch (warnCase) {
             case 1:
-                msg += F(" Top tank full! ");
+                msg += F(" Top tank FULL! ");
                 break;
             case 2:
-                msg += F("Well tank empty!");
+                msg += F(" Well tank VOID!");
                 break;
             case 3:
-                msg += F(" Well tank full!");
+                msg += F(" Well tank FULL!");
                 break;
         }
 
