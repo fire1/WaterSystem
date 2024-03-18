@@ -27,7 +27,6 @@ private:
     unsigned long debounceTime = 0;
     uint8_t lastBtnPress = 0;
     uint8_t cursor = 0;
-    bool enter = false;
     bool displayOn = true;
     bool isEdit = false;
     bool isHold = false;
