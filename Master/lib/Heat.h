@@ -31,7 +31,7 @@ private:
     const float beta = (log(TempRT1 / TempRT2)) / ((1 / TempT1) - (1 / TempT2));
     const float rInf = TempR0 * exp(-beta / TempT0);
 
-    const uint8_t edgeWorkingTemp = stopMaxTemp - 3;
+    const uint8_t edgeWorkingTemp = stopMaxTemp - 10;
 
     struct Temperature {
         int summary = 0;

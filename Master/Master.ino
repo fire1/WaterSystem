@@ -36,7 +36,9 @@ void loop() {
     rule.hark();
     draw.menu(&menu);
     read.hark();
+    heat.hark();
 
+    heat.warn(&draw);
 
     if (spanSm.isActive()) {
         ctrlWell.ctrl();
