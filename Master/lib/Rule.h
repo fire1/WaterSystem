@@ -46,6 +46,7 @@ public:
     void hark() {
         this->handleWellMode();
         this->handleMainMode();
+        this->handleLevelStop();
     }
 
     /**
@@ -115,21 +116,6 @@ private:
      */
     void pumpWell(uint8_t workMin, uint16_t stopMin) {
 
-        //
-        // Stop when is full well tank
-        if (ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
-            setWarn(F(" Well tank FULL!"));
-            Serial.println(F("Warning: STOP Well tank is full!"));
-            dbg(read->getWellLevel());
-            dbg(F("cm / "));
-            dbg(LevelSensorBothMax);
-            dbg(F("cm "));
-            dbgLn();
-            ctrlWell.setOn(false);
-            read->stopWorkRead();
-            return;
-        }
-
         unsigned long msTimeToOff = this->calcMinutes(workMin);
         unsigned long msTimeToOn = this->calcMinutes(stopMin);
 
@@ -190,27 +176,6 @@ private:
     // Controls pump1
     void handleWellMode() {
 
-        //
-        // Stop when Main is full
-        if (ctrlMain.isOn() && LevelSensorBothMax >= read->getMainLevel()) {
-            ctrlMain.setOn(false);
-
-            setWarn(F(" Top tank FULL! "));
-            dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
-
-            read->stopWorkRead();
-        }
-
-        if (ctrlMain.isOn() && LevelSensorStopWell <= read->getWellLevel()) {
-            ctrlMain.setOn(false);
-
-            setWarn(F(" Well tank VOID!"));
-            dbgLn(F("CTRL /Main/ turn off /Well empty/"));
-
-            read->stopWorkRead();
-        }
-
-
         switch (modeWell->value()) {
             default:
             case 0:
@@ -265,6 +230,7 @@ private:
     void pumpMain() {
 
         uint8_t main = read->getMainLevel();
+
         if (!ctrlMain.isOn() && !ctrlWell.isOn()) {
             read->startWorkRead();
 
@@ -280,9 +246,8 @@ private:
     void handleMainMode() {
         uint8_t levelMain = read->getMainLevel();
         uint8_t levelWell = read->getWellLevel();
-
         //
-        // Stop this function when sensor is not avialable
+        // Stop this function when sensor is not available
         if (levelMain == 0)
             return;
 
@@ -302,6 +267,51 @@ private:
                     return pumpMain();
         }
     }
+
+    /**
+     * Monitors the levels and turn off on Low or Full tank state
+     */
+    void handleLevelStop() {
+        uint8_t levelMain = read->getMainLevel();
+        uint8_t levelWell = read->getWellLevel();
+
+        //
+        // Stop Well when is full
+        if (ctrlWell.isOn() && LevelSensorBothMax >= levelWell) {
+            setWarn(F(" Well tank FULL!"));
+            Serial.println(F("Warning: STOP Well tank is full!"));
+            dbg(read->getWellLevel());
+            dbg(F("cm / "));
+            dbg(LevelSensorBothMax);
+            dbg(F("cm "));
+            dbgLn();
+            ctrlWell.setOn(false);
+            read->stopWorkRead();
+            return;
+        }
+
+        //
+        // Stop Main when Main is full
+        if (ctrlMain.isOn() && LevelSensorBothMax >= levelMain) {
+            ctrlMain.setOn(false);
+
+            setWarn(F(" Top tank FULL! "));
+            dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
+
+            read->stopWorkRead();
+        }
+        //
+        // Stop when well is empty
+        if (ctrlMain.isOn() && LevelSensorStopWell <= levelWell) {
+            ctrlMain.setOn(false);
+
+            setWarn(F(" Well tank VOID!"));
+            dbgLn(F("CTRL /Main/ turn off /Well empty/"));
+
+            read->stopWorkRead();
+        }
+    }
+
 
     /**
      * Led beet for indicating the modes
