@@ -237,7 +237,7 @@ private:
 
     void warnRule(DrawInterface *dr) {
         lcd.setCursor(0, 0);
-        lcd.print(F(" Pumping STOP!  "));
+        lcd.print(F(" Pump stopped..."));
         lcd.setCursor(0, 1);
         lcd.print(dr->getWarnMsg());
 

@@ -279,7 +279,7 @@ private:
         //
         // Stop Well when is full
         if (ctrlWell.isOn() && LevelSensorBothMax >= levelWell) {
-            setWarn(F(" Well tank FULL!"));
+            setWarn(F(" WELL tank FULL!"));
             Serial.println(F("Warning: STOP Well tank is full!"));
             dbg(read->getWellLevel());
             dbg(F("cm / "));
@@ -296,7 +296,7 @@ private:
         if (ctrlMain.isOn() && LevelSensorBothMax >= levelMain) {
             ctrlMain.setOn(false);
 
-            setWarn(F(" Top tank FULL! "));
+            setWarn(F(" TOP tank FULL! "));
             dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
 
             read->stopWorkRead();
@@ -306,7 +306,7 @@ private:
         if (ctrlMain.isOn() && LevelSensorStopWell <= levelWell) {
             ctrlMain.setOn(false);
 
-            setWarn(F(" Well tank VOID!"));
+            setWarn(F(" WELL tank VOID!"));
             dbgLn(F("CTRL /Main/ turn off /Well empty/"));
 
             read->stopWorkRead();
