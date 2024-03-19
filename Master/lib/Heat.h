@@ -55,7 +55,7 @@ public:
     }
 
     void begin() {
-        pinMode(pinTmpRss, INPUT);
+        pinMode(pinTmpRss, INPUT_PULLUP);
         pinMode(pinFanRss, OUTPUT);
         analogWrite(pinFanRss, 255);
         delay(200);

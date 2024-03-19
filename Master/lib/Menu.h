@@ -21,7 +21,7 @@ private:
       */
     void drawLevel(byte level, byte min) {
 
-        uint8_t bars = map(level, min, LevelSensorBothMax, 1, 10);
+        uint8_t bars = map(level, min + 2, LevelSensorBothMax + 5, 1, 10);
         // uint8_t bars = map(level, 100, 23, 1, 10);
         if (bars > 10) {
             bars = 10;

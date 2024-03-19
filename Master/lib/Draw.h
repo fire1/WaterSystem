@@ -366,6 +366,7 @@ public:
      * @param msg
      */
     void warn(uint8_t index, String msg) {
+        if (!msg) return;
 
         warnTimeout.start(WarnScreenTimeout, AsyncDelay::MILLIS);
         this->isWarn = true;
@@ -376,6 +377,7 @@ public:
     }
 
     String getWarnMsg() {
+        Serial.println(this->warnMsg);
         return this->warnMsg;
     }
 

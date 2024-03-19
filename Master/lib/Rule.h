@@ -54,7 +54,8 @@ public:
      * @param dr
      */
     void warn(DrawInterface *dr) {
-        if (this->warnCase.length() == 0) return;
+
+        if (this->warnCase == "") return;
         dr->warn(WarnMenu_Rule, this->warnCase);
         this->warnCase = "";
 
