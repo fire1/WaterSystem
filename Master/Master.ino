@@ -1,8 +1,5 @@
 #include <Arduino.h>
 
-//
-// Private libs
-
 #include "lib/Glob.h"
 #include "lib/Init.h"
 
@@ -21,14 +18,15 @@ void setup() {
     draw.begin();
     rule.begin();
     buzz.begin();
-
-#ifdef ENABLE_CLOCK
     time.begin();
-#endif
+
 }
 
 void loop() {
+    //
+    // Debugging
     cmd.listen();
+
     time.hark();
     //
     // Listeners
@@ -46,6 +44,9 @@ void loop() {
     heat.warn(&draw);
     rule.warn(&draw);
 
+    //
+    // Handles power on/off
+    //  with some delay...
     if (spanSm.isActive()) {
         ctrlWell.ctrl();
         ctrlMain.ctrl();
