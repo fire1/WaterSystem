@@ -2,6 +2,7 @@
 
 //
 // Private libs
+
 #include "lib/Glob.h"
 #include "lib/Init.h"
 
@@ -27,10 +28,8 @@ void setup() {
 }
 
 void loop() {
+    cmd.listen();
     time.hark();
-#ifdef ENABLE_CMD
-    cmd.hark(&read, &draw, &heat);  // input commands from serial
-#endif
     //
     // Listeners
     buzz.hark();

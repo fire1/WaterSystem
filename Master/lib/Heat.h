@@ -62,11 +62,20 @@ public:
     }
 
     void hark() {
+
+        if (cmd.set(F("heat"), this->heat))
+            this->isReading = false;
+
+        if (cmd.show(F("heat"), 1000))
+            cmd.print(F("Heat: "), this->heat);
+
+
         if (this->isReading && spanSm.isActive())
             this->read();
 
-
         this->handle();
+
+
     }
 
     //

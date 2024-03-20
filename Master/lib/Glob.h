@@ -1,16 +1,18 @@
-#include <stdint.h>
+
 
 #ifndef Global_h
 #define Global_h
 
-
+#include <stdint.h>
 #include <SoftwareSerial.h>
 #include <LiquidCrystal.h>
 #include <AsyncDelay.h>
 #include <Wire.h>
+#include <CmdSerial.h>
 
 #include "Setup.h"
 
+CmdSerial cmd;
 
 #define pinLed 13
 #define pinTone 9
@@ -187,7 +189,6 @@ extern Span spanMx(250003);  // Loop span at 60k loops
 #include "Heat.h"
 #include "Menu.h"
 #include "Draw.h"
-#include "Cmd.h"
 
 
 #endif

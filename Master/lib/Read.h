@@ -111,6 +111,16 @@ public:
                 Serial.println(F("Warning: Unable to read main sensor!"));
         }
         */
+
+        cmd.set(F("well"), this->well);
+        cmd.set(F("main"), this->main);
+
+        if (cmd.show(F("well")))
+            cmd.print(F("Well level is:"), this->well);
+
+        if (cmd.show(F("main")))
+            cmd.print(F("Main level is:"), this->well);
+
     }
 
     void test() {
@@ -330,7 +340,7 @@ private:
             Serial3.setTimeout(50);
             Serial3.write(startUartCommand);
             this->isWellReadSent = true;
-           // dbgLn(F(" /UART/ Sending  "));
+            // dbgLn(F(" /UART/ Sending  "));
         }
         return false;
     }

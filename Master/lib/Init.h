@@ -48,8 +48,4 @@ Menu menu(&rule, &read, &time, &heat, &modeWellTank, &modeMainTank);
 // Draw driver
 Draw draw(&read, &buzz);
 
-//
-// Comands
-Cmd cmd(&time);
-
 #endif
