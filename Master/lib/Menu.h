@@ -41,7 +41,12 @@ private:
     void home(DrawInterface *dr) {
 
         lcd.setCursor(0, 0);
-        lcd.print(F("Tank1 "));
+        lcd.print(F("Tank1"));
+        if(ctrlWell.isTerminated())
+          lcd.write((char)5);
+        else
+          lcd.print(F(" "));
+
         int level1 = read->getWellLevel();
 
         if (level1 == 0 || level1 > LevelSensorWellMin)
@@ -50,8 +55,14 @@ private:
             drawLevel(level1, LevelSensorWellMin);
 
         lcd.setCursor(0, 1);
-        lcd.print(F("Tank2 "));
+        lcd.print(F("Tank2"));
+
         int level2 = read->getMainLevel();
+        if(ctrlMain.isTerminated())
+          lcd.write((char)5);
+        else
+          lcd.print(F(" "));
+
         if (level2 == 0 || level2 > LevelSensorMainMin)
             lcd.print(F("[-?-]     "));
         else
@@ -322,12 +333,14 @@ public:
         byte charDayIcon[8] = {B00000, B10101, B01010, B10001, B01010, B10101, B00000, B00000};
         byte charNightIcon[8] = {B00000, B01110, B10101, B11011, B10101, B01110, B00000, B00000};
         byte charClockIcon[8] = {B00000, B01110, B10101, B10111, B10001, B01110, B00000, B00000};
+        byte charTerminate[8] = { B10100, B01000, B10100, B00000, B00000, B00000, B00000, B00000 };
 
         lcd.createChar(0, charBarLevel);
         lcd.createChar(1, charCelsius);
         lcd.createChar(2, charDayIcon);
         lcd.createChar(3, charNightIcon);
         lcd.createChar(4, charClockIcon);
+        lcd.createChar(5, charTerminate);
 
 
 
