@@ -46,6 +46,10 @@ public:
     return this->terminated;
   }
 
+  void clearTerminate() {
+    this->terminated = false;
+  }
+
   byte getPin() {
     return this->pin;
   }

@@ -269,6 +269,8 @@ public:
 
         if (this->onClick(pump->getBtn())) {
             pump->toggle();
+            pump->clearTerminate(); // When human interaction is made, we will clear terminate.
+
             if (stop->isOn())
                 stop->setOn(false);
 
