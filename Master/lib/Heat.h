@@ -126,17 +126,14 @@ private:
         //
         // Debug fan speed
         cmd.set(F("cool"), this->fan);
-
-        if (cmd.show(F("cool")))
-            cmd.print(F("Cool:"), this->fan);
-
         //
         // Debug temperature
-        if (cmd.set(F("heat"), this->heat))
-            this->isReading = false;
+        if (cmd.set(F("heat"), this->heat)) this->isReading = false;
 
-        if (cmd.show(F("heat")))
-            cmd.print(F("Heat:"), this->heat);
+        //
+        // Show internal values for cooling fan / SSR heat.
+        if (cmd.show(F("cool"))) cmd.print(F("Cool:"), this->fan);
+        if (cmd.show(F("heat"))) cmd.print(F("Heat:"), this->heat);
     }
 
     /**

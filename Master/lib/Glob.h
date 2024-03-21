@@ -11,7 +11,9 @@
 #include <CmdSerial.h>
 
 #include "Setup.h"
-
+//
+// Used as debugging tool for 
+//  Serial Input/Output.
 CmdSerial cmd;
 
 #define pinLed 13
