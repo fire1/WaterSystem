@@ -100,7 +100,7 @@ private:
         if (time->isConn()) {
             //
             // Check for daytime each minutes
-            if (spanMx.isActive())
+            if (spanMx.active())
                 this->isDaytime = time->isDaytime();  //pass state for daytime locally
 
         } else {
@@ -138,7 +138,7 @@ private:
         //
         // Prepare, read levels before start
         if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= (msTimeToOn - timePrepareTurnOn))) {
-            if (spanLg.isActive()) {
+            if (spanLg.active()) {
                 read->startWorkRead();
                 buzz->alarm();
 

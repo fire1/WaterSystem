@@ -328,7 +328,7 @@ public:
 
         this->input();
 
-        if (spanMd.isActive()) {
+        if (spanMd.active()) {
 
             if (this->displayOn && this->cursor == 0)
                 read->startWorkRead();

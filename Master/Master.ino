@@ -47,7 +47,7 @@ void loop() {
     //
     // Handles power on/off
     //  with some delay...
-    if (spanSm.isActive()) {
+    if (spanSm.active()) {
         ctrlWell.ctrl();
         ctrlMain.ctrl();
     }
@@ -64,7 +64,7 @@ void loop() {
 // Rest of the junk, kept as tests
 void loop_() {
     //read.test();
-    if (spanSm.isActive()) rule.hark();
+    if (spanSm.active()) rule.hark();
 
 
     spanSm.tick();

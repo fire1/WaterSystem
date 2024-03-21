@@ -1,34 +1,38 @@
+#ifndef Span_h
+#define Span_h
 
-#ifndef Loop_h
-#define Loop_h
+#include <Arduino.h>
+
+/**
+ * @class Time span class
+ */
 class Span {
 
 private:
-  bool active = false;
-  uint16_t length;
-  unsigned long index;
+    bool isActive = false;
+    uint16_t length;
+    unsigned long previousMillis = 0;
 
 
 public:
 
-  Span(uint16_t len)
-    : length(len) {}
+    Span(uint16_t len)
+            : length(len) {}
 
-  bool isActive() {
-    return active;
-  }
+    bool active() {
+        return isActive;
+    }
 
-  void tick() {
-    if (index >= length) {
-      index = 0;
-      active = true;
-      return;
-    } else
-      index++;
-    active = false;
-  }
+    void tick() {
+        unsigned long currentMillis = millis();  // Get the current time
+        // Check if enough time has passed for the span to be active
+        if (currentMillis - previousMillis >= length) {
+            isActive = true;
+            previousMillis = currentMillis;
+        } else {
+            isActive = false;
+        }
+    }
 };
-
-
 
 #endif

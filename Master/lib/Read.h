@@ -81,7 +81,9 @@ public:
     void hark() {
         if (millis() < 200) return;
 
-        if (spanMx.isActive()) {
+        this->debug();
+
+        if (spanMx.active()) {
             sensorWell.error = 0;
             sensorMain.error = 0;
         }
@@ -104,7 +106,7 @@ public:
             dbgLn("Turning Off Main sensor power.");
         }
 /*
-        if (spanLg.isActive()) {
+        if (spanLg.active()) {
             if (sensorWell.error >= DisableSensorError)
                 Serial.println(F("Warning: Unable to read well sensor!"));
             if (sensorMain.error >= DisableSensorError)
@@ -112,14 +114,7 @@ public:
         }
         */
 
-        cmd.set(F("well"), this->well);
-        cmd.set(F("main"), this->main);
 
-        if (cmd.show(F("well")))
-            cmd.print(F("Well level is:"), this->well);
-
-        if (cmd.show(F("main")))
-            cmd.print(F("Main level is:"), this->well);
 
     }
 
@@ -336,7 +331,7 @@ private:
 
             digitalWrite(pinLed, LOW);
             return true; // finish the reading
-        } else if (spanLg.isActive()) {
+        } else if (spanLg.active()) {
             Serial3.setTimeout(50);
             Serial3.write(startUartCommand);
             this->isWellReadSent = true;
@@ -370,6 +365,17 @@ private:
     }
 
 #endif
+
+    void debug() {
+        cmd.set(F("well"), this->well);
+        cmd.set(F("main"), this->main);
+
+        if (cmd.show(F("well")))
+            cmd.print(F("Well level is:"), this->well);
+
+        if (cmd.show(F("main")))
+            cmd.print(F("Main level is:"), this->well);
+    }
 
 };
 

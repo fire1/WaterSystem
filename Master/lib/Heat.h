@@ -62,15 +62,8 @@ public:
     }
 
     void hark() {
-
-        if (cmd.set(F("heat"), this->heat))
-            this->isReading = false;
-
-        if (cmd.show(F("heat"), 1000))
-            cmd.print(F("Heat: "), this->heat);
-
-
-        if (this->isReading && spanSm.isActive())
+        this->debug();
+        if (this->isReading && spanSm.active())
             this->read();
 
         this->handle();
@@ -126,6 +119,27 @@ private:
     }
 
     /**
+     *
+     */
+    void debug() {
+
+        //
+        // Debug fan speed
+        cmd.set(F("cool"), this->fan);
+
+        if (cmd.show(F("cool")))
+            cmd.print(F("Cool:"), this->fan);
+
+        //
+        // Debug temperature
+        if (cmd.set(F("heat"), this->heat))
+            this->isReading = false;
+
+        if (cmd.show(F("heat")))
+            cmd.print(F("Heat:"), this->heat);
+    }
+
+    /**
      * Calculate temperature from readings
      * @param value
      * @return
@@ -143,7 +157,7 @@ private:
      */
     void handle() {
         if (this->heat >= stopMaxTemp) {
-            if (spanLg.isActive())
+            if (spanLg.active())
                 Serial.println(F("Warning: Overeating temperature for  SSR!"));
 
             ctrlMain.setOn(false);
@@ -152,7 +166,7 @@ private:
 
         this->isAlarmOn = (this->heat >= this->edgeWorkingTemp);
 
-        if (this->isAlarmOn && spanMd.isActive()) {
+        if (this->isAlarmOn && spanMd.active()) {
             buzz->alarm();
         }
         int pwm;
@@ -169,7 +183,7 @@ private:
 
         this->fan = (uint8_t) pwm;
 
-        if (spanSm.isActive()) {
+        if (spanSm.active()) {
             if (pwm == 0) {
                 digitalWrite(pinFanRss, LOW);
                 return;

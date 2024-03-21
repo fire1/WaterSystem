@@ -78,12 +78,12 @@ public:
   void hark() {
     if (!this->isConnected) return;
 
-    if (spanMx.isActive()) {
+    if (spanMx.active()) {
       this->daytime = resolveDaytime();
     }
 
     if (this->daytime) {
-      if (spanMx.isActive())
+      if (spanMx.active())
         digitalWrite(pinLed, !digitalRead(pinLed));
     }
   }
