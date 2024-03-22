@@ -12,7 +12,7 @@
 
 #include "Setup.h"
 //
-// Used as debugging tool for 
+// Used as debugging tool for
 //  Serial Input/Output.
 CmdSerial cmd;
 
@@ -51,44 +51,44 @@ class Tone;
 class DrawInterface {
 public:
 
-    // Pure virtual functions - These functions must be implemented by derived classes
-    virtual uint8_t getCursor() = 0;
+  // Pure virtual functions - These functions must be implemented by derived classes
+  virtual uint8_t getCursor() = 0;
 
-    virtual void edit(Data *d) = 0;
+  virtual void edit(Data *d) = 0;
 
-    virtual void pump(Pump *p, Pump *s,bool overwrite = false) = 0;
+  virtual void pump(Pump *p, Pump *s, bool overwrite = false) = 0;
 
-    virtual void resetCursor();
+  virtual void resetCursor();
 
-    virtual bool isEditing() = 0;
+  virtual bool isEditing() = 0;
 
-    virtual bool isDisplayOn() = 0;
+  virtual bool isDisplayOn() = 0;
 
-    virtual void warn(uint8_t i, bool buzz = true) = 0;
+  virtual void warn(uint8_t i, bool buzz = true) = 0;
 
-    virtual void warn(uint8_t i, String msg) = 0;
+  virtual void warn(uint8_t i, String msg) = 0;
 
-    virtual String getWarnMsg() = 0;
+  virtual String getWarnMsg() = 0;
 };
 
 const uint8_t PumpScheduleMaxIntervals = 8;
 struct PumpSchedule {
-    uint8_t workMin;
-    uint8_t intervals;
-    uint8_t levels[PumpScheduleMaxIntervals];
-    uint16_t stops[PumpScheduleMaxIntervals];
+  uint8_t workMin;
+  uint8_t intervals;
+  uint8_t levels[PumpScheduleMaxIntervals];
+  uint16_t stops[PumpScheduleMaxIntervals];
 };
 
 //
 // LCD setup
 #define pinBacklight 29
 const uint8_t
-        pinRs = 22,
-        pinEn = 23,
-        pinD4 = 24,
-        pinD5 = 25,
-        pinD6 = 26,
-        pinD7 = 27;
+  pinRs = 22,
+  pinEn = 23,
+  pinD4 = 24,
+  pinD5 = 25,
+  pinD6 = 26,
+  pinD7 = 27;
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 //
@@ -145,12 +145,12 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorWellMin 110
 #define LevelSensorStopWell 100
 
-#define TimeoutPowerSlave 5000 // time to wait for powering up the main sensor
+#define TimeoutPowerSlave 5000  // time to wait for powering up the main sensor
 
 //
 // Schedules for pumping well
-const PumpSchedule ScheduleWellOnMainEasy = {12, 4, {80, 65, 50, 30}, {35, 360, 1440, 2880}};
-const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 45}, {30, 60, 1440}};
+const PumpSchedule ScheduleWellOnMainEasy = { 12, 4, { 80, 65, 50, 30 }, { 35, 360, 1440, 2880 } };
+const PumpSchedule ScheduleWellOnMainFast = { 15, 3, { 75, 50, 45 }, { 30, 60, 1440 } };
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
