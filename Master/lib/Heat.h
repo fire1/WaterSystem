@@ -18,7 +18,7 @@ const float TempT0 = 298.15;   // use T0 in Kelvin [K]
 const float TempT1 = 273.15;      // [K] in datasheet 0º C
 const float TempT2 = 373.15;      // [K] in datasheet 100° C
 const float TempRT1 = 35563;   // [ohms]  resistance in T1
-const float TempRT2 = 549;    // [ohms]   resistance in T2
+const float TempRT2 = 550;    // [ohms]   resistance in T2
 
 class Heat {
 private:
@@ -55,7 +55,7 @@ public:
     }
 
     void begin() {
-        pinMode(pinTmpRss, INPUT_PULLUP);
+        pinMode(pinTmpRss, INPUT);
         pinMode(pinFanRss, OUTPUT);
         analogWrite(pinFanRss, 255);
         delay(200);
@@ -112,8 +112,11 @@ private:
         TempRead.index = 1;
         TempRead.summary = TempRead.mean;
 
+        if(cmd.show(F("mean")))
+          cmd.print(F("Mean temp"),TempRead.mean);
 
-        this->heat = this->calculate(TempRead.mean);
+        this->heat=map(TempRead.mean, 444, 294, 15, 90);
+        //this->heat = this->calculate(TempRead.mean);
 
         //Serial.println(this->heat);
     }

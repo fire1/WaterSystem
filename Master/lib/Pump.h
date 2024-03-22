@@ -9,8 +9,8 @@ private:
   byte pin;
   byte btn;
   byte led;
-  bool terminated = false;
-
+  bool isTerminate = false;
+  bool isOverwrite = false;
 
   void handleLed() {
     if (this->on) digitalWrite(led, LOW);
@@ -28,26 +28,36 @@ public:
   }
 
   void setOn(bool state) {
-    if (this->terminated) return;
+    if (this->isTerminate) return;
     this->on = state;
     this->handleLed();
   }
-
-  void toggle() {
+  /**
+    * Toggle pump state off/on.
+    *  By default access is frом a human interaction.
+    * @param overwrite 
+    * @return 
+    */
+  void toggle(bool overwrite = false) {
+    this->isOverwrite = overwrite;
     this->on = !this->on;
     this->handleLed();
   }
 
   void terminate() {
-    this->terminated = true;
+    this->isTerminate = true;
   }
 
   bool isTerminated() {
-    return this->terminated;
+    return this->isTerminate;
+  }
+
+  bool isOverwrite() {
+    return this->isOverwrite;
   }
 
   void clearTerminate() {
-    this->terminated = false;
+    this->isTerminate = false;
   }
 
   byte getPin() {

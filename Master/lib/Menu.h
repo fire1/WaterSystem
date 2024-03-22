@@ -106,7 +106,7 @@ private:
      */
     void pumpWell(DrawInterface *dr) {
 
-        dr->pump(&ctrlWell, &ctrlMain);
+        dr->pump(&ctrlWell, &ctrlMain, true);
 
         lcd.setCursor(0, 0);
         lcd.print(F("Compressor:     "));
