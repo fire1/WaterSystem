@@ -52,7 +52,7 @@ public:
     return this->isTerminate;
   }
 
-  bool isOverwrite() {
+  bool isOverwrited() {
     return this->isOverwrite;
   }
 

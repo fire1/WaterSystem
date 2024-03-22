@@ -276,7 +276,7 @@ private:
 
     // WELL
     // Stop Well when is full
-    if (ctrlWell.isOn() && !ctrlWell.isOverwrite() && LevelSensorBothMax >= levelWell) {
+    if (ctrlWell.isOn() && !ctrlWell.isOverwrited() && LevelSensorBothMax >= levelWell) {
       setWarn(F(" WELL tank FULL!"));
       Serial.println(F("Warning: STOP Well tank is full!"));
       dbg(read->getWellLevel());
