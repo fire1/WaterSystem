@@ -69,8 +69,10 @@ public:
   }
 
   void ctrl() {
-    if (this->on) digitalWrite(pin, HIGH);
-    else digitalWrite(pin, LOW);
+    if (this->on)
+      digitalWrite(pin, HIGH);
+    else
+      digitalWrite(pin, LOW);
   }
 };
 
