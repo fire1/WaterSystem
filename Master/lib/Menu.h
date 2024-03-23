@@ -315,13 +315,15 @@ private:
   void handleEditState(DrawInterface *dr) {
     //
     // Еxecute only when is changed
-    if (this->isEditLast != dr->isEditing())
+    if (this->isEditLast != dr->isEditing()) {
+
       if (!dr->isEditing())
         lcd.noBlink();
       else
         lcd.blink();
 
-    this->isEditLast = dr->isEditing();
+      this->isEditLast = dr->isEditing();
+    }
   }
 
 public:

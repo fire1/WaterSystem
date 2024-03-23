@@ -115,7 +115,7 @@ private:
         if(cmd.show(F("mean")))
           cmd.print(F("Mean temp"),TempRead.mean);
 
-        this->heat=map(TempRead.mean, 444, 294, 15, 90);
+        this->heat=map(TempRead.mean, 494, 443, 10, 17);
         //this->heat = this->calculate(TempRead.mean);
 
         //Serial.println(this->heat);

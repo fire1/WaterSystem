@@ -254,7 +254,7 @@ public:
     return this->isEdit;
   }
 
-  
+
 
   //
   // Toggle pump state on click
@@ -327,16 +327,27 @@ public:
   // Drawse the menu and handles the inputs
   void menu(Menu *mn) {
 
+    if (this->cursor == 0 && this->displayOn) {
+
+      if (this->onClick(pinBtnOk)) {
+        read->expireWorkTimer();  // forcing to read
+        buzz->save();
+        read->startWorkRead();
+        dbgLn(F("Force read..."));
+      }
+
+      if (spanMd.active()) {
+        read->startWorkRead();
+      }
+    }
+
     this->input();
 
-    if (spanMd.active()) {
 
-      if (this->displayOn && this->cursor == 0)
-        read->startWorkRead();
+    this->isDraw = false;
+    mn->draw(this);
 
-      this->isDraw = false;
-      mn->draw(this);
-    }
+
 
     this->suspendDisplay();
     this->handleSleepLed();

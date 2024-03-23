@@ -126,7 +126,8 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 #define LevelRefreshTimeIdle 1800000  // 30min
 // #define LevelRefreshTimeIdle 900000  // 15min
-#define LevelRefreshTimeWork 5000
+#define LevelRefreshTimeWork 15000
+#define TimeoutPowerSlave LevelRefreshTimeWork * 1.5  // time to wait for powering up the main sensor
 
 #define pinMainPower 8  // Turn on (GND) power for slave
 #define pinMainRx 10    // Recive data pin from slave
@@ -145,7 +146,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorWellMin 110
 #define LevelSensorStopWell 100
 
-#define TimeoutPowerSlave 5000  // time to wait for powering up the main sensor
+
 
 //
 // Schedules for pumping well
