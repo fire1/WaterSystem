@@ -87,9 +87,27 @@ private:
     return Draw::None;
   }
 
+  /**
+    * Handles home special options
+    */
+  void homeOptions() {
+    if (this->cursor == 0 && this->displayOn) {
+
+      if (this->onClick(pinBtnOk)) {
+        read->expireWorkTimer();  // forcing to read
+        buzz->save();
+        read->startWorkRead();
+        dbgLn(F("Force read..."));
+      }
+
+      if (spanMd.active()) {
+        read->startWorkRead();
+      }
+    }
+  }
 
   /**
-      * Handles user general input
+    * Handles user general input
       */
   void input() {
 
@@ -327,20 +345,7 @@ public:
   // Drawse the menu and handles the inputs
   void menu(Menu *mn) {
 
-    if (this->cursor == 0 && this->displayOn) {
-
-      if (this->onClick(pinBtnOk)) {
-        read->expireWorkTimer();  // forcing to read
-        buzz->save();
-        read->startWorkRead();
-        dbgLn(F("Force read..."));
-      }
-
-      if (spanMd.active()) {
-        read->startWorkRead();
-      }
-    }
-
+    this->homeOptions();
     this->input();
 
 
