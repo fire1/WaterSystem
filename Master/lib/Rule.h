@@ -43,6 +43,7 @@ public:
 
 
   void hark() {
+    this->handleDebug();
     this->handleWellMode();
     this->handleMainMode();
     this->handleLevelStop();
@@ -338,6 +339,15 @@ private:
         beatLed.repeat();
       }
     }
+  }
+  /**
+    * Handles debug IO
+    */
+  void handleDebug() {
+    if (cmd.show(F("next"), 1000))
+      cmd.print(F("Next action:", this->timerNextAction));
+
+    cmd.set(F("next"), this->timerNextAction);
   }
 };
 
