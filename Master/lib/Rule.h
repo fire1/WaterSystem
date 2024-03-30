@@ -345,7 +345,7 @@ private:
     */
   void handleDebug() {
     if (cmd.show(F("next"), 1000))
-      cmd.print(F("Next action:", this->timerNextAction));
+      cmd.print(F("Next action:"), this->timerNextAction);
 
     cmd.set(F("next"), this->timerNextAction);
   }
