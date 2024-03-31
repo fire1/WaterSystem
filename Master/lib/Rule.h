@@ -201,8 +201,8 @@ private:
             case 3:
                 // Now!
                 beatWell(400);
-                //pumpWell(15, 20);
-                pumpWell(1, 2);
+                pumpWell(15, 20);
+                //pumpWell(1, 2);
                 break;
         }
     }
