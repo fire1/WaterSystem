@@ -377,6 +377,8 @@ public:
         this->cursor = index;
         this->isWarn = true;
 
+        if (!this->displayOn) this->weakUpDisplay();
+
         if (isSoundEnabled)
             buzz->warn();
     }
@@ -388,13 +390,8 @@ public:
        */
     void warn(uint8_t index, String msg) {
         if (!msg) return;
-
-        warnTimeout.start(WarnScreenTimeout, AsyncDelay::MILLIS);
-        this->isWarn = true;
-        this->cursor = index;
         this->warnMsg = msg;
-
-        buzz->warn();
+        this->warn(index);
     }
 
     String getWarnMsg() {

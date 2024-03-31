@@ -115,14 +115,15 @@ private:
         if (cmd.show(F("mean")))
             cmd.print(F("Mean temp"), TempRead.mean);
 
-        this->heat = map(TempRead.mean, 494, 443, 10, 17);
-        //this->heat = this->calculate(TempRead.mean);
+        //this->heat = map(TempRead.mean, 494, 412, 10, 25);
+        this->heat = this->calculate(TempRead.mean);
+        //this->heat = this->calc(TempRead.mean);
 
         //Serial.println(this->heat);
     }
 
     /**
-     *
+     * Debug info for heat class
      */
     void debug() {
 
@@ -135,8 +136,8 @@ private:
 
         //
         // Show internal values for cooling fan / SSR heat.
-        if (cmd.show(F("cool"))) cmd.print(F("Cool:"), this->fan);
-        if (cmd.show(F("heat"))) cmd.print(F("Heat:"), this->heat);
+        if (cmd.show(F("cool"), 1000)) cmd.print(F("Cool:"), this->fan);
+        if (cmd.show(F("heat"), 1000)) cmd.print(F("Heat:"), this->heat);
     }
 
     /**
@@ -144,8 +145,8 @@ private:
      * @param value
      * @return
      */
-    int8_t calculate(uint8_t value) {
-        float Vout = TempVin * ((float) (value) / 1024.0); // calc for ntc
+    int8_t calculate(int value) {
+        float Vout = TempVin * ((float) (value) / 1023.0); // calc for ntc
         float Rout = (TempRt * Vout / (TempVin - Vout));
 
         float TempK = (beta / log(Rout / rInf)); // calc for temperature
