@@ -149,7 +149,7 @@ private:
         }
         //
         // Turn pump on
-        if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOn)) {
+        if (!ctrlMain.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOn)) {
             this->isAlarmOn = false;
             wellTimer = millis();
             this->timerNextAction = wellTimer + msTimeToOff;
