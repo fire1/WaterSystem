@@ -5,59 +5,60 @@
 
 
 void setup() {
-  //
-  // Initialize Serial
-  welcomeSerialMessage();
-  //
-  // global LED to indicate data/sleep
-  pinMode(pinLed, OUTPUT);
-  //
-  // Initialize classes
-  read.begin();
-  menu.begin();
-  draw.begin();
-  rule.begin();
-  buzz.begin();
-  time.begin();
+    //
+    // Initialize Serial
+    welcomeSerialMessage();
+    //
+    // global LED to indicate data/sleep
+    pinMode(pinLed, OUTPUT);
+    //
+    // Initialize classes
+    read.begin();
+    menu.begin();
+    draw.begin();
+    rule.begin();
+    buzz.begin();
+    time.begin();
 }
 
 void loop() {
-  //
-  // Debugging
-  cmd.listen();
+    //
+    // Debugging
+    cmd.listen();
 
-  time.hark();
-  //
-  // Listeners
-  buzz.hark();
-  rule.hark();
-  read.hark();
-  heat.hark();
+    time.hark();
+    //
+    // Listeners
+    buzz.hark();
+    rule.hark();
+    read.hark();
+    heat.hark();
 
-  //
-  // Display menu
-  draw.menu(&menu);
+    //
+    // Display menu
+    if (spanMd.active())
+        draw.menu(&menu);
 
-  //
-  // Warnings
-  heat.warn(&draw);
-  rule.warn(&draw);
+    //
+    // Warnings
+    heat.warn(&draw);
+    rule.warn(&draw);
 
-  ctrlWell.ctrl();
-  ctrlMain.ctrl();
+    ctrlWell.ctrl();
+    ctrlMain.ctrl();
 
-  spanSm.tick();
-  spanMd.tick();
-  spanLg.tick();
-  spanMx.tick();
+    spanSm.tick();
+    spanMd.tick();
+    spanLg.tick();
+    spanMx.tick();
 }
 
 //
 // Rest of the junk, kept as tests
 void loop_() {
-  //read.test();
-  if (spanSm.active()) rule.hark();
+    //read.test();
+    if (spanSm.active()) rule.hark();
 
 
-  spanSm.tick();
+    spanSm.tick();
 }

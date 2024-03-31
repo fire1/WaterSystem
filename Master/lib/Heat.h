@@ -51,7 +51,7 @@ public:
      */
     void warn(DrawInterface *dr) {
         if (this->isAlarmOn)
-            dr->warn(WarnMenu_Heat, false);
+            dr->warn(MenuWarn_Heat, false);
     }
 
     void begin() {
@@ -112,10 +112,10 @@ private:
         TempRead.index = 1;
         TempRead.summary = TempRead.mean;
 
-        if(cmd.show(F("mean")))
-          cmd.print(F("Mean temp"),TempRead.mean);
+        if (cmd.show(F("mean")))
+            cmd.print(F("Mean temp"), TempRead.mean);
 
-        this->heat=map(TempRead.mean, 494, 443, 10, 17);
+        this->heat = map(TempRead.mean, 494, 443, 10, 17);
         //this->heat = this->calculate(TempRead.mean);
 
         //Serial.println(this->heat);

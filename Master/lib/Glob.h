@@ -11,6 +11,7 @@
 #include <CmdSerial.h>
 
 #include "Setup.h"
+
 //
 // Used as debugging tool for
 //  Serial Input/Output.
@@ -51,44 +52,44 @@ class Tone;
 class DrawInterface {
 public:
 
-  // Pure virtual functions - These functions must be implemented by derived classes
-  virtual uint8_t getCursor() = 0;
+    // Pure virtual functions - These functions must be implemented by derived classes
+    virtual uint8_t getCursor() = 0;
 
-  virtual void edit(Data *d) = 0;
+    virtual void edit(Data *d) = 0;
 
-  virtual void pump(Pump *p, Pump *s, bool overwrite = false) = 0;
+    virtual void pump(Pump *p, Pump *s, bool overwrite = false) = 0;
 
-  virtual void resetCursor();
+    virtual void resetCursor();
 
-  virtual bool isEditing() = 0;
+    virtual bool isEditing() = 0;
 
-  virtual bool isDisplayOn() = 0;
+    virtual bool isDisplayOn() = 0;
 
-  virtual void warn(uint8_t i, bool buzz = true) = 0;
+    virtual void warn(uint8_t i, bool buzz = true) = 0;
 
-  virtual void warn(uint8_t i, String msg) = 0;
+    virtual void warn(uint8_t i, String msg) = 0;
 
-  virtual String getWarnMsg() = 0;
+    virtual String getWarnMsg() = 0;
 };
 
 const uint8_t PumpScheduleMaxIntervals = 8;
 struct PumpSchedule {
-  uint8_t workMin;
-  uint8_t intervals;
-  uint8_t levels[PumpScheduleMaxIntervals];
-  uint16_t stops[PumpScheduleMaxIntervals];
+    uint8_t workMin;
+    uint8_t intervals;
+    uint8_t levels[PumpScheduleMaxIntervals];
+    uint16_t stops[PumpScheduleMaxIntervals];
 };
 
 //
 // LCD setup
 #define pinBacklight 29
 const uint8_t
-  pinRs = 22,
-  pinEn = 23,
-  pinD4 = 24,
-  pinD5 = 25,
-  pinD6 = 26,
-  pinD7 = 27;
+        pinRs = 22,
+        pinEn = 23,
+        pinD4 = 24,
+        pinD5 = 25,
+        pinD6 = 26,
+        pinD7 = 27;
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 //
@@ -147,20 +148,28 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorStopWell 100
 
 
-
 //
 // Schedules for pumping well
-const PumpSchedule ScheduleWellOnMainEasy = { 12, 4, { 80, 65, 50, 30 }, { 35, 360, 1440, 2880 } };
-const PumpSchedule ScheduleWellOnMainFast = { 15, 3, { 75, 50, 45 }, { 30, 60, 1440 } };
+const PumpSchedule ScheduleWellOnMainEasy = {12, 4, {80, 65, 50, 30}, {35, 360, 1440, 2880}};
+const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 45}, {30, 60, 1440}};
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
 #define WarnScreenTimeout 5000
 
 //
+// Cursor map of the UI
+const uint8_t MenuInfo_Home = 0;
+const uint8_t MenuEdit_Well = 1;
+const uint8_t MenuEdit_Main = 2;
+const uint8_t MenuPump_Well = 5;
+const uint8_t MenuPump_Main = 6;
+const uint8_t MenuInfo_Time = 255;
+const uint8_t MenuInfo_Heat = 254;
+//
 // Notification screens
-const uint8_t WarnMenu_Heat = 7;
-const uint8_t WarnMenu_Rule = 8;
+const uint8_t MenuWarn_Heat = 7;
+const uint8_t MenuWarn_Rule = 8;
 
 
 //
@@ -182,8 +191,8 @@ extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
 extern Span spanSm(199);     // Loop span at Small
-extern Span spanMd(2101);    // Loop span Middle  /screen refresh/
-extern Span spanLg(5802);    // Loop span Large   /warning messages/
+extern Span spanMd(250);    // Loop span Middle  /screen refresh/
+extern Span spanLg(5801);    // Loop span Large   /warning messages/
 extern Span spanMx(250003);  // Loop span at 60k loops
 
 #include "Time.h"
