@@ -227,11 +227,12 @@ private:
     }
 
     /**
-   * Weak-up the display
-   */
-    void weakUpDisplay() {
+     * Wakeup the display
+     * @param cursor
+     */
+    void weakUpDisplay(uint8_t cursor = 0) {
         this->displayOn = true;
-        this->cursor = 0;
+        this->cursor = cursor;
         stopDisplay.restart();
         lcd.display();
         digitalWrite(pinBacklight, this->displayOn);
@@ -254,9 +255,6 @@ private:
     void handleWarnMenu() {
         if (!this->isWarn) return;
 
-        if (!this->displayOn)
-            this->weakUpDisplay();
-
         if (this->warnTimeout.isExpired()) {
             this->resetCursor();
             this->isWarn = false;
@@ -264,7 +262,18 @@ private:
     }
 
     void handleDebug() {
+
         cmd.set(F("menu"), this->cursor);
+        uint8_t tmp;
+
+        if (cmd.set(F("display"), tmp)) {
+            if (tmp == 1) this->weakUpDisplay();
+            else this->suspendDisplay();
+        }
+        
+        if (cmd.set(F("warn"), tmp)) this->warn(tmp);
+
+
     }
 
 
@@ -374,10 +383,11 @@ public:
        */
     void warn(uint8_t index, bool isSoundEnabled = true) {
         warnTimeout.start(WarnScreenTimeout, AsyncDelay::MILLIS);
+
+        if (!this->displayOn) this->weakUpDisplay(index);
         this->cursor = index;
         this->isWarn = true;
 
-        if (!this->displayOn) this->weakUpDisplay();
 
         if (isSoundEnabled)
             buzz->warn();
