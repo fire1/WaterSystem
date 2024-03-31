@@ -330,6 +330,14 @@ private:
         }
     }
 
+    void handleDebug() {
+
+
+        if (cmd.show(F("next"), 1000)) {
+            String dump = formatMsToTime(rule->getActionTimer());
+            cmd.print(F("Next action:"), dump);
+        }
+    }
 
 public:
 
@@ -378,6 +386,7 @@ public:
    */
     void draw(DrawInterface *dr) {
 
+        this->handleDebug();
         //
         // Controls display blink state safe
         this->handleEditState(dr);

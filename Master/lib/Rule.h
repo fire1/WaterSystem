@@ -20,7 +20,7 @@ private:
 
     AsyncDelay beatLed;
     uint16_t beatLedLast = 0;
-    bool isDaytime = false;
+    bool isDaytime = true;
     bool isAlarmOn = false;
     uint32_t timePrepareTurnOn;
     unsigned long timerNextAction = 0;
@@ -201,7 +201,8 @@ private:
             case 3:
                 // Now!
                 beatWell(400);
-                pumpWell(15, 20);
+                //pumpWell(15, 20);
+                pumpWell(1, 2);
                 break;
         }
     }
@@ -354,10 +355,6 @@ private:
       * Handles debug IO
       */
     void handleDebug() {
-        if (cmd.show(F("next"), 1000))
-            cmd.print(F("Next action:"), this->timerNextAction);
-
-        cmd.set(F("next"), this->timerNextAction);
     }
 };
 

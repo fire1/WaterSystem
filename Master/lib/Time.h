@@ -56,6 +56,13 @@ public:
     }
   }
 
+  /**
+   * Adjust the clock
+   */
+  void adjust(){
+      rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
   //
   // Check if it is daytime, to run pumps only in the daytime
   bool isDaytime() {
@@ -78,7 +85,7 @@ public:
   void hark() {
     if (!this->isConnected) return;
 
-    if (spanMx.active()) {
+    if (spanLg.active()) {
       this->daytime = resolveDaytime();
     }
 

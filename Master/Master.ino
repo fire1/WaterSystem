@@ -19,6 +19,8 @@ void setup() {
     rule.begin();
     buzz.begin();
     time.begin();
+
+    //time.adjust();
 }
 
 void loop() {
