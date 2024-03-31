@@ -119,6 +119,8 @@ private:
         unsigned long msTimeToOff = this->calcMinutes(workMin);
         unsigned long msTimeToOn = this->calcMinutes(stopMin);
 
+        if (!this->timerNextAction)
+            this->timerNextAction = msTimeToOn;
         //
         // Turn pump OFF by timeout of mode
         if (ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOff)) {
@@ -275,9 +277,16 @@ private:
         uint8_t levelMain = read->getMainLevel();
         uint8_t levelWell = read->getWellLevel();
 
+        //
+        // After 5min clear terminate.
+        if (spanLg.active()) {
+            ctrlMain.clearTerminate();
+            ctrlWell.clearTerminate();
+        }
+
         // WELL
         // Stop Well when is full
-        if (ctrlWell.isOn() && !ctrlWell.isOverwrited() && LevelSensorBothMax >= levelWell) {
+        if (ctrlWell.isOn() && !ctrlWell.isOverwritten() && LevelSensorBothMax >= levelWell) {
             setWarn(F(" WELL tank FULL!"));
             Serial.println(F("Warning: STOP Well tank is full!"));
             dbg(read->getWellLevel());

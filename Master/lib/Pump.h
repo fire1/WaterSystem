@@ -55,7 +55,7 @@ public:
         return this->isTerminate;
     }
 
-    bool isOverwrited() {
+    bool isOverwritten() {
         return this->isOverwrite;
     }
 
