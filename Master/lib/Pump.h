@@ -41,8 +41,8 @@ public:
       * @param overwrite
       * @return
       */
-    void toggle(bool overwrite = false) {
-        this->isOverwrite = overwrite;
+    void toggle() {
+        this->isOverwrite = true;
         this->on = !this->on;
         this->handleLed();
     }
@@ -72,10 +72,11 @@ public:
     }
 
     void ctrl() {
+
         //
         // It is good to have some debounce of switching the machine power
         if (on == lastState) return;
-        if (debounce >= 200) {
+        if (debounce >= 200 || isOverwrite) {
             lastState = on;
             debounce = 0;
 

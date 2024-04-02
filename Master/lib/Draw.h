@@ -300,7 +300,7 @@ public:
 
         if (this->onClick(pump->getBtn())) {
             pump->clearTerminate();   // As human interaction is made, we will clear terminate.
-            pump->toggle(overwrite);  // Pass overwrite state
+            pump->toggle();  // Pass overwrite state
 
             if (stop->isOn())
                 stop->setOn(false);

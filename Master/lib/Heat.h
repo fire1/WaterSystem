@@ -55,18 +55,21 @@ public:
     }
 
     void begin() {
+        //
+        // Pin 2 timer 3 setup the speed
+        TCCR3B = TCCR3B & B11111000 | B00000100;   //  122.55 Hz
         pinMode(pinTmpRss, INPUT);
         pinMode(pinFanRss, OUTPUT);
         analogWrite(pinFanRss, 255);
-        delay(200);
+        delay(400);
     }
 
     void hark() {
         this->debug();
-        if (this->isReading && spanSm.active())
+        if (this->isReading && spanSm.active()) {
             this->read();
-
-        this->handle();
+            this->handle();
+        }
 
 
     }
@@ -88,6 +91,8 @@ public:
 
     void setFan(uint8_t pwm) {
         this->fan = pwm;
+        this->isReading = false;
+        this->handle();
     }
 
 
@@ -129,7 +134,10 @@ private:
 
         //
         // Debug fan speed
-        cmd.set(F("cool"), this->fan);
+        if (cmd.set(F("cool"), this->fan)) {
+            this->isReading = false;
+            analogWrite(pinFanRss, this->fan);
+        }
         //
         // Debug temperature
         if (cmd.set(F("heat"), this->heat)) this->isReading = false;
