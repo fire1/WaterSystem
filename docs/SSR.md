@@ -7,7 +7,7 @@ since they can overheat and cause fire.
 
 The scheme also includes exampe values for snubber circuit designed and tested to work for ~1kw induction motor.
 In case of issue with random firing of the TRIAC, values needs to be changed/increased. \
-__Each induction motor needs own individual values in order to bypass on/off induction issues.__
+__Each induction motor needs own individual values in order to bypass random firing issues.__
 
 ## Wiring Scheme
 
