@@ -29,6 +29,7 @@ private:
 
     bool isAlarmOn = false;
     bool isReading = true;
+    bool isHandle = true;
     const float beta = (log(TempRT1 / TempRT2)) / ((1 / TempT1) - (1 / TempT2));
     const float rInf = TempR0 * exp(-beta / TempT0);
 
@@ -66,9 +67,9 @@ public:
 
     void hark() {
         this->debug();
-        if (this->isReading && spanSm.active()) {
-            this->read();
-            this->handle();
+        if (spanSm.active()) {
+            if (this->isReading) this->read();
+            if (this->isHandle) this->handle();
         }
 
 
@@ -84,14 +85,12 @@ public:
 
     void setHeat(int8_t value) {
         this->heat = value;
-        this->isReading = false;
         this->handle();
     }
 
 
     void setFan(uint8_t pwm) {
         this->fan = pwm;
-        this->isReading = false;
         this->handle();
     }
 
@@ -135,7 +134,7 @@ private:
         //
         // Debug fan speed
         if (cmd.set(F("cool"), this->fan)) {
-            this->isReading = false;
+            this->isHandle = false;
             analogWrite(pinFanSsr, this->fan);
         }
         //
@@ -186,19 +185,18 @@ private:
             pwm = map(this->heat, 75, edgeWorkingTemp, 50, 254);  // map temp over pwm with thresholds
         //
         // Set end points
-        if (pwm < 2) pwm = 0;
+        if (pwm < 5) pwm = 0;
         if (pwm > 254) pwm = 254;
 
 
         this->fan = (uint8_t) pwm;
 
-        if (spanSm.active()) {
-            if (pwm == 0) {
-                digitalWrite(pinFanSsr, LOW);
-                return;
-            }
-            analogWrite(pinFanSsr, this->fan);
+        if (pwm == 0) {
+            digitalWrite(pinFanSsr, LOW);
+            return;
         }
+        analogWrite(pinFanSsr, this->fan);
+
     }
 };
 
