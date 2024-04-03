@@ -14,9 +14,14 @@ private:
     bool isTerminate = false;
     bool isOverwrite = false;
 
-    void handleLed() {
-        if (this->on) digitalWrite(led, LOW);
-        else digitalWrite(led, HIGH);
+
+    void handlePins() {
+        digitalWrite(pin, this->on);
+        digitalWrite(led, !this->on);
+
+        String msg = "Handle pins state: ";
+        msg += this->on;
+        Serial.println(msg);
     }
 
 
@@ -30,21 +35,19 @@ public:
     }
 
     void setOn(bool state) {
-        if (this->isTerminate) return;
         this->on = state;
-        this->handleLed();
     }
 
     /**
-      * Toggle pump state off/on.
-      *  By default access is frом a human interaction.
-      * @param overwrite
-      * @return
-      */
+        * Toggle pump state off/on.
+        *  By default access is frом a human interaction.
+        * @param overwrite
+        * @return
+        */
     void toggle() {
         this->isOverwrite = true;
         this->on = !this->on;
-        this->handleLed();
+        this->handlePins();
     }
 
     void terminate() {
@@ -64,6 +67,7 @@ public:
     }
 
     byte getPin() {
+
         return this->pin;
     }
 
@@ -76,14 +80,10 @@ public:
         //
         // It is good to have some debounce of switching the machine power
         if (on == lastState) return;
-        if (debounce >= 200 || isOverwrite) {
+        if (debounce >= 200) {
             lastState = on;
             debounce = 0;
-
-            if (this->on)
-                digitalWrite(pin, HIGH);
-            else
-                digitalWrite(pin, LOW);
+            handlePins();
         }
         debounce++;
     }

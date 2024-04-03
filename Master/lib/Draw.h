@@ -13,6 +13,7 @@ private:
     AsyncDelay stopDisplay;
     Buzz *buzz;
     Read *read;
+
     AsyncDelay sleepLed;
     AsyncDelay warnTimeout;
 
@@ -243,10 +244,18 @@ private:
    * Handles the pin 13 led indication when display is suspended
    */
     void handleSleepLed() {
-        if (!this->displayOn && sleepLed.isExpired()) {
-            digitalWrite(pinLed, !digitalRead(pinLed));
-            sleepLed.repeat();
-        }
+        if (this->displayOn) return;
+
+        if ((sleepLed.isExpired()))
+            if (!digitalRead(pinLed)) {
+                digitalWrite(pinLed, HIGH);
+                sleepLed.start(150, AsyncDelay::MILLIS);
+                Serial.println("Led on");
+            } else {
+                digitalWrite(pinLed, LOW);
+                sleepLed.start(2000, AsyncDelay::MILLIS);
+                Serial.println("Led off");
+            }
     }
 
     /**
@@ -270,7 +279,7 @@ private:
             if (tmp == 1) this->weakUpDisplay();
             else this->suspendDisplay();
         }
-        
+
         if (cmd.set(F("warn"), tmp)) this->warn(tmp);
 
 
@@ -290,7 +299,7 @@ public:
 
     //
     // Toggle pump state on click
-    void pump(Pump *pump, Pump *stop, bool overwrite = false) {
+    void pump(Pump *pump, Pump *stop) {
         this->isEdit = true;
 
         if (this->onClick(pinBtnOk) || this->onClick(pinBtnNext) || this->onClick(pinBtnBack)) {
@@ -322,7 +331,7 @@ public:
 
         // refreshRate.start(timeRefresh, AsyncDelay::MILLIS);
         stopDisplay.start(SuspendDisplayTime, AsyncDelay::MILLIS);
-        sleepLed.start(1000, AsyncDelay::MILLIS);
+
         //
         // Define simple joystick pins
         pinMode(pinBtnNext, INPUT_PULLUP);
