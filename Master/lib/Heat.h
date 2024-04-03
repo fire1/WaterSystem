@@ -182,7 +182,7 @@ private:
         if (this->heat > 40 && this->heat < 75) {
             pwm = map(this->heat, 40, 75, 5, 50);  // map temp over pwm with thresholds
         } else
-            pwm = map(this->heat, 75, edgeWorkingTemp, 50, 254);  // map temp over pwm with thresholds
+            pwm = map(this->heat, 75, edgeWorkingTemp, 50, 255);  // map temp over pwm with thresholds
         //
         // Set end points
         if (pwm < 5) pwm = 0;
