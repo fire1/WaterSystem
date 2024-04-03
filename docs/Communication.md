@@ -10,8 +10,8 @@ This document outlines the setup for a long-range community communication system
 - 50-Meter Long Cable (2-Wire)
 - Tank Level Sensors (JSN-SR04t-v2)
 
-_**Note:** For the lower supply, the voltage resistance of R1 should be lowered, \
-as an example the 9V resistor value needs to be 100ohms._
+_**Note:** For the lower supply-voltage resistance of R1 should be lowered, \
+as an example the 9V power-supply the resistor value needs to be 100ohms._
 
 ## Wiring Scheme
 
