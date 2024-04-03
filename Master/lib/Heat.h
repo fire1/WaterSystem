@@ -59,8 +59,8 @@ public:
         // Pin 2 timer 3 setup the speed
         TCCR3B = TCCR3B & B11111000 | B00000100;   //  122.55 Hz
         pinMode(pinTmpRss, INPUT);
-        pinMode(pinFanRss, OUTPUT);
-        analogWrite(pinFanRss, 255);
+        pinMode(pinFanSsr, OUTPUT);
+        analogWrite(pinFanSsr, 255);
         delay(400);
     }
 
@@ -136,7 +136,7 @@ private:
         // Debug fan speed
         if (cmd.set(F("cool"), this->fan)) {
             this->isReading = false;
-            analogWrite(pinFanRss, this->fan);
+            analogWrite(pinFanSsr, this->fan);
         }
         //
         // Debug temperature
@@ -194,10 +194,10 @@ private:
 
         if (spanSm.active()) {
             if (pwm == 0) {
-                digitalWrite(pinFanRss, LOW);
+                digitalWrite(pinFanSsr, LOW);
                 return;
             }
-            analogWrite(pinFanRss, this->fan);
+            analogWrite(pinFanSsr, this->fan);
         }
     }
 };

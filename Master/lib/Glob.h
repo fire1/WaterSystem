@@ -26,7 +26,7 @@ CmdSerial cmd;
 //
 // Cooling control and monitoring
 #define pinTmpRss A9  // Temperature input / NTC-MF52AT
-#define pinFanRss 2   // Temperature fan for RSS
+#define pinFanSsr 2   // Temperature fan for RSS
 //
 // Designed for AC loads has maximum junction temperature of 150°C
 // Operating junction temperature range. -40 to +125. °C
