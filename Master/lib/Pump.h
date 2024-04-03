@@ -19,9 +19,9 @@ private:
         digitalWrite(pin, this->on);
         digitalWrite(led, !this->on);
 
-        String msg = "Handle pins state: ";
+/*        String msg = "Handle pins state: ";
         msg += this->on;
-        Serial.println(msg);
+        Serial.println(msg);*/
     }
 
 
