@@ -180,8 +180,8 @@ private:
         }
         int pwm;
 
-        if (this->heat > 30 && this->heat < 75) {
-            pwm = map(this->heat, 30, 75, 2, 15);  // map temp over pwm with thresholds
+        if (this->heat > 40 && this->heat < 75) {
+            pwm = map(this->heat, 40, 75, 5, 50);  // map temp over pwm with thresholds
         } else
             pwm = map(this->heat, 75, edgeWorkingTemp, 50, 254);  // map temp over pwm with thresholds
         //

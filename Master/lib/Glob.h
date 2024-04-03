@@ -30,7 +30,7 @@ CmdSerial cmd;
 //
 // Designed for AC loads has maximum junction temperature of 150°C
 // Operating junction temperature range. -40 to +125. °C
-#define stopMaxTemp 100
+#define stopMaxTemp 90
 const int TempSampleReads = 10;
 
 
