@@ -63,6 +63,8 @@ public:
 
     virtual bool isEditing() = 0;
 
+    virtual void noEdit() = 0;
+
     virtual bool isDisplayOn() = 0;
 
     virtual void warn(uint8_t i, bool buzz = true) = 0;
@@ -127,7 +129,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 #define LevelRefreshTimeIdle 1800000  // 30min
 // #define LevelRefreshTimeIdle 900000  // 15min
-#define LevelRefreshTimeWork 15000
+#define LevelRefreshTimeWork 12000
 #define TimeoutPowerSlave LevelRefreshTimeWork * 1.5  // time to wait for powering up the main sensor
 
 #define pinMainPower 8  // Turn on (GND) power for slave

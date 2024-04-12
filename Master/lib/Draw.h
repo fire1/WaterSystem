@@ -296,6 +296,9 @@ public:
         return this->isEdit;
     }
 
+    void noEdit() {
+        this->isEdit = false;
+    }
 
     //
     // Toggle pump state on click

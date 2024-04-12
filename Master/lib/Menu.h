@@ -43,7 +43,7 @@ private:
         * Display home screen
         */
     void home(DrawInterface *dr) {
-
+        dr->noEdit();
         lcd.setCursor(0, 0);
         lcd.print(F("Tank1"));
         if (ctrlWell.isTerminated())
@@ -145,7 +145,8 @@ private:
     /**
        * Info menu
        */
-    void infoTime() {
+    void infoTime(DrawInterface *dr) {
+        dr->noEdit();
         lcd.setCursor(0, 0);
         if (time->isConn()) {
             // format 00-00 0000-00-00
@@ -206,7 +207,8 @@ private:
     /**
        * Heat warning
        */
-    void warnHeat() {
+    void warnHeat(DrawInterface *dr) {
+        dr->noEdit();
         lcd.setCursor(0, 0);
         lcd.print(F(" Overheating!   "));
 
@@ -225,7 +227,8 @@ private:
     /**
        * Heat information
        */
-    void infoHeat() {
+    void infoHeat(DrawInterface *dr) {
+        dr->noEdit();
         lcd.setCursor(0, 0);
 
         if (time->isConn()) {
@@ -246,6 +249,7 @@ private:
     }
 
     void warnRule(DrawInterface *dr) {
+        dr->noEdit();
         lcd.setCursor(0, 0);
         lcd.print(F(" Pump stopped..."));
         lcd.setCursor(0, 1);
@@ -415,7 +419,7 @@ public:
             case MenuPump_Main:
                 return this->pumpMain(dr);
             case MenuWarn_Heat:
-                return this->warnHeat();
+                return this->warnHeat(dr);
             case MenuWarn_Rule:
                 return this->warnRule(dr);
 
@@ -423,12 +427,12 @@ public:
                 //
                 // Backward menu 2
             case MenuInfo_Heat:
-                return this->infoHeat();
+                return this->infoHeat(dr);
 
                 //
                 // Backward menu 1
             case MenuInfo_Time:
-                return this->infoTime();
+                return this->infoTime(dr);
         }
     }
 };
