@@ -99,7 +99,7 @@ private:
         if (time->isConn()) {
             //
             // Check for daytime each minutes
-            if (spanMx.active())
+            if (spanLg.active())
                 this->isDaytime = time->isDaytime();  //pass state for daytime locally
 
         } else {
@@ -119,8 +119,10 @@ private:
         unsigned long msTimeToOff = this->calcMinutes(workMin);
         unsigned long msTimeToOn = this->calcMinutes(stopMin);
 
+        //
+        // Fixes initial timer
         if (!this->timerNextAction)
-            this->timerNextAction = msTimeToOn;
+            this->timerNextAction = millis() + msTimeToOn;
         //
         // Turn pump OFF by timeout of mode
         if (ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOff)) {
@@ -215,7 +217,7 @@ private:
         uint8_t main = read->getMainLevel();
         uint16_t stop = 180;
 
-        if (main > 18) {
+        if (main > LevelSensorBothMax && main < LevelSensorMainMin) {
             for (int i = 0; i < schedule.intervals; ++i) {
                 if (schedule.levels[i] > main) {
                     stop = schedule.stops[i];

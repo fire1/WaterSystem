@@ -1,7 +1,9 @@
-#include "Arduino.h"
+
 
 #ifndef Pump_h
 #define Pump_h
+
+#include "Arduino.h"
 
 class Pump {
 private:

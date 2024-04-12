@@ -183,11 +183,10 @@ private:
             pwm = map(this->heat, 40, 75, 5, 50);  // map temp over pwm with thresholds
         } else
             pwm = map(this->heat, 75, edgeWorkingTemp, 50, 255);  // map temp over pwm with thresholds
-        //
+        //ww
         // Set end points
         if (pwm < 5) pwm = 0;
         if (pwm > 254) pwm = 254;
-
 
         this->fan = (uint8_t) pwm;
 
