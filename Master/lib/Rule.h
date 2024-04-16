@@ -1,10 +1,9 @@
-#include "HardwareSerial.h"
-#include <stdint.h>
-#include "Arduino.h"
 
 #ifndef Rule_h
 #define Rule_h
 
+#include "HardwareSerial.h"
+#include "Arduino.h"
 #include "Glob.h"
 
 class Rule {
