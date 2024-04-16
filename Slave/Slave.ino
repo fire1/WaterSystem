@@ -2,6 +2,7 @@
 // Slave code to send information to the master
 // Chip used to send data is Atmega8.
 //
+#include <Arduino.h>
 #include <SoftwareSerial.h>
 
 #define DEBUG 1  // Enables Serial output
