@@ -119,8 +119,8 @@ private:
         if (cmd.show(F("mean")))
             cmd.print(F("Mean temp"), TempRead.mean);
 
-        //this->heat = map(TempRead.mean, 494, 412, 10, 25);
-        this->heat = this->calculate(TempRead.mean);
+        this->heat = map(TempRead.mean, 494, 400, 10, 24); // updated 24*C
+        //this->heat = this->calculate(TempRead.mean); // <--- use this
         //this->heat = this->calc(TempRead.mean);
 
         //Serial.println(this->heat);
