@@ -4,6 +4,12 @@
 #include "lib/Init.h"
 
 
+/* Note:
+ *  The source code for this sketch is based on the "dependencies-injection" type.
+ *  This code structure will improve a customization of the final needs of the sketch.
+ */
+
+
 void setup() {
     //
     // Initialize Serial
@@ -56,12 +62,5 @@ void loop() {
 
 }
 
-//
-// Rest of the junk, kept as tests
-void loop_() {
-    //read.test();
-    if (spanSm.active()) rule.hark();
+// end of the file...
 
-
-    spanSm.tick();
-}

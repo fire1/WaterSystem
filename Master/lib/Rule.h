@@ -141,6 +141,19 @@ private:
 
             read->stopWorkRead();
         }
+
+        //
+        // Check well for daytime
+        if (!this->checkDaytime()) {
+            this->timerNextAction = 0;
+            if (this->isAlarmOn)return;
+
+            this->isAlarmOn = true; // flag to display only once
+            setWarn(F("Not a daytime!  "));
+            dbgLn(F("Warning: STOP /well/ It is not daytime!"));
+            return;
+        }
+
         //
         // Prepare, read levels before start
         if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= (msTimeToOn - timePrepareTurnOn))) {
@@ -154,17 +167,10 @@ private:
         }
 
         //
-        // Turn pump on
+        // Turn the pump on
         if (!ctrlMain.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOn)) {
-            this->isAlarmOn = false;
-
             //#ifdef CHECK_DAYTIME
-            if (!this->checkDaytime()) {
-                this->timerNextAction = 0;
-                setWarn(F("Not a daytime!"));
-                dbgLn(F("Warning: STOP /well/ It is not daytime!"));
-                return;
-            }
+
             //#endif
 
             wellTimer = millis();
@@ -210,7 +216,7 @@ private:
             case 3:
                 // Now!
                 beatWell(400);
-                pumpWell(15, 20);
+                pumpWell(WellPumpDefaultRuntime, 20);
                 //pumpWell(1, 2);
                 break;
         }

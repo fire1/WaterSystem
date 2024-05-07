@@ -149,11 +149,14 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorWellMin 110
 #define LevelSensorStopWell 100
 
-
 //
-// Schedules for pumping well
-const PumpSchedule ScheduleWellOnMainEasy = {12, 4, {80, 65, 50, 30}, {35, 360, 1440, 2880}};
-const PumpSchedule ScheduleWellOnMainFast = {15, 3, {75, 50, 45}, {30, 60, 1440}};
+// Defining the best pumping run time
+const int8_t WellPumpDefaultRuntime = 12;
+//
+// Schedules for well pumping periods
+//      FORMAT: {<on time>, <array length>, {<off time>,...}}
+const PumpSchedule ScheduleWellOnMainEasy = {10, 4, {80, 65, 50, 30}, {35, 360, 1440, 2880}};
+const PumpSchedule ScheduleWellOnMainFast = {WellPumpDefaultRuntime, 3, {75, 50, 45}, {30, 60, 1440}};
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
