@@ -20,7 +20,7 @@ private:
     AsyncDelay beatLed;
     uint16_t beatLedLast = 0;
     bool isDaytime = true;
-    bool isAlarmOn = false;
+    bool isWarnDaytime = false;
     uint32_t timePrepareTurnOn;
     unsigned long timerNextAction = 0;
 
@@ -146,13 +146,13 @@ private:
         // Check well for daytime
         if (!this->checkDaytime()) {
             this->timerNextAction = 0;
-            if (this->isAlarmOn)return;
+            if (this->isWarnDaytime)return;
 
-            this->isAlarmOn = true; // flag to display only once
+            this->isWarnDaytime = true; // flag to display only once
             setWarn(F("Not a daytime!  "));
             dbgLn(F("Warning: STOP /well/ It is not daytime!"));
             return;
-        }
+        } else this->isWarnDaytime = false;
 
         //
         // Prepare, read levels before start
