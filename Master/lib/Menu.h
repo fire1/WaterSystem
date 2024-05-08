@@ -364,12 +364,17 @@ public:
         byte charClockIcon[8] = {B00000, B01110, B10101, B10111, B10001, B01110, B00000, B00000};
         byte charTerminate[8] = {B10100, B01000, B10100, B00000, B00000, B00000, B00000, B00000};
 
+        byte charOneLine[8] = {B00000, B01000, B11001, B01000, B01000, B01001, B11100, B11111};
+        byte charTwoLine[8] = {B00000, B01000, B10101, B00100, B01000, B10001, B11100, B11111};
+
         lcd.createChar(0, charBarLevel);
         lcd.createChar(1, charCelsius);
         lcd.createChar(2, charDayIcon);
         lcd.createChar(3, charNightIcon);
         lcd.createChar(4, charClockIcon);
         lcd.createChar(5, charTerminate);
+        lcd.createChar(6, charOneLine);
+        lcd.createChar(7, charTwoLine);
 
 
 
