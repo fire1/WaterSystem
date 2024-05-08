@@ -74,6 +74,46 @@ private:
     }
 
     /**
+     * Home screen version 2
+     * @param dr
+     */
+    void homeV2(DrawInterface *dr) {
+        dr->noEdit();
+        lcd.setCursor(0, 0);
+        uint8_t level1 = read->getWellLevel();
+        lcd.write((char) 6);
+        lcd.print(F(" "));
+        lcd.cursor();
+
+        lcd.print(formatUint8(level1));
+        lcd.noCursor();
+        lcd.print(F(" "));
+
+        if (level1 == 0 || level1 > LevelSensorWellMin)
+            lcd.print(F("[-?-]     "));
+        else
+            drawLevel(level1, LevelSensorWellMin);
+        //
+        // Second row //////////////////////////////
+        //
+        lcd.setCursor(0, 1);
+        uint8_t level2 = read->getMainLevel();
+        lcd.write((char) 7);
+        lcd.print(F(" "));
+        lcd.cursor();
+
+        lcd.print(formatUint8(level2));
+        lcd.noCursor();
+        lcd.print(F(" "));
+
+        if (level2 == 0 || level2 > LevelSensorMainMin)
+            lcd.print(F("[-?-]     "));
+        else
+            drawLevel(level2, LevelSensorMainMin);
+
+    }
+
+    /**
        * Menu tank well
        * @param dr
        */
@@ -410,7 +450,8 @@ public:
 
             case MenuInfo_Home:
             default:
-                this->home(dr);
+                //this->home(dr);
+                this->homeV2(dr);
                 dr->resetCursor();
                 break;
 
