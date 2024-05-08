@@ -82,12 +82,14 @@ private:
         lcd.setCursor(0, 0);
         uint8_t level1 = read->getWellLevel();
         lcd.write((char) 6);
-        lcd.print(F(" "));
-        lcd.cursor();
+
+        // daytime mark
+        if (time->isDaytime()) lcd.write((char) 2); else lcd.write((char) 3);
 
         lcd.print(formatUint8(level1));
-        lcd.noCursor();
-        lcd.print(F(" "));
+
+        // Terminate mark
+        if (ctrlWell.isTerminated()) lcd.write((char) 5); else lcd.print(F(" "));
 
         if (level1 == 0 || level1 > LevelSensorWellMin)
             lcd.print(F("[-?-]     "));
@@ -100,11 +102,11 @@ private:
         uint8_t level2 = read->getMainLevel();
         lcd.write((char) 7);
         lcd.print(F(" "));
-        lcd.cursor();
 
         lcd.print(formatUint8(level2));
-        lcd.noCursor();
-        lcd.print(F(" "));
+
+        // Terminate mark
+        if (ctrlMain.isTerminated())lcd.write((char) 5); else lcd.print(F(" "));
 
         if (level2 == 0 || level2 > LevelSensorMainMin)
             lcd.print(F("[-?-]     "));
@@ -399,8 +401,8 @@ public:
 
         byte charBarLevel[8] = {B11111, B11111, B11111, B11111, B11111, B11111, B11111, B00000};
         byte charCelsius[8] = {B00000, B01000, B00011, B00100, B00100, B00100, B00011, B00000};
-        byte charDayIcon[8] = {B00000, B10101, B01010, B10001, B01010, B10101, B00000, B00000};
-        byte charNightIcon[8] = {B00000, B01110, B10101, B11011, B10101, B01110, B00000, B00000};
+        byte charDayIcon[8] = {B00000, B00110, B01010, B01100, B00000, B00000, B00000, B00000};
+        byte charNightIcon[8] = {B00000, B00110, B01100, B00000, B00000, B00000, B00000, B00000};
         byte charClockIcon[8] = {B00000, B01110, B10101, B10111, B10001, B01110, B00000, B00000};
         byte charTerminate[8] = {B10100, B01000, B10100, B00000, B00000, B00000, B00000, B00000};
 
