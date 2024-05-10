@@ -52,46 +52,46 @@ class Tone;
 class DrawInterface {
 public:
 
-    // Pure virtual functions - These functions must be implemented by derived classes
-    virtual uint8_t getCursor() = 0;
+  // Pure virtual functions - These functions must be implemented by derived classes
+  virtual uint8_t getCursor() = 0;
 
-    virtual void edit(Data *d) = 0;
+  virtual void edit(Data *d) = 0;
 
-    virtual void pump(Pump *p, Pump *s) = 0;
+  virtual void pump(Pump *p, Pump *s) = 0;
 
-    virtual void resetCursor();
+  virtual void resetCursor();
 
-    virtual bool isEditing() = 0;
+  virtual bool isEditing() = 0;
 
-    virtual void noEdit() = 0;
+  virtual void noEdit() = 0;
 
-    virtual bool isDisplayOn() = 0;
+  virtual bool isDisplayOn() = 0;
 
-    virtual void warn(uint8_t i, bool buzz = true) = 0;
+  virtual void warn(uint8_t i, bool buzz = true) = 0;
 
-    virtual void warn(uint8_t i, String msg) = 0;
+  virtual void warn(uint8_t i, String msg) = 0;
 
-    virtual String getWarnMsg() = 0;
+  virtual String getWarnMsg() = 0;
 };
 
 const uint8_t PumpScheduleMaxIntervals = 8;
 struct PumpSchedule {
-    uint8_t workMin;
-    uint8_t intervals;
-    uint8_t levels[PumpScheduleMaxIntervals];
-    uint16_t stops[PumpScheduleMaxIntervals];
+  uint8_t workMin;
+  uint8_t intervals;
+  uint8_t levels[PumpScheduleMaxIntervals];
+  uint16_t stops[PumpScheduleMaxIntervals];
 };
 
 //
 // LCD setup
 #define pinBacklight 29
 const uint8_t
-        pinRs = 22,
-        pinEn = 23,
-        pinD4 = 24,
-        pinD5 = 25,
-        pinD6 = 26,
-        pinD7 = 27;
+  pinRs = 22,
+  pinEn = 23,
+  pinD4 = 24,
+  pinD5 = 25,
+  pinD6 = 26,
+  pinD7 = 27;
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 //
@@ -152,11 +152,12 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 //
 // Defining the best pumping run time
 const int8_t WellPumpDefaultRuntime = 12;
+const float WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.8;
 //
 // Schedules for well pumping periods
 //      FORMAT: {<on time>, <array length>, {<off time>,...}}
-const PumpSchedule ScheduleWellOnMainEasy = {10, 4, {80, 65, 50, 30}, {35, 360, 1440, 2880}};
-const PumpSchedule ScheduleWellOnMainFast = {WellPumpDefaultRuntime, 3, {75, 50, 45}, {30, 60, 1440}};
+const PumpSchedule ScheduleWellOnMainEasy = { 10, 4, { 80, 65, 50, 30 }, { 35, 360, 1440, 2880 } };
+const PumpSchedule ScheduleWellOnMainFast = { WellPumpDefaultRuntime, 3, { 75, 50, 45 }, { 30, 60, 1440 } };
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
@@ -196,7 +197,7 @@ extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
 extern Span spanSm(149);     // Loop span at Small
-extern Span spanMd(250);    // Loop span Middle  /screen refresh/
+extern Span spanMd(250);     // Loop span Middle  /screen refresh/
 extern Span spanLg(7093);    // Loop span Large   /warning messages/
 extern Span spanMx(250005);  // Loop span at 60k loops
 

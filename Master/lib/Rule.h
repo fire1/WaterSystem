@@ -128,23 +128,22 @@ private:
     this->nextToOff = msTimeToOff;
     this->nextToOn = msTimeToOn;
 
-
-    if (!ctrlWell.isOn() && LevelSensorBothMax > read->getWellLevel()) {
-      return;
-    }
-
     //
     // Turn pump OFF by timeout of mode
     if (ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOff)) {
       ctrlWell.setOn(false);
       wellTimer = millis();
 
-      dbg(F("CTRL well /"));
-      dbg(stopMin);
-      dbg(F("min/ pump is Off "));
+      dbg(F("[CTRL] well to OFF"));
       dbgLn();
 
       read->stopWorkRead();
+    }
+
+    //
+    // Ignore next code when tank is full
+    if (!ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
+      return;
     }
 
     //
@@ -165,8 +164,7 @@ private:
       if (spanLg.active()) {
         read->startWorkRead();
         buzz->alarm();
-
-        dbg(F("Prepare levels /Well/ "));
+        dbg(F("[CTRL] Well prepare"));
         dbgLn();
       }
     }
@@ -174,19 +172,10 @@ private:
     //
     // Turn the pump on
     if (!ctrlMain.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOn)) {
-      //#ifdef CHECK_DAYTIME
-
-      //#endif
-
       wellTimer = millis();
 
-
-
-      dbg(F("CTRL well /"));
-      dbg(workMin);
-      dbg(F("min/ pump  is On "));
+      dbg(F("[CTRL] Well to ON"));
       dbgLn();
-
 
       ctrlWell.setOn(true);
     }
@@ -205,30 +194,31 @@ private:
 
       case 1:
         // Easy
-        beatWell(1500);
+        beatWell(2400);
         pumpWellSchedule(ScheduleWellOnMainEasy);
 
         break;
 
       case 2:
         // Fast
-        beatWell(800);
+        beatWell(1200);
         pumpWellSchedule(ScheduleWellOnMainFast);
         break;
 
       case 3:
         // Now!
         beatWell(400);
-        pumpWell(WellPumpDefaultRuntime, 20);
+        pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
         //pumpWell(1, 2);
         break;
     }
   }
 
+
   /**
-         * Pump schedule for the well mode
-         * @param schedule
-         */
+    * Pump schedule for the well mode
+    * @param schedule
+    */
   void pumpWellSchedule(const PumpSchedule &schedule) {
     uint8_t main = read->getMainLevel();
     uint16_t stop = 180;
