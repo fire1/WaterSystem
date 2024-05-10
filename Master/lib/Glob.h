@@ -154,10 +154,10 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 const int8_t WellPumpDefaultRuntime = 12;
 const float WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.8;
 //
-// Schedules for well pumping periods
+// Schedules for well pumping periods by combining the levels of both tanks
 //      FORMAT: {<on time>, <array length>, {<tank level>, ...}, {<off time>, ...} }
-const PumpSchedule ScheduleWellOnMainEasy = { 10, 4, { 80, 65, 50, 30 }, { 35, 360, 1440, 2880 } };
-const PumpSchedule ScheduleWellOnMainFast = { WellPumpDefaultRuntime, 3, { 75, 50, 45 }, { 30, 60, 1440 } };
+const PumpSchedule ScheduleWellEasy = { 10, 4, { 160, 130, 100, 60 }, { 35, 360, 1440, 2880 } };
+const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 3, { 150, 100, 90 }, { 30, 60, 1440 } };
 
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20

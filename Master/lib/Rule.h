@@ -196,14 +196,14 @@ private:
       case 1:
         // Easy
         beatWell(2400);
-        pumpWellSchedule(ScheduleWellOnMainEasy);
+        pumpWellSchedule(ScheduleWellEasy);
 
         break;
 
       case 2:
         // Fast
         beatWell(1200);
-        pumpWellSchedule(ScheduleWellOnMainFast);
+        pumpWellSchedule(ScheduleWellFast);
         break;
 
       case 3:
@@ -221,16 +221,19 @@ private:
     * @param schedule
     */
   void pumpWellSchedule(const PumpSchedule &schedule) {
-    uint8_t well = read->getWellLevel();
-    uint16_t stop = 180; // just defining some foo value
+    uint8_t comb = read->getWellLevel() + read->getMainLevel();
+    uint16_t stop = 180;  // just defining some foo value
 
-    if (well > LevelSensorBothMax && well < LevelSensorMainMin) {
-      for (int i = 0; i < schedule.intervals; ++i) {
-        if (schedule.levels[i] > well) {
-          stop = schedule.stops[i];
-          break;  // Exit loop once stop is found
-        }
+    for (int i = 0; i < schedule.intervals; ++i) {
+      if (schedule.levels[i] > comb) {
+        stop = schedule.stops[i];
       }
+    }
+
+
+    if (cmd.show(F("schedule"))) {
+      cmd.print(F("[Schedule] well work:"), schedule.workMin);
+      cmd.print(F("[Schedule] well stop:"), stop);
     }
 
     pumpWell(schedule.workMin, stop);
