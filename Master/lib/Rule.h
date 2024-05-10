@@ -222,7 +222,7 @@ private:
     */
   void pumpWellSchedule(const PumpSchedule &schedule) {
     uint8_t well = read->getWellLevel();
-    uint8_t stop = 180; // just defining some foo value
+    uint16_t stop = 180; // just defining some foo value
 
     if (well > LevelSensorBothMax && well < LevelSensorMainMin) {
       for (int i = 0; i < schedule.intervals; ++i) {
