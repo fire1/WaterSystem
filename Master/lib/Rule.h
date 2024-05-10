@@ -1,3 +1,4 @@
+#include <stdint.h>
 
 #ifndef Rule_h
 #define Rule_h
@@ -220,12 +221,11 @@ private:
     * @param schedule
     */
   void pumpWellSchedule(const PumpSchedule &schedule) {
-    uint8_t main = read->getMainLevel();
-    uint16_t stop = 180;
+    uint8_t well = read->getWellLevel();
 
-    if (main > LevelSensorBothMax && main < LevelSensorMainMin) {
+    if (well > LevelSensorBothMax && well < LevelSensorMainMin) {
       for (int i = 0; i < schedule.intervals; ++i) {
-        if (schedule.levels[i] > main) {
+        if (schedule.levels[i] > well) {
           stop = schedule.stops[i];
           break;  // Exit loop once stop is found
         }

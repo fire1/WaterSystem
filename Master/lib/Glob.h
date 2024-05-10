@@ -155,7 +155,7 @@ const int8_t WellPumpDefaultRuntime = 12;
 const float WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.8;
 //
 // Schedules for well pumping periods
-//      FORMAT: {<on time>, <array length>, {<off time>,...}}
+//      FORMAT: {<on time>, <array length>, {<tank level>, ...}, {<off time>, ...} }
 const PumpSchedule ScheduleWellOnMainEasy = { 10, 4, { 80, 65, 50, 30 }, { 35, 360, 1440, 2880 } };
 const PumpSchedule ScheduleWellOnMainFast = { WellPumpDefaultRuntime, 3, { 75, 50, 45 }, { 30, 60, 1440 } };
 
