@@ -49,6 +49,7 @@ public:
     void toggle() {
         this->isOverwrite = true;
         this->on = !this->on;
+        lastState = on;
         this->handlePins();
     }
 

@@ -225,11 +225,9 @@ private:
     uint16_t stop = 180;  // just defining some foo value
 
     for (int i = 0; i < schedule.intervals; ++i) {
-      if (schedule.levels[i] > comb) {
+      if (schedule.levels[i] > comb)
         stop = schedule.stops[i];
-      }
     }
-
 
     if (cmd.show(F("schedule"))) {
       cmd.print(F("[Schedule] well work:"), schedule.workMin);
