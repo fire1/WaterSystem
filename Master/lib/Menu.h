@@ -1,3 +1,4 @@
+#include "WString.h"
 
 #ifndef Menu_h
 #define Menu_h
@@ -47,7 +48,8 @@ private:
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1"));
     if (ctrlWell.isTerminated())
-      lcd.write((char)5);
+      //lcd.write((char)5);
+      lcd.write((char)235);  // buildin char
     else
       lcd.print(F(" "));
 
@@ -63,7 +65,8 @@ private:
 
     int level2 = read->getMainLevel();
     if (ctrlMain.isTerminated())
-      lcd.write((char)5);
+      //lcd.write((char)5);
+      lcd.write((char)235);  // buildin char
     else
       lcd.print(F(" "));
 
@@ -90,7 +93,9 @@ private:
     lcd.print(formatUint8(level1));
 
     // Terminate mark
-    if (ctrlWell.isTerminated()) lcd.write((char)5);
+    if (ctrlWell.isTerminated())
+      // lcd.write((char)5);
+      lcd.write((char)235);
     else lcd.print(F(" "));
 
     if (level1 == 0 || level1 > LevelSensorWellMin)
@@ -108,7 +113,9 @@ private:
     lcd.print(formatUint8(level2));
 
     // Terminate mark
-    if (ctrlMain.isTerminated()) lcd.write((char)5);
+    if (ctrlMain.isTerminated())
+      // lcd.write((char)5);
+      lcd.write((char)235);
     else lcd.print(F(" "));
 
     if (level2 == 0 || level2 > LevelSensorMainMin)
@@ -247,8 +254,13 @@ private:
     // When stopped
     // Print to on time
     if (!ctrlWell.isOn()) lcd.print(F("~"));
-    else lcd.print(F(" "));                        //10
-    lcd.print(formatMsToTime(rule->getNextOn()));  //13
+    else lcd.print(F(" "));  //10
+    unsigned long next = rule->getNextOn();
+    if (next > MaxDaysInMillis) {
+      lcd.print(F("/"));
+      lcd.write((char)243); // infinity 
+      lcd.print(F("/"));
+    } else lcd.print(formatMsToTime(rule->getNextOn()));  //13
 
     lcd.print(F("   "));
   }
@@ -385,8 +397,6 @@ private:
   }
 
   void handleDebug() {
-
-
   }
 
 public:
@@ -418,10 +428,12 @@ public:
     lcd.createChar(2, charDayIcon);
     lcd.createChar(3, charNightIcon);
     lcd.createChar(4, charClockIcon);
-    lcd.createChar(5, charTerminate);
+    lcd.createChar(5, charTerminate); // todo: free to replace since LCD has same charater
     lcd.createChar(6, charOneLine);
     lcd.createChar(7, charTwoLine);
 
+    //   lcd.write((char)162); // - bracket 
+    //   lcd.write((char)163); // - bracket 
 
 
     //

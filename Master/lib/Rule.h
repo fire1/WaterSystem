@@ -10,7 +10,13 @@
 class Rule {
 private:
 
-  unsigned long wellTimer = 0;
+  struct WellState {
+    unsigned long time = 0;
+    bool on = false;
+  };
+
+  WellState wellCtr;
+
 
   Read *read;
   Data *modeWell;
@@ -43,7 +49,10 @@ public:
     this->timePrepareTurnOn = LevelRefreshTimeWork * LevelSensorReads - 50;
   }
 
-
+  /**
+    * @brief Listen for environment changes.
+    * 
+    */
   void hark() {
     this->handleDebug();
     this->handleWellMode();
@@ -52,9 +61,9 @@ public:
   }
 
   /**
-         * Display warning message
-         * @param dr
-         */
+    * Display warning message
+    * @param dr
+    */
   void warn(DrawInterface *dr) {
 
     if (this->warnCase == "") return;
@@ -62,18 +71,22 @@ public:
     this->warnCase = "";
   }
 
-
-
+  /**
+    * @brief Gets next timer ON action
+    */
   unsigned long getNextOn() {
-    if (!ctrlWell.isOn())
-      return this->nextToOn - (millis() - wellTimer);
+    if (!wellCtr.on)
+      return this->nextToOn - (millis() - this->wellCtr.time);
 
     return this->nextToOn;
   }
 
+  /**
+    * @brief Gets next timer OFF action
+    */
   unsigned long getNextOff() {
-    if (ctrlWell.isOn())
-      return this->nextToOff - (millis() - wellTimer);
+    if (wellCtr.on)
+      return this->nextToOff - (millis() - this->wellCtr.time);
 
     return this->nextToOff;
   }
@@ -117,10 +130,10 @@ private:
   }
 
   /**
-         * Pumping well amplitude
-         * @param workMin
-         * @param stopMin
-         */
+  * Pumping well amplitude
+  * @param workMin
+  * @param stopMin
+  */
   void pumpWell(uint8_t workMin, uint16_t stopMin) {
 
     unsigned long msTimeToOff = this->calcMinutes(workMin);
@@ -130,10 +143,17 @@ private:
     this->nextToOn = msTimeToOn;
 
     //
+    // Reset the clock when pump is manually run
+    if (ctrlWell.isOn() != wellCtr.on) {
+      wellCtr.on = ctrlWell.isOn();
+      wellCtr.time = millis();
+    }
+
+    //
     // Turn pump OFF by timeout of mode
-    if (ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOff)) {
+    if (ctrlWell.isOn() && (millis() - wellCtr.time >= msTimeToOff)) {
       ctrlWell.setOn(false);
-      wellTimer = millis();
+      wellCtr.time = millis();
 
       dbg(F("[CTRL] well to OFF"));
       dbgLn();
@@ -161,7 +181,7 @@ private:
 
     //
     // Prepare, read levels before start
-    if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= (msTimeToOn - timePrepareTurnOn))) {
+    if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellCtr.time >= (msTimeToOn - timePrepareTurnOn))) {
       if (spanLg.active()) {
         read->startWorkRead();
         buzz->alarm();
@@ -172,8 +192,8 @@ private:
 
     //
     // Turn the pump on
-    if (!ctrlMain.isOn() && !ctrlWell.isOn() && (millis() - wellTimer >= msTimeToOn)) {
-      wellTimer = millis();
+    if (!ctrlMain.isOn() && !ctrlWell.isOn() && (millis() - wellCtr.time >= msTimeToOn)) {
+      wellCtr.time = millis();
 
       dbg(F("[CTRL] Well to ON"));
       dbgLn();

@@ -154,6 +154,9 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 const int8_t WellPumpDefaultRuntime = 12;
 const float WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.8;
 //
+// Define maximum days in millis() check
+const unsigned long MaxDaysInMillis = 40 * 24 * 60 * 60 * 1000;
+//
 // Schedules for well pumping periods by combining the levels of both tanks
 //      FORMAT: {<on time>, <array length>, {<tank level>, ...}, {<off time>, ...} }
 const PumpSchedule ScheduleWellEasy = { 10, 4, { 160, 130, 100, 60 }, { 35, 360, 1440, 2880 } };
