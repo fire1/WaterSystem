@@ -258,7 +258,7 @@ private:
     unsigned long next = rule->getNextOn();
     if (next > MaxDaysInMillis) {
       lcd.print(F("/"));
-      lcd.write((char)243); // infinity 
+      lcd.write((char)243);  // infinity
       lcd.print(F("/"));
     } else lcd.print(formatMsToTime(rule->getNextOn()));  //13
 
@@ -267,8 +267,8 @@ private:
 
 
   /**
-       * Heat warning
-       */
+    * Heat warning
+    */
   void warnHeat(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
@@ -287,8 +287,8 @@ private:
   }
 
   /**
-       * Heat information
-       */
+    * Heat information
+    */
   void infoHeat(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
@@ -319,10 +319,10 @@ private:
   }
 
   /**
-       * Formats numbers to proper display format
-       * @param value
-       * @return
-       */
+    * Formats numbers to proper display format
+    * @param value
+    * @return
+    */
   char *formatNumTemp(int value) {
 
     if (value < 0) {
@@ -334,20 +334,20 @@ private:
   }
 
   /**
-       * Formats uint8_t numbers to be displayed.
-       * @param value
-       * @return
-       */
+    * Formats uint8_t numbers to be displayed.
+    * @param value
+    * @return
+    */
   char *formatUint8(uint8_t value) {
     sprintf(formatBuffer, "%03d", value);
     return formatBuffer;
   }
 
   /**
-       * Formats given ms to time
-       * @param milliseconds
-       * @return
-       */
+    * Formats given ms to time
+    * @param milliseconds
+    * @return
+    */
   char *formatMsToTime(unsigned long milliseconds) {
     unsigned long seconds = milliseconds / 1000;
     unsigned long minutes = seconds / 60;
@@ -379,9 +379,9 @@ private:
   }
 
   /**
-     * Shows blinking cursor
-     * @param dr
-     */
+    * Shows blinking cursor
+    * @param dr
+    */
   void handleEditState(DrawInterface *dr) {
     //
     // Execute only when is changed
@@ -428,12 +428,12 @@ public:
     lcd.createChar(2, charDayIcon);
     lcd.createChar(3, charNightIcon);
     lcd.createChar(4, charClockIcon);
-    lcd.createChar(5, charTerminate); // todo: free to replace since LCD has same charater
+    lcd.createChar(5, charTerminate);  // todo: free to replace since LCD has same charater
     lcd.createChar(6, charOneLine);
     lcd.createChar(7, charTwoLine);
 
-    //   lcd.write((char)162); // - bracket 
-    //   lcd.write((char)163); // - bracket 
+    //   lcd.write((char)162); // - bracket
+    //   lcd.write((char)163); // - bracket
 
 
     //

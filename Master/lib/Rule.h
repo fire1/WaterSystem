@@ -94,26 +94,26 @@ public:
 private:
 
   /**
-         * Sets warning massage to be displayed.
-         * @param msg
-         */
+    * Sets warning massage to be displayed.
+    * @param msg
+    */
   void setWarn(String msg) {
     this->warnCase = msg;
   }
 
   /**
-         * Converts minutes to millis
-         * @param minutes
-         * @return
-         */
+    * Converts minutes to millis
+    * @param minutes
+    * @return
+    */
   unsigned long calcMinutes(unsigned int minutes) {
     return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
   }
 
   /**
-         * Safe way to check for daytime
-         * @return
-         */
+    * Safe way to check for daytime
+    * @return
+    */
   bool checkDaytime() {
     //
     // Wrapping time class locally
@@ -258,8 +258,8 @@ private:
   }
 
   /**
-         * Just turns on the pump to main
-         */
+    * Just turns on the pump to main
+    */
   void pumpMain() {
 
     uint8_t main = read->getMainLevel();
@@ -302,8 +302,8 @@ private:
   }
 
   /**
-         * Monitors the levels and turn off on Low or Full tank state
-         */
+    * Monitors the levels and turn off on Low or Full tank state
+    */
   void handleMainStop() {
     uint8_t levelMain = read->getMainLevel();
     uint8_t levelWell = read->getWellLevel();
@@ -342,9 +342,9 @@ private:
 
 
   /**
-         * Led beet for indicating the modes
-         * @param ms
-         */
+    * Led beet for indicating the modes
+    * @param ms
+    */
   void beatWell(int ms) {
 
     if (ms == 0) {
@@ -367,8 +367,8 @@ private:
   }
 
   /**
-        * Handles debug IO
-        */
+    * Handles debug IO
+    */
   void handleDebug() {
   }
 };
