@@ -76,7 +76,7 @@ public:
 
 const uint8_t PumpScheduleMaxIntervals = 8;
 struct PumpSchedule {
-  uint8_t workMin;
+  uint8_t runtime;
   uint8_t intervals;
   uint8_t levels[PumpScheduleMaxIntervals];
   uint16_t stops[PumpScheduleMaxIntervals];
@@ -130,7 +130,7 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelRefreshTimeIdle 1800000  // 30min
 // #define LevelRefreshTimeIdle 900000  // 15min
 #define LevelRefreshTimeWork 12000
-#define TimeoutPowerSlave LevelRefreshTimeWork * 1.5  // time to wait for powering up the main sensor
+#define TimeoutPowerSlave LevelRefreshTimeWork * 2  // time to wait for powering up the main sensor
 
 #define pinMainPower 8  // Turn on (GND) power for slave
 #define pinMainRx 10    // Recive data pin from slave
@@ -147,19 +147,20 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelSensorMainMin 105
 
 #define LevelSensorWellMin 110
-#define LevelSensorStopWell 100
+#define LevelSensorStopWell 90
 
 //
 // Defining the best pumping run time
 const int8_t WellPumpDefaultRuntime = 12;
-const float WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.8;
+const int8_t WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.7;
 //
 // Define maximum days in millis() check
 const unsigned long MaxDaysInMillis = 40 * 24 * 60 * 60 * 1000;
+
 //
 // Schedules for well pumping periods by combining the levels of both tanks
 //      FORMAT: {<on time>, <array length>, {<tank level>, ...}, {<off time>, ...} }
-const PumpSchedule ScheduleWellEasy = { 10, 4, { 160, 130, 100, 60 }, { 35, 360, 1440, 2880 } };
+const PumpSchedule ScheduleWellEasy = { WellPumpDefaultRuntime * 0.84, 4, { 160, 130, 100, 60 }, { 35, 360, 1440, 2880 } };
 const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 3, { 150, 100, 90 }, { 30, 60, 1440 } };
 
 #define SuspendDisplayTime 240000  // 4min
