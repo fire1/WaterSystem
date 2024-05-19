@@ -163,6 +163,8 @@ const unsigned long MaxDaysInMillis = 40 * 24 * 60 * 60 * 1000;
 const PumpSchedule ScheduleWellEasy = { WellPumpDefaultRuntime * 0.84, 4, { 160, 130, 100, 60 }, { 35, 360, 1440, 2880 } };
 const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 3, { 150, 100, 90 }, { 30, 60, 1440 } };
 
+
+const int8_t WellDayjobHour = 16;  // Clock hour
 #define SuspendDisplayTime 240000  // 4min
 #define DisableSensorError 20
 #define WarnScreenTimeout 5000

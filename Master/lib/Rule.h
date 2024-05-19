@@ -17,6 +17,8 @@ private:
 
   WellState wellCtr;
 
+  bool wellHasDayjob = false;
+
 
   Read *read;
   Data *modeWell;
@@ -58,6 +60,7 @@ public:
     this->handleWellMode();
     this->handleMainMode();
     this->handleMainStop();
+    this->handleDayjob();
   }
 
   /**
@@ -364,6 +367,16 @@ private:
         beatLed.repeat();
       }
     }
+  }
+  void handleDayjob() {
+    if (!time->isConn()) return;  // clock is not connected...
+
+    if (!wellHasDayjob && WellDayjobHour == time->getHour()) {
+      ctrlWell.setOn(true);
+      wellHasDayjob = true;
+    }
+    // Reset dayjob
+    if (!time->isDaytime()) wellHasDayjob = false;
   }
 
   /**
