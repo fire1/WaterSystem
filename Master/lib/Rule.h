@@ -10,6 +10,8 @@
 class Rule {
 private:
 
+  //
+  // Handle well state localy in order to detect human interaction.
   struct WellState {
     unsigned long time = 0;
     bool on = false;
@@ -17,6 +19,8 @@ private:
 
   WellState wellCtr;
 
+  // 
+  // Handles the state of "dayjob" for the well.
   bool wellHasDayjob = false;
 
 
@@ -368,6 +372,10 @@ private:
       }
     }
   }
+
+  /**
+  	*  The well pump will be turned on once a day when it has not been running.
+  	*/
   void handleDayjob() {
     if (!time->isConn()) return;  // clock is not connected...
 

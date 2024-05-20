@@ -10,28 +10,35 @@
 #include <Wire.h>
 #include <CmdSerial.h>
 
-#include "Setup.h"
+//
+// Definition setup
+#define DEBUG  // Comment it to disable debugging
+//#define DAYTIME_CHECK // Comment it to disable daytime check for running pumps
+//#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
+#define WELL_MEASURE_UART_47K // Uses Serial UART to communicate with the sensor
+#define ENABLE_CMD// Enables Serial input listener for commands
+#define ENABLE_CLOCK // Enables DS3231 clock usage
 
 //
 // Used as debugging tool for
 //  Serial Input/Output.
 CmdSerial cmd;
 
-#define pinLed 13
-#define pinTone 9
+const uint8_t pinLed = 13;
+const uint8_t pinTone = 9;
 //
 // Pump controll pins
-#define pinWellPump A10  // Well pump pin putput
-#define pinMainPump A11  // Main pump pin output
+const uint8_t pinWellPump = A10;  // Well pump pin putput
+const uint8_t pinMainPump = A11;  // Main pump pin output
 //
 // Cooling control and monitoring
-#define pinTmpRss A9  // Temperature input / NTC-MF52AT
-#define pinFanSsr 2   // Temperature fan for RSS
+const uint8_t pinTmpRss = A9;  // Temperature input / NTC-MF52AT
+const uint8_t pinFanSsr = 2;   // Temperature fan for RSS
 //
 // Designed for AC loads has maximum junction temperature of 150°C
 // Operating junction temperature range. -40 to +125. °C
-#define stopMaxTemp 90
-const int TempSampleReads = 10;
+const uint8_t stopMaxTemp = 90;
+const uint8_t TempSampleReads = 10;
 
 
 //
@@ -49,32 +56,16 @@ class Pump;
 class Tone;
 
 
-class DrawInterface {
-public:
+//
+// Draw Api interface
+#include "DrIn.h"
 
-  // Pure virtual functions - These functions must be implemented by derived classes
-  virtual uint8_t getCursor() = 0;
+//
+// The max array len for  well pump schedule
+const uint8_t PumpScheduleMaxIntervals = 4;
 
-  virtual void edit(Data *d) = 0;
-
-  virtual void pump(Pump *p, Pump *s) = 0;
-
-  virtual void resetCursor();
-
-  virtual bool isEditing() = 0;
-
-  virtual void noEdit() = 0;
-
-  virtual bool isDisplayOn() = 0;
-
-  virtual void warn(uint8_t i, bool buzz = true) = 0;
-
-  virtual void warn(uint8_t i, String msg) = 0;
-
-  virtual String getWarnMsg() = 0;
-};
-
-const uint8_t PumpScheduleMaxIntervals = 8;
+//
+// The schedule structure
 struct PumpSchedule {
   uint8_t runtime;
   uint8_t intervals;
@@ -96,28 +87,28 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 //
 // Panel led pins
-#define pinLedBeat 30
-#define pinLedWell 31
-#define pinLedMain 32
+const uint8_t pinLedBeat = 30;
+const uint8_t pinLedWell = 31;
+const uint8_t pinLedMain = 32;
 
 //
 // Instant pump buttons
-#define pinBtnWell 33
-#define pinBtnMain 34
+const uint8_t pinBtnWell = 33;
+const uint8_t pinBtnMain = 34;
 
 
 //
 // Panel navigation pins
-#define pinBtnBack 35
-#define pinBtnOk 36
-#define pinBtnNext 37
+const uint8_t pinBtnBack = 35;
+const uint8_t pinBtnOk = 36;
+const uint8_t pinBtnNext = 37;
 
 //
 //  Ultrasonic Standart read mesurment pinns,
 //    it is not recommended sice uses too much time to measure
 #ifdef WELL_MEASURE_DEFAULT
-#define pinWellEcho 15  // Echo pin
-#define pinWellSend 14  // Trigger pin
+const uint8_t pinWellEcho = 15;  // Echo pin
+const uint8_t pinWellSend = 14;  // Trigger pin
 #endif
 //
 // For this mode a 45Kohm resistor is solder for R19
@@ -132,8 +123,8 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 #define LevelRefreshTimeWork 12000
 #define TimeoutPowerSlave LevelRefreshTimeWork * 2  // time to wait for powering up the main sensor
 
-#define pinMainPower 8  // Turn on (GND) power for slave
-#define pinMainRx 10    // Recive data pin from slave
+const uint8_t pinMainPower = 8;  // Turn on (GND) power for slave
+const uint8_t pinMainRx = 10;    // Recive data pin from slave
 //
 // Defines how meny time to read sensors
 //  before defining tank state.
@@ -143,11 +134,11 @@ LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 // This value defines safe level
 // point for max u-s sensor reads.
 // Should be common for both sensors.
-#define LevelSensorBothMax 20
-#define LevelSensorMainMin 105
+const uint8_t LevelSensorBothMax = 20;
+const uint8_t LevelSensorMainMin = 105;
 
-#define LevelSensorWellMin 110
-#define LevelSensorStopWell 90
+const uint8_t LevelSensorWellMin = 110;
+const uint8_t LevelSensorStopWell = 90;
 
 //
 // Defining the best pumping run time
