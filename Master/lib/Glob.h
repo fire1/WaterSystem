@@ -1,7 +1,10 @@
-
-
 #ifndef Global_h
 #define Global_h
+/**
+  * Gobal definition of object and paramerters
+  *		This also is used as global include.
+  */
+
 
 #include <stdint.h>
 #include <SoftwareSerial.h>
