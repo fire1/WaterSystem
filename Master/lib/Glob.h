@@ -105,24 +105,25 @@ const uint8_t pinBtnNext = 37;
 
 //
 //  Ultrasonic Standart read mesurment pinns,
-//    it is not recommended sice uses too much time to measure
+//
+//    it is not recommended sice uses too much time to measure tank level into the sketch.
 #ifdef WELL_MEASURE_DEFAULT
 const uint8_t pinWellEcho = 15;  // Echo pin
 const uint8_t pinWellSend = 14;  // Trigger pin
 #endif
-//
-// For this mode a 45Kohm resistor is solder for R19
+// Default
+// For this mode a 45Kohm resistor is solder for R19 pad on the PCB
 #ifdef WELL_MEASURE_UART_47K   // For UART Serial I'm using Serial3 port RX3 pin 15 and TX3 pin 14
 #define startUartCommand 0x01  // All available commands to transmit are 0x01, 0x00, 0x55
 #define verifyCorrection 1     // Some of the sensors sends +/-  1/2 values, in my case is +1 in order to work verification.
 #endif
 
-
+// Sensor read tank level times
 #define LevelRefreshTimeIdle 1800000  // 30min
-// #define LevelRefreshTimeIdle 900000  // 15min
 #define LevelRefreshTimeWork 12000
 #define TimeoutPowerSlave LevelRefreshTimeWork * 2  // time to wait for powering up the main sensor
-
+//
+// Sensors pins
 const uint8_t pinMainPower = 8;  // Turn on (GND) power for slave
 const uint8_t pinMainRx = 10;    // Recive data pin from slave
 //
@@ -136,12 +137,13 @@ const uint8_t pinMainRx = 10;    // Recive data pin from slave
 // Should be common for both sensors.
 const uint8_t LevelSensorBothMax = 20;
 const uint8_t LevelSensorMainMin = 105;
-
+//
+// Well levels
 const uint8_t LevelSensorWellMin = 110;
 const uint8_t LevelSensorStopWell = 90;
 
 //
-// Defining the best pumping run time
+// Defining the best pumping runtime
 const int8_t WellPumpDefaultRuntime = 12;
 const int8_t WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.7;
 //
@@ -154,14 +156,16 @@ const unsigned long MaxDaysInMillis = 40 * 24 * 60 * 60 * 1000;
 const PumpSchedule ScheduleWellEasy = { WellPumpDefaultRuntime * 0.84, 4, { 160, 130, 100, 60 }, { 35, 360, 1440, 2880 } };
 const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 3, { 150, 100, 90 }, { 30, 60, 1440 } };
 
-
+//
+// A clock time when to execute a dayjob for well pump	
 const int8_t WellDayjobHour = 16;  // Clock hour
-#define SuspendDisplayTime 240000  // 4min
-#define DisableSensorError 20
-#define WarnScreenTimeout 5000
+
+#define SuspendDisplayTime 240000  // After 4min will turn off the display. 
+#define DisableSensorError 20  // How many errors will disable sensor read.
+#define WarnScreenTimeout 5000 // Time to display warning message.
 
 //
-// Cursor map of the UI
+// Cursor map of the menu UI
 const uint8_t MenuInfo_Home = 0;
 const uint8_t MenuEdit_Well = 1;
 const uint8_t MenuEdit_Main = 2;
@@ -170,7 +174,7 @@ const uint8_t MenuPump_Main = 6;
 const uint8_t MenuInfo_Time = 255;
 const uint8_t MenuInfo_Heat = 254;
 //
-// Notification screens
+// Warn (notification) screens
 const uint8_t MenuWarn_Heat = 7;
 const uint8_t MenuWarn_Rule = 8;
 
@@ -178,7 +182,7 @@ const uint8_t MenuWarn_Rule = 8;
 //
 // Debounce time for the joystick
 #define BtnDebounceTime 10
-#define BtnHoldTime 2000
+#define BtnHoldTime 2000 // deprecated
 
 //
 // Constructing
