@@ -10,13 +10,13 @@ class Span {
 
 private:
     bool isActive = false;
-    uint16_t length;
+    uint32_t length;
     unsigned long previousMillis = 0;
 
 
 public:
 
-    Span(uint16_t len)
+    Span(uint32_t len)
             : length(len) {}
 
     bool active() {
