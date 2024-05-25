@@ -156,8 +156,8 @@ const unsigned long MaxDaysInMillis = 40 * 24 * 60 * 60 * 1000;
 //
 // Schedules for well pumping periods by combining the levels of both tanks
 //      FORMAT: {<on time>, <array length>, {<tank level>, ...}, {<off time>, ...} }
-const PumpSchedule ScheduleWellEasy = { WellPumpDefaultRuntime * 0.84, 4, { 160, 130, 100, 60 }, { 35, 360, 1440, 2880 } };
-const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 3, { 150, 100, 90 }, { 30, 60, 1440 } };
+const PumpSchedule ScheduleWellEasy = { WellPumpDefaultRuntime * 0.84, 4, { 100, 80, 60, 50 }, { 35, 360, 1440, 2880 } };
+const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 3, { 90, 60, 50 }, { 30, 60, 1440 } };
 
 //
 // A clock time when to execute a dayjob for well pump	
