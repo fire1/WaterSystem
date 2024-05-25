@@ -377,14 +377,27 @@ private:
   	*  The well pump will be turned on once a day when it has not been running.
   	*/
   void handleDayjob() {
-    if (!time->isConn()) return;  // clock is not connected...
+  
+  	//
+  	// This function will be active only when clock is active.
+    if (!time->isConn()) return;
 
+    //
+    // Reset dayjob for the next day
+	if (!time->isDaytime()) wellHasDayjob = false;
+	
+	//
+	// Pass the "On" pump state to dayjob state...
+	if(wellCtr.on && !wellHasDayjob) wellHasDayjob = true;
+
+	//
+	// Turn on well for the dayjob
     if (!wellHasDayjob && WellDayjobHour == time->getHour()) {
       ctrlWell.setOn(true);
       wellHasDayjob = true;
     }
-    // Reset dayjob
-    if (!time->isDaytime()) wellHasDayjob = false;
+    
+    
   }
 
   /**

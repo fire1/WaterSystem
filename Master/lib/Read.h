@@ -1,5 +1,3 @@
-#include "Arduino.h"
-#include <stdint.h>
 
 #ifndef Read_h
 #define Read_h
