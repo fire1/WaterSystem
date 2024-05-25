@@ -149,7 +149,7 @@ private:
     cmdName = F("clock");
     if (cmd.set(cmdName)) {
       this->adjust();
-      cmd.print(F("Clock adjusted"));
+      cmd.print(F("Clock adjusted"), F("OK"));
     }
   }
 };
