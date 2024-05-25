@@ -140,8 +140,17 @@ private:
       this->daytime = (bool)num;
       overwrite = true;
     }
+
     if (cmd.show(cmdName))
       cmd.print(F("Daytime is "), this->daytime);
+
+    //
+    // Adjust clock
+    cmdName = F("clock");
+    if (cmd.set(cmdName)) {
+      this->adjust();
+      cmd.print(F("Clock adjusted"));
+    }
   }
 };
 
