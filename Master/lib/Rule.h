@@ -404,6 +404,15 @@ private:
     * Handles debug IO
     */
   void handleDebug() {
+
+  	if(cmd.show("timer:on"))
+  		cmd.print("Time to on", getNextOn());
+  
+
+  	if(cmd.show("timer:off"))
+  		cmd.print("Time to off", getNextOff());
+  	
+  	
   }
 };
 
