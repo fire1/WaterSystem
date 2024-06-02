@@ -83,7 +83,7 @@ public:
     */
   unsigned long getNextOn() {
     if (!wellCtr.on)
-      return this->nextToOn - (millis() - this->wellCtr.time);
+      return  this->nextToOn - (millis() - wellCtr.time);
 
     return this->nextToOn;
   }
@@ -142,6 +142,10 @@ private:
   * @param stopMin
   */
   void pumpWell(uint8_t workMin, uint16_t stopMin) {
+
+    if(cmd.show(F("timer:stop"))){
+      cmd.print("Timer stop time", stopMin);
+    }
 
     unsigned long msTimeToOff = this->calcMinutes(workMin);
     unsigned long msTimeToOn = this->calcMinutes(stopMin);

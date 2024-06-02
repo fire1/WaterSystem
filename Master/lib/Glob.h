@@ -151,7 +151,7 @@ const int8_t WellPumpDefaultRuntime = 12;
 const int8_t WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.7;
 //
 // Define maximum days in millis() check
-const unsigned long MaxDaysInMillis = 40 * 24 * 60 * 60 * 1000;
+const unsigned long MaxDaysInMillis = 3456000000; // 40 * 24 * 60 * 60 * 1000;
 
 //
 // Schedules for well pumping periods by combining the levels of both tanks
