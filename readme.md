@@ -65,9 +65,10 @@ contributes to overall resource optimization.
 ## [UI Demo](https://wokwi.com/projects/392574312711891969)
 
 This is a simple demo of the UI. \
-I order to bypass overheating warning enter `heat 20` in the Serial Monitor.\
 For simulating some water level in the tank/s use `well` or `main` command with value from `20` to `95`.\
-All commands can be checked in Cmd.h
+All commands can be checked when you write help in the Serial monitor.
+
+
 
 ## Potential Components
 
