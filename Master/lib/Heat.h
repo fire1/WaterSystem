@@ -116,7 +116,7 @@ private:
         TempRead.index = 1;
         TempRead.summary = TempRead.mean;
 
-        if (cmd.show(F("mean")))
+        if (cmd.show(F("mean"),F("Shows mean temperature for SSR.")))
             cmd.print(F("Mean temp"), TempRead.mean);
 
         this->heat = map(TempRead.mean, 494, 400, 10, 24); // updated 24*C
@@ -133,18 +133,18 @@ private:
 
         //
         // Debug fan speed
-        if (cmd.set(F("cool"), this->fan)) {
+        if (cmd.set(F("cool"), this->fan,F("Overwrite the fan speed."))) {
             this->isHandle = false;
             analogWrite(pinFanSsr, this->fan);
         }
         //
         // Debug temperature
-        if (cmd.set(F("heat"), this->heat)) this->isReading = false;
+        if (cmd.set(F("heat"), this->heat, F("Overwrites SSR temperature."))) this->isReading = false;
 
         //
         // Show internal values for cooling fan / SSR heat.
-        if (cmd.show(F("cool"), 1000)) cmd.print(F("Cool:"), this->fan);
-        if (cmd.show(F("heat"), 1000)) cmd.print(F("Heat:"), this->heat);
+        if (cmd.show(F("cool"),  F("Shows fan speed PWM."))) cmd.print(F("Cool:"), this->fan);
+        if (cmd.show(F("heat"),  F("Shows SSR temperature."))) cmd.print(F("Heat:"), this->heat);
     }
 
     /**

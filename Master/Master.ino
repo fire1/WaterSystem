@@ -59,7 +59,6 @@ void loop() {
     spanMd.tick();
     spanLg.tick();
     spanMx.tick();
-
 }
 
 // end of the file...

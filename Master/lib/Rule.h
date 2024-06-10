@@ -143,10 +143,6 @@ private:
   */
   void pumpWell(uint8_t workMin, uint16_t stopMin) {
 
-    if(cmd.show(F("timer:stop"))){
-      cmd.print("Timer stop time", stopMin);
-    }
-
     unsigned long msTimeToOff = this->calcMinutes(workMin);
     unsigned long msTimeToOn = this->calcMinutes(stopMin);
 
@@ -394,28 +390,27 @@ private:
 	// Pass the "On" pump state to dayjob state...
 	if(wellCtr.on && !wellHasDayjob) wellHasDayjob = true;
 
-	//
-	// Turn on well for the dayjob
-    if (!wellHasDayjob && WellDayjobHour == time->getHour()) {
-      ctrlWell.setOn(true);
-      wellHasDayjob = true;
+          //
+          // Turn on well for the dayjob
+      if (!wellHasDayjob && WellDayjobHour == time->getHour()) {
+        ctrlWell.setOn(true);
+        wellHasDayjob = true;
+      }
+      
+      
     }
-    
-    
-  }
 
-  /**
-    * Handles debug IO
-    */
-  void handleDebug() {
+    /**
+      * Handles debug IO
+      */
+    void handleDebug() {
 
-  	if(cmd.show("timer:on"))
+            if(cmd.show("timer:on",F("Shows work timer to next ON state.")))
   		cmd.print("Time to on", getNextOn());
   
 
-  	if(cmd.show("timer:off"))
+  	if(cmd.show("timer:off",F("Shows work timer to next OFF state.")))
   		cmd.print("Time to off", getNextOff());
-  	
   	
   }
 };

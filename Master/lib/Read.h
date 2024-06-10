@@ -387,13 +387,13 @@ private:
      * Handles debug
      */
     void debug() {
-        cmd.set(F("well"), this->well);
-        cmd.set(F("main"), this->main);
+        cmd.set(F("well"), this->well, F("Overwrite well tank level."));
+        cmd.set(F("main"), this->main, F("Overwrite main tank level."));
 
-        if (cmd.show(F("well")))
+        if (cmd.show(F("well"),F("Show well tank level.")))
             cmd.print(F("Well level is:"), this->well);
 
-        if (cmd.show(F("main")))
+        if (cmd.show(F("main"),F("Show main tank level.")))
             cmd.print(F("Main level is:"), this->well);
     }
 };

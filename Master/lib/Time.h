@@ -131,23 +131,25 @@ private:
     }
   }
 
+  //
+  // Handles the debug data of the class.
   void debug() {
     int8_t num = 0;
 
     String cmdName = F("day");
 
-    if (cmd.set(cmdName, num)) {
+    if (cmd.set(cmdName, num, F("Overwrites the daytime state."))) {
       this->daytime = (bool)num;
       overwrite = true;
     }
 
-    if (cmd.show(cmdName))
+    if (cmd.show(cmdName, F("Show is a daytime.")))
       cmd.print(F("Daytime is "), this->daytime);
 
     //
     // Adjust clock
     cmdName = F("clock");
-    if (cmd.set(cmdName)) {
+    if (cmd.set(cmdName, num, F("Adjusts the clock time."))) {
       this->adjust();
       cmd.print(F("Clock adjusted"), F("OK"));
     }
