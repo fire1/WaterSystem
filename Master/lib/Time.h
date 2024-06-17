@@ -122,7 +122,7 @@ private:
     if (isWinter) {
       // If it's winter, consider hours from 9 AM to 4 PM as daytime
       return (currentHour >= 9 && currentHour < 16);
-    } else if (isSummer) {
+          } else if (isSummer) {
       // If it's summer, consider hours from 10 AM to 8 PM as daytime
       return (currentHour >= 10 && currentHour < 20);
     } else {

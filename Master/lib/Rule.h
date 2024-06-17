@@ -16,8 +16,19 @@ private:
     unsigned long time = 0;
     bool on = false;
   };
-
   WellState wellCtr;
+
+	// 
+	// Used to handle the schedule time properly
+   	struct WellSchedule{
+    	uint16_t level = 0;
+    	unsigned long runtime;
+    	unsigned long stop;
+   	};
+
+  	WellSchedule wellSch;
+
+  
 
   // 
   // Handles the state of "dayjob" for the well.
@@ -113,7 +124,7 @@ private:
     * @param minutes
     * @return
     */
-  unsigned long calcMinutes(unsigned int minutes) {
+  unsigned long calcMinutes(unsigned long minutes) {
     return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
   }
 
@@ -141,7 +152,7 @@ private:
   * @param workMin
   * @param stopMin
   */
-  void pumpWell(uint8_t workMin, uint16_t stopMin) {
+  void pumpWell(uint8_t workMin, unsigned long stopMin) {
 
     unsigned long msTimeToOff = this->calcMinutes(workMin);
     unsigned long msTimeToOn = this->calcMinutes(stopMin);
@@ -149,6 +160,12 @@ private:
     this->nextToOff = msTimeToOff;
     this->nextToOn = msTimeToOn;
 
+	if(cmd.show(F("dump:off"))){
+		Serial.print(F("Stop min: "));
+		Serial.print(stopMin);
+		Serial.print(F(" ms: "));
+		Serial.println(msTimeToOn);
+	}
     //
     // Reset the clock when pump is manually run
     if (ctrlWell.isOn() != wellCtr.on) {
@@ -247,21 +264,54 @@ private:
     * Pump schedule for the well mode
     * @param schedule
     */
-  void pumpWellSchedule(const PumpSchedule &schedule) {
-    uint8_t comb = read->getWellLevel() + read->getMainLevel();
-    uint16_t stop = 180;  // just defining some foo value
+  void pumpWellSchedule(PumpSchedule schedule) {
+    uint8_t level = read->getWellLevel() + read->getMainLevel();
 
-    for (int i = 0; i < schedule.stops; ++i) {
-      if (schedule.levels[i] > comb)
-        stop = schedule.stops[i];
+
+    if(cmd.show(F("combo"), F("Shows combined level for scedule"))){
+    	cmd.print(F("Combo level"), level);
+    }	
+    
+    if(level < 38) return;
+
+	if(level == this->wellSch.level ) {
+	
+		 if (cmd.show(F("schedule"))) {
+		 
+		   	Serial.print(F("[Schedule] well work: "));
+		   	Serial.print(this->wellSch.runtime);
+		   	Serial.print(" stop: ");
+		   	Serial.println(this->wellSch.stop);
+		  }
+		  
+		pumpWell(wellSch.runtime, wellSch.stop);   
+		return;
+	}
+	
+	
+    this->wellSch.stop = schedule.stops[0];  // Sets lowest value as default 
+	
+    for (uint8_t i = 0; i < schedule.intervals; ++i) {
+      if (schedule.levels[i] > level){
+
+      	dbg(F("[Schedule] lvl below "));
+      	dbg(schedule.levels[i]);
+      	dbg(F(" Raw "));
+      	dbg(level);
+      	dbg(F(" stop "));
+      	dbg(schedule.stops[i]);
+      	dbg(F(" run "));
+      	dbg(schedule.runtime);
+    	dbgLn();
+
+    	this->wellSch.stop = schedule.stops[i];
+      }
+      
     }
-
-    if (cmd.show(F("schedule"))) {
-      cmd.print(F("[Schedule] well work:"), schedule.runtime);
-      cmd.print(F("[Schedule] well stop:"), stop);
-    }
-
-    pumpWell(schedule.runtime, stop);
+    
+	this->wellSch.runtime = schedule.runtime;
+	this->wellSch.level = level;
+    
   }
 
   /**

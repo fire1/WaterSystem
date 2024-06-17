@@ -63,18 +63,6 @@ class Tone;
 // Draw Api interface
 #include "DrIn.h"
 
-//
-// The max array len for  well pump schedule
-const uint8_t PumpScheduleMaxIntervals = 4;
-
-//
-// The schedule structure
-struct PumpSchedule {
-uint8_t runtime;
-uint8_t intervals;
-uint8_t levels[PumpScheduleMaxIntervals];
-uint16_t stops[PumpScheduleMaxIntervals];
-};
 
 //
 // LCD setup
@@ -153,11 +141,26 @@ const int8_t WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.7;
 // Define maximum days in millis() check
 const unsigned long MaxDaysInMillis = 3456000000; // 40 * 24 * 60 * 60 * 1000;
 
+
+//
+// The max array len for  well pump schedule
+const uint8_t PumpScheduleMaxIntervals = 4;
+
+//
+// The schedule structure
+struct PumpSchedule {
+	uint8_t runtime;
+	uint8_t intervals;
+	uint8_t levels[PumpScheduleMaxIntervals];
+	uint16_t stops[PumpScheduleMaxIntervals];
+};	
+
+
 //
 // Schedules for well pumping periods by combining the levels of both tanks
 //      FORMAT: {<on time>, <array length>, {<tank level>, ...}, {<off time>, ...} }
-const PumpSchedule ScheduleWellEasy = { (WellPumpDefaultRuntime * 0.84), 4, { 100, 80, 60, 50 }, { 35, 360, 1440, 2880 } };
-const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 3, { 70, 60, 50 }, { 30, 60, 1440 } };
+const PumpSchedule ScheduleWellEasy = { (WellPumpDefaultRuntime * 0.84), 4, { 100, 80, 60, 50 }, { 35, 365, 1430, 2890 } };
+const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 4, { 80, 70, 55, 45 }, { 30, 60, 365, 1430 } };
 
 //
 // A clock time when to execute a dayjob for well pump	
