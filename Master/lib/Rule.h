@@ -18,19 +18,19 @@ private:
   };
   WellState wellCtr;
 
-	// 
-	// Used to handle the schedule time properly
-   	struct WellSchedule{
-    	uint16_t level = 0;
-    	unsigned long runtime;
-    	unsigned long stop;
-   	};
+  //
+  // Used to handle the schedule time properly
+  struct WellSchedule {
+    uint16_t level = 0;
+    unsigned long runtime;
+    unsigned long stop;
+  };
 
-  	WellSchedule wellSch;
+  WellSchedule wellSch;
 
-  
 
-  // 
+
+  //
   // Handles the state of "dayjob" for the well.
   bool wellHasDayjob = false;
 
@@ -94,7 +94,7 @@ public:
     */
   unsigned long getNextOn() {
     if (!wellCtr.on)
-      return  this->nextToOn - (millis() - wellCtr.time);
+      return this->nextToOn - (millis() - wellCtr.time);
 
     return this->nextToOn;
   }
@@ -160,12 +160,12 @@ private:
     this->nextToOff = msTimeToOff;
     this->nextToOn = msTimeToOn;
 
-	if(cmd.show(F("dump:off"))){
-		Serial.print(F("Stop min: "));
-		Serial.print(stopMin);
-		Serial.print(F(" ms: "));
-		Serial.println(msTimeToOn);
-	}
+    if (cmd.show(F("dump:off"))) {
+      Serial.print(F("Stop min: "));
+      Serial.print(stopMin);
+      Serial.print(F(" ms: "));
+      Serial.println(msTimeToOn);
+    }
     //
     // Reset the clock when pump is manually run
     if (ctrlWell.isOn() != wellCtr.on) {
@@ -265,53 +265,58 @@ private:
     * @param schedule
     */
   void pumpWellSchedule(PumpSchedule schedule) {
-    uint8_t level = read->getWellLevel() + read->getMainLevel();
+    int16_t level = read->getWellLevel() + read->getMainLevel();
 
 
-    if(cmd.show(F("combo"), F("Shows combined level for scedule"))){
-    	cmd.print(F("Combo level"), level);
-    }	
-    
-    if(level < 38) return;
-
-	if(level == this->wellSch.level ) {
-	
-		 if (cmd.show(F("schedule"))) {
-		 
-		   	Serial.print(F("[Schedule] well work: "));
-		   	Serial.print(this->wellSch.runtime);
-		   	Serial.print(" stop: ");
-		   	Serial.println(this->wellSch.stop);
-		  }
-		  
-		pumpWell(wellSch.runtime, wellSch.stop);   
-		return;
-	}
-	
-	
-    this->wellSch.stop = schedule.stops[0];  // Sets lowest value as default 
-	
-    for (uint8_t i = 0; i < schedule.intervals; ++i) {
-      if (schedule.levels[i] > level){
-
-      	dbg(F("[Schedule] lvl below "));
-      	dbg(schedule.levels[i]);
-      	dbg(F(" Raw "));
-      	dbg(level);
-      	dbg(F(" stop "));
-      	dbg(schedule.stops[i]);
-      	dbg(F(" run "));
-      	dbg(schedule.runtime);
-    	dbgLn();
-
-    	this->wellSch.stop = schedule.stops[i];
-      }
-      
+    if (cmd.show(F("combo"), F("Shows combined level for scedule"))) {
+      cmd.print(F("Combo level"), level);
     }
-    
-	this->wellSch.runtime = schedule.runtime;
-	this->wellSch.level = level;
-    
+
+    //
+    // Will wait for levels to be ready
+    if (level < PumpScheduleCombinedMinLevel) return;
+
+    //
+    // Removeing the empty space from combined level
+    level = level - PumpScheduleCombinedAbsence;
+    if (level < 0) level = 0;
+
+    //
+    // Compare the lavels at "next" loop index (skips for loop each time)
+    if (level == this->wellSch.level) {
+      if (cmd.show(F("schedule"))) {
+        Serial.print(F("[Schedule] well work: "));
+        Serial.print(this->wellSch.runtime);
+        Serial.print(" stop: ");
+        Serial.println(this->wellSch.stop);
+      }
+
+      pumpWell(wellSch.runtime, wellSch.stop);
+      return;
+    }
+
+
+    this->wellSch.stop = schedule.stops[0];  // Sets lowest value as default
+
+    for (uint8_t i = 0; i < schedule.intervals; ++i) {
+      if (schedule.levels[i] > level) {
+
+        dbg(F("[Schedule] lvl below "));
+        dbg(schedule.levels[i]);
+        dbg(F(" Raw "));
+        dbg(level);
+        dbg(F(" stop "));
+        dbg(schedule.stops[i]);
+        dbg(F(" run "));
+        dbg(schedule.runtime);
+        dbgLn();
+
+        this->wellSch.stop = schedule.stops[i];
+      }
+    }
+
+    this->wellSch.runtime = schedule.runtime;
+    this->wellSch.level = level;
   }
 
   /**
@@ -427,41 +432,38 @@ private:
   	*  The well pump will be turned on once a day when it has not been running.
   	*/
   void handleDayjob() {
-  
-  	//
-  	// This function will be active only when clock is active.
+
+    //
+    // This function will be active only when clock is active.
     if (!time->isConn()) return;
 
     //
     // Reset dayjob for the next day
-	if (!time->isDaytime()) wellHasDayjob = false;
-	
-	//
-	// Pass the "On" pump state to dayjob state...
-	if(wellCtr.on && !wellHasDayjob) wellHasDayjob = true;
+    if (!time->isDaytime()) wellHasDayjob = false;
 
-          //
-          // Turn on well for the dayjob
-      if (!wellHasDayjob && WellDayjobHour == time->getHour()) {
-        ctrlWell.setOn(true);
-        wellHasDayjob = true;
-      }
-      
-      
+    //
+    // Pass the "On" pump state to dayjob state...
+    if (wellCtr.on && !wellHasDayjob) wellHasDayjob = true;
+
+    //
+    // Turn on well for the dayjob
+    if (!wellHasDayjob && WellDayjobHour == time->getHour()) {
+      ctrlWell.setOn(true);
+      wellHasDayjob = true;
     }
+  }
 
-    /**
+  /**
       * Handles debug IO
       */
-    void handleDebug() {
+  void handleDebug() {
 
-            if(cmd.show("timer:on",F("Shows work timer to next ON state.")))
-  		cmd.print("Time to on", getNextOn());
-  
+    if (cmd.show("timer:on", F("Shows work timer to next ON state.")))
+      cmd.print("Time to on", getNextOn());
 
-  	if(cmd.show("timer:off",F("Shows work timer to next OFF state.")))
-  		cmd.print("Time to off", getNextOff());
-  	
+
+    if (cmd.show("timer:off", F("Shows work timer to next OFF state.")))
+      cmd.print("Time to off", getNextOff());
   }
 };
 

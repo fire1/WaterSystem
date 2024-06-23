@@ -18,9 +18,9 @@
 #define DEBUG  // Comment it to disable debugging
 //#define DAYTIME_CHECK // Comment it to disable daytime check for running pumps
 //#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
-#define WELL_MEASURE_UART_47K // Uses Serial UART to communicate with the sensor
-#define ENABLE_CMD// Enables Serial input listener for commands
-#define ENABLE_CLOCK // Enables DS3231 clock usage
+#define WELL_MEASURE_UART_47K  // Uses Serial UART to communicate with the sensor
+#define ENABLE_CMD             // Enables Serial input listener for commands
+#define ENABLE_CLOCK           // Enables DS3231 clock usage
 
 //
 // Used as debugging tool for
@@ -68,12 +68,12 @@ class Tone;
 // LCD setup
 #define pinBacklight 29
 const uint8_t
-pinRs = 22,
-pinEn = 23,
-pinD4 = 24,
-pinD5 = 25,
-pinD6 = 26,
-pinD7 = 27;
+  pinRs = 22,
+  pinEn = 23,
+  pinD4 = 24,
+  pinD5 = 25,
+  pinD6 = 26,
+  pinD7 = 27;
 LiquidCrystal lcd(pinRs, pinEn, pinD4, pinD5, pinD6, pinD7);
 
 //
@@ -99,8 +99,8 @@ const uint8_t pinBtnNext = 37;
 //
 //    it is not recommended sice uses too much time to measure tank level into the sketch.
 #ifdef WELL_MEASURE_DEFAULT
-const uint8_t pinWellEcho = 15;//Echo pin
-const uint8_t pinWellSend = 14;//Trigger pin
+const uint8_t pinWellEcho = 15;  //Echo pin
+const uint8_t pinWellSend = 14;  //Trigger pin
 #endif
 // Default
 // For this mode a 45Kohm resistor is solder for R19 pad on the PCB
@@ -116,7 +116,7 @@ const uint8_t pinWellSend = 14;//Trigger pin
 //
 // Sensors pins
 const uint8_t pinMainPower = 8;  // Turn on (GND) power for slave
-const uint8_t pinMainRx = 10;//Recive data pin from slave
+const uint8_t pinMainRx = 10;    //Recive data pin from slave
 //
 // Defines how meny time to read sensors
 //  before defining tank state.
@@ -136,11 +136,18 @@ const uint8_t LevelSensorStopWell = 90;
 //
 // Defining the best pumping runtime
 const int8_t WellPumpDefaultRuntime = 12;
-const int8_t WellPumpDefaultBreaktime = WellPumpDefaultRuntime * 1.7;
+const int8_t WellPumpDefaultBreaktime = 30;
 //
 // Define maximum days in millis() check
-const unsigned long MaxDaysInMillis = 3456000000; // 40 * 24 * 60 * 60 * 1000;
+const unsigned long MaxDaysInMillis = 3456000000;  // 40 * 24 * 60 * 60 * 1000;
 
+//
+// Lowest level for both tanks / combined....
+const uint8_t PumpScheduleCombinedMinLevel = 38;
+//
+// In order to set more easily the tank levels for different cases,
+// we will remove min max for ultrasonix sensors,  such as 20cm x2 (two tanks) = 40
+const uint8_t PumpScheduleCombinedAbsence = 40;
 
 //
 // The max array len for  well pump schedule
@@ -149,26 +156,26 @@ const uint8_t PumpScheduleMaxIntervals = 4;
 //
 // The schedule structure
 struct PumpSchedule {
-	uint8_t runtime;
-	uint8_t intervals;
-	uint8_t levels[PumpScheduleMaxIntervals];
-	uint16_t stops[PumpScheduleMaxIntervals];
-};	
+  uint8_t runtime;
+  uint8_t intervals;
+  uint8_t levels[PumpScheduleMaxIntervals];
+  uint16_t stops[PumpScheduleMaxIntervals];
+};
 
 
 //
 // Schedules for well pumping periods by combining the levels of both tanks
-//      FORMAT: {<on time>, <array length>, {<tank level>, ...}, {<off time>, ...} }
-const PumpSchedule ScheduleWellEasy = { (WellPumpDefaultRuntime * 0.84), 4, { 100, 80, 60, 50 }, { 35, 365, 1430, 2890 } };
-const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 4, { 80, 70, 55, 45 }, { 30, 60, 365, 1430 } };
+//      FORMAT:                       {    <on time>,             <array length>, {<tank level>, ...}, {<off time>, ...} }
+const PumpSchedule ScheduleWellEasy = { (WellPumpDefaultRuntime * 0.84), 4, { 60, 40, 20, 10 }, { 35, 365, 1430, 2890 } };
+const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 4, { 60, 30, 20, 5 }, { 30, 60, 180, 1430 } };
 
 //
-// A clock time when to execute a dayjob for well pump	
-const int8_t WellDayjobHour = 16;//Clock hour
+// A clock time when to execute a dayjob for well pump
+const int8_t WellDayjobHour = 16;  //Clock hour
 
 #define SuspendDisplayTime 240000  // After 4min will turn off the display.
-#define DisableSensorError 20  // How many errors will disable sensor read.
-#define WarnScreenTimeout 5000 // Time to display warning message.
+#define DisableSensorError 20      // How many errors will disable sensor read.
+#define WarnScreenTimeout 5000     // Time to display warning message.
 
 //
 // Cursor map of the menu UI
@@ -188,7 +195,7 @@ const uint8_t MenuWarn_Rule = 8;
 //
 // Debounce time for the joystick
 #define BtnDebounceTime 10
-#define BtnHoldTime 2000 // deprecated
+#define BtnHoldTime 2000  // deprecated
 
 //
 // Constructing
@@ -203,10 +210,10 @@ const uint8_t MenuWarn_Rule = 8;
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
-extern Span spanSm(149); //Loop span at Small
-extern Span spanMd(250); //Loop span Middle  /screen refresh/
-extern Span spanLg(7093);//Loop span Large   /warning messages/
-extern Span spanMx(250005);//Loop span at 60k loops
+extern Span spanSm(149);     //Loop span at Small
+extern Span spanMd(250);     //Loop span Middle  /screen refresh/
+extern Span spanLg(7093);    //Loop span Large   /warning messages/
+extern Span spanMx(250005);  //Loop span at 60k loops
 
 #include "Time.h"
 #include "Read.h"
