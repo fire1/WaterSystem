@@ -124,7 +124,7 @@ private:
       return (currentHour >= 9 && currentHour < 16);
           } else if (isSummer) {
       // If it's summer, consider hours from 10 AM to 8 PM as daytime
-      return (currentHour >= 10 && currentHour < 20);
+      return (currentHour >= 9 && currentHour < 20);
     } else {
       // For other seasons (fall and spring), consider hours from 9 AM to 5 PM as daytime
       return (currentHour >= 9 && currentHour < 18);

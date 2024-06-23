@@ -120,7 +120,7 @@ const uint8_t pinMainRx = 10;    //Recive data pin from slave
 //
 // Defines how meny time to read sensors
 //  before defining tank state.
-#define LevelSensorReads 5
+#define LevelSensorReads 4
 
 //
 // This value defines safe level
@@ -167,7 +167,7 @@ struct PumpSchedule {
 // Schedules for well pumping periods by combining the levels of both tanks
 //      FORMAT:                       {    <on time>,             <array length>, {<tank level>, ...}, {<off time>, ...} }
 const PumpSchedule ScheduleWellEasy = { (WellPumpDefaultRuntime * 0.84), 4, { 60, 40, 20, 10 }, { 35, 365, 1430, 2890 } };
-const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 4, { 60, 30, 20, 5 }, { 30, 60, 180, 1430 } };
+const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 4, { 60, 50, 20, 5 }, { 30, 60, 180, 1430 } };
 
 //
 // A clock time when to execute a dayjob for well pump
@@ -212,7 +212,7 @@ extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
 extern Span spanSm(149);     //Loop span at Small
 extern Span spanMd(250);     //Loop span Middle  /screen refresh/
-extern Span spanLg(7093);    //Loop span Large   /warning messages/
+extern Span spanLg(7593);    //Loop span Large   /warning messages/
 extern Span spanMx(250005);  //Loop span at 60k loops
 
 #include "Time.h"
