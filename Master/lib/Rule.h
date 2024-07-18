@@ -355,10 +355,10 @@ private:
         if (levelMain > 32 && levelWell < 70)
           return pumpMain();
       case 2:  // Half
-        if (levelMain > 45 && levelWell < 55)
+        if (levelMain > 47 && levelWell < 55)
           return pumpMain();
       case 3:  // Void
-        if (levelMain > 75 && levelWell < 40)
+        if (levelMain > 75 && levelWell < 30)
           return pumpMain();
     }
   }
