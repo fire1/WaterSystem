@@ -136,7 +136,7 @@ const uint8_t LevelSensorStopWell = 90;
 //
 // Defining the best pumping runtime
 const int8_t WellPumpDefaultRuntime = 12;
-const int8_t WellPumpDefaultBreaktime = 30;
+const int8_t WellPumpDefaultBreaktime = 45;
 //
 // Define maximum days in millis() check
 const unsigned long MaxDaysInMillis = 3456000000;  // 40 * 24 * 60 * 60 * 1000;
