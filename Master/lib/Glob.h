@@ -167,7 +167,7 @@ struct PumpSchedule {
 // Schedules for well pumping periods by combining the levels of both tanks
 //      FORMAT:                       {    <on time>,             <array length>, {<tank level>, ...}, {<off time>, ...} }
 const PumpSchedule ScheduleWellEasy = { (WellPumpDefaultRuntime * 0.84), 4, { 60, 40, 20, 10 }, { 35, 365, 1430, 2890 } };
-const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 4, { 60, 50, 20, 5 }, { 30, 60, 145, 1430 } };
+const PumpSchedule ScheduleWellFast = { WellPumpDefaultRuntime, 4, { 60, 50, 20, 5 }, { 35, 45, 60, 125 } };
 
 //
 // A clock time when to execute a dayjob for well pump

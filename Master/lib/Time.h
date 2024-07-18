@@ -121,13 +121,22 @@ private:
     // Check for daytime based on the season
     if (isWinter) {
       // If it's winter, consider hours from 9 AM to 4 PM as daytime
-      return (currentHour >= 9 && currentHour < 16);
-          } else if (isSummer) {
-      // If it's summer, consider hours from 10 AM to 8 PM as daytime
-      return (currentHour >= 9 && currentHour < 20);
+      return (currentHour >= 9 && currentHour <= 16);
+    } else if (isSummer) {
+      //
+      // Full work daytime
+      if (this->getTemp() < 34)
+        // If it's summer, consider hours from 8 AM to 9 PM as daytime
+        return (currentHour >= 8 && currentHour <= 21);
+      //
+      // Add a lunch break when is hot
+      else
+        // Return true if the current hour is between 8 and 21, excluding 12 to 15
+        return (currentHour >= 8 && currentHour < 12) || (currentHour > 15 && currentHour <= 21);
+
     } else {
-      // For other seasons (fall and spring), consider hours from 9 AM to 5 PM as daytime
-      return (currentHour >= 9 && currentHour < 18);
+      // For other seasons (fall and spring), consider hours from 9 AM to 6 PM as daytime
+      return (currentHour >= 9 && currentHour <= 18);
     }
   }
 
