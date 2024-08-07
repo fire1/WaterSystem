@@ -43,7 +43,7 @@ public:
   }
 
   void begin() {
-    Serial.print(F("Starting clock ... "));
+    Serial.print(F("Connecting to the clock ... "));
 
     Wire.setWireTimeout(80000);
     this->isConnected = rtc.begin();
@@ -107,7 +107,10 @@ public:
 
 private:
 
-
+  /**
+   * Resolves is a daytime 
+   *  based on the season.
+   * */
   bool resolveDaytime() {
     const DateTime currentTime = this->now();
     int currentHour = this->hour = currentTime.hour();
