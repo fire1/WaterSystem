@@ -68,12 +68,16 @@ public:
 
   /**
     * @brief Listen for environment changes.
-    * 
+    *
     */
   void hark() {
     this->handleDebug();
-    this->handleWellMode();
-    this->handleMainMode();
+    
+    if (read->getWellLevel() > 19)
+      this->handleWellMode();
+    if (read->getMainLevel() > 19)
+      this->handleMainMode();
+
     this->handleMainStop();
     this->handleDayjob();
   }
