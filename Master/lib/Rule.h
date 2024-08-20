@@ -72,7 +72,7 @@ public:
     */
   void hark() {
     this->handleDebug();
-    
+
     if (read->getWellLevel() > 19)
       this->handleWellMode();
     if (read->getMainLevel() > 19)
