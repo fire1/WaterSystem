@@ -73,10 +73,9 @@ public:
   void hark() {
     this->handleDebug();
 
-    if (read->getWellLevel() > 19)
-      this->handleWellMode();
-    if (read->getMainLevel() > 19)
-      this->handleMainMode();
+
+    this->handleWellMode();
+    this->handleMainMode();
 
     this->handleMainStop();
     this->handleDayjob();
@@ -192,6 +191,11 @@ private:
     //
     // Ignore next code when tank is full
     if (!ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
+      return;
+    }
+
+    // Data is not ready
+    if (!ctrlWell.isOn() && read->getWellLevel() < 19) {
       return;
     }
 
@@ -313,7 +317,8 @@ private:
         dbg(schedule.stops[i]);
         dbg(F(" run "));
         dbg(schedule.runtime);
-        dbgLn();
+        dbg(F(" index: "));
+        dbgLn(i);
 
         this->wellSch.stop = schedule.stops[i];
       }
@@ -347,7 +352,7 @@ private:
     uint8_t levelWell = read->getWellLevel();
     //
     // Stop this function when sensor is not available
-    if (levelMain == 0)
+    if (levelMain < 19)
       return;
 
     // Mapping values from 20 to 95, like 20 is Full and 95 empty
