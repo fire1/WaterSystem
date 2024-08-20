@@ -24,6 +24,7 @@ private:
     uint16_t level = 0;
     unsigned long runtime;
     unsigned long stop;
+    uint8_t mode = 0;
   };
 
   WellSchedule wellSch;
@@ -274,7 +275,7 @@ private:
     */
   void pumpWellSchedule(PumpSchedule schedule) {
     int16_t level = read->getWellLevel() + read->getMainLevel();
-
+    uint8_t mode = modeWell->value();
 
     if (cmd.show(F("combo"), F("Shows combined level for scedule"))) {
       cmd.print(F("Combo level"), level);
@@ -291,7 +292,7 @@ private:
 
     //
     // Compare the lavels at "next" loop index (skips for loop each time)
-    if (level == this->wellSch.level) {
+    if (level == this->wellSch.level && this->wellSch.mode == mode) {
       if (cmd.show(F("schedule"))) {
         Serial.print(F("[Schedule] well work: "));
         Serial.print(this->wellSch.runtime);
@@ -326,6 +327,7 @@ private:
 
     this->wellSch.runtime = schedule.runtime;
     this->wellSch.level = level;
+    this->wellSch.mode = mode;
   }
 
   /**
