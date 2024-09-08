@@ -24,7 +24,7 @@ class Heat {
 private:
 
     Buzz *buzz;
-    int8_t heat = 0;
+    int heat = 0;
     uint8_t fan = 0;
 
     bool isAlarmOn = false;
@@ -79,7 +79,7 @@ public:
     // Public access info
     //
 
-    int8_t getTemperature() {
+    int getTemperature() {
         return this->heat;
     }
 
@@ -119,13 +119,9 @@ private:
         if (cmd.show(F("mean"),F("Shows mean temperature for SSR.")))
             cmd.print(F("Mean temp"), TempRead.mean);
 
-        this->heat = map(TempRead.mean, 494, 404, 10, 41); // updated 33*C
+        this->heat = map(TempRead.mean, 553, 325, 27, 200); 
         // raw = C*
-        // 494 = 10
-        // 400 = 24
-        // 407 = 34
-        // 405 = 40
-        // 404 = 41
+        // 553 = 27
         //this->heat = this->calculate(TempRead.mean); // <--- use this
         //this->heat = this->calc(TempRead.mean);
 

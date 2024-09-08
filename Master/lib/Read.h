@@ -104,9 +104,11 @@ public:
     this->readAtWork();  // Pumping
 
 
-    if (powerMain.isExpired() && digitalRead(pinMainPower)) {
-      digitalWrite(pinMainPower, LOW);
-      dbgLn("Turning Off Main sensor power.");
+    if (powerMain.isExpired() && spanMd.active()) {
+      if (digitalRead(pinMainPower)) {
+        dbgLn("MAIN /Powerdown/ sensor");
+        digitalWrite(pinMainPower, LOW);
+      }
     }
     /*
             if (spanLg.active()) {
@@ -145,20 +147,31 @@ public:
   }
 
   //
+  // Verifies both tanks levels
+  bool atNorm() {
+    if (this->well < 19 || this->main < 19) return false;
+    if (this->main > LevelSensorMainMin) return false;
+    if (this->well > LevelSensorWellMin) return false;
+
+    return true;
+  }
+
+  //
   // Sorter period for sensors
   void startWorkRead() {
 
     if (!this->isWorkRead) {
       this->resetLevels();
       this->startShortReadTimer();
-      Serial.println("Start Work read");
       this->isWorkRead = true;
+      dbgLn(F("Work read /Start/"));
     }
   }
 
   void stopWorkRead() {
-    if (!ctrlWell.isOn() && !ctrlMain.isOn())
-      this->isWorkRead = false;
+    if (ctrlWell.isOn() || ctrlMain.isOn()) return;  // do not interrupt when working ...
+    //dbgLn(F("Work read /Stop/"));
+    this->isWorkRead = false;
   }
 
   bool isWork() {
@@ -205,23 +218,25 @@ private:
   //
   // Read a well tank.
   void readWell() {
-    if (!sensorWell.done) {
-      // Read well sensor has two variants of reading distance.
-      // The default type for the module is not recommended since disturbs main loop.
-      // Soldering 47k Ohm resistor for R19 on the module is HIGHLY recommended,
-      // this will enable UART of the module.
-      uint16_t distance;
-      if (onReadWellSensorDistance(distance)) {
-        if (distance == 0) {
-          sensorWell.error++;
-          return;
-        }
-        dbg(distance);
-        pushAverage(sensorWell, distance);
-        this->well = sensorWell.average;
-        dbg(F(" AVR "));
-        dbgLn(this->well);
+    if (sensorWell.done) return;
+
+    uint16_t distance;
+    //
+    // About onReadWellSensorDistance:
+    //  Read well sensor has two variants of reading distance.
+    //  The default type for the module is not recommended since disturbs main loop.
+    //  Soldering 47k Ohm resistor for R19 on the module is HIGHLY recommended,
+    //  this will enable UART of the module.
+    if (onReadWellSensorDistance(distance)) {
+      if (distance == 0) {
+        sensorWell.error++;
+        return;
       }
+      dbg(distance);
+      pushAverage(sensorWell, distance);
+      this->well = sensorWell.average;
+      dbg(F(" AVR "));
+      dbgLn(this->well);
     }
   }
 
@@ -245,7 +260,7 @@ private:
         if (distance > 0) {
           pushAverage(sensorMain, distance);
           this->main = sensorMain.average;
-          dbg(F("Main read UAR "));
+          dbg(F("MAIN /UART/ Reciving "));
           dbg(distance);
           dbg(F(" AVR "));
           dbgLn(this->main);
@@ -343,7 +358,7 @@ private:
       startByte = Serial3.read();
       if (startByte != 255) return true;
 
-      dbg(F(" /UART/ Receiving "));
+      dbg(F("WELL /UART/ Receiving "));
 
       byte readFrames[3];
       Serial3.readBytes(readFrames, 3);
@@ -413,6 +428,15 @@ private:
 
     if (cmd.show(F("main"), F("Show main tank level.")))
       cmd.print(F("Main level is:"), this->well);
+
+    if (cmd.show(F("mpwr"), F("Shows state of Main power")))
+      cmd.print(F("Main pwr state:"), digitalRead(pinMainPower));
+
+    uint8_t pwr = 0;
+    if (cmd.set(F("mpwr"), pwr, F("Overwrite main power state."))) {
+      digitalWrite(pinMainPower, pwr);
+      cmd.print(F("Main pwr state:"), digitalRead(pinMainPower));
+    }
   }
 };
 

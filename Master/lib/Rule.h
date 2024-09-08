@@ -74,6 +74,7 @@ public:
   void hark() {
     this->handleDebug();
 
+    if (millis() < 6000) return;
 
     this->handleWellMode();
     this->handleMainMode();
@@ -337,7 +338,7 @@ private:
 
     uint8_t main = read->getMainLevel();
 
-    if (!ctrlMain.isOn() && !ctrlWell.isOn()) {
+    if (!ctrlMain.isOn() && !ctrlWell.isOn() && read->atNorm()) {
       read->startWorkRead();
 
       dbg(F("CTRL /Main/ at level "));
@@ -455,6 +456,10 @@ private:
     //
     // Pass the "On" pump state to dayjob state...
     if (wellCtr.on && !wellHasDayjob) wellHasDayjob = true;
+
+    //
+    // Skip dayjob when levels are not available.
+    if (!read->atNorm()) return;
 
     //
     // Turn on well for the dayjob
