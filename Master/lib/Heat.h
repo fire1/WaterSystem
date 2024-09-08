@@ -119,9 +119,13 @@ private:
         if (cmd.show(F("mean"),F("Shows mean temperature for SSR.")))
             cmd.print(F("Mean temp"), TempRead.mean);
 
-        this->heat = map(TempRead.mean, 553, 325, 27, 200); 
+        this->heat = map(TempRead.mean, 553, 493, 27, 33); 
         // raw = C*
         // 553 = 27
+        // 493 = 32
+
+        // 325 - max
+
         //this->heat = this->calculate(TempRead.mean); // <--- use this
         //this->heat = this->calc(TempRead.mean);
 
