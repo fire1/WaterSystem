@@ -9,7 +9,6 @@
 
 class Rule {
 private:
-
   //
   // Handle well state localy in order to detect human interaction.
   struct WellState {
@@ -46,6 +45,7 @@ private:
   uint16_t beatLedLast = 0;
   bool isDaytime = true;
   bool isWarnDaytime = false;
+  bool isWarnTopTank = false;
   uint32_t timePrepareTurnOn;
   unsigned long nextToOn = 0;
   unsigned long nextToOff = 0;
@@ -53,9 +53,8 @@ private:
   String warnCase = "";
 
 public:
-
   Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
-    : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
+      : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
   }
 
   void begin() {
@@ -74,7 +73,8 @@ public:
   void hark() {
     this->handleDebug();
 
-    if (millis() < 6000) return;
+    if (millis() < 6000)
+      return;
 
     this->handleWellMode();
     this->handleMainMode();
@@ -89,7 +89,8 @@ public:
     */
   void warn(DrawInterface *dr) {
 
-    if (this->warnCase == "") return;
+    if (this->warnCase == "")
+      return;
     dr->warn(MenuWarn_Rule, this->warnCase);
     this->warnCase = "";
   }
@@ -115,7 +116,6 @@ public:
   }
 
 private:
-
   /**
     * Sets warning massage to be displayed.
     * @param msg
@@ -130,7 +130,7 @@ private:
     * @return
     */
   unsigned long calcMinutes(unsigned long minutes) {
-    return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
+    return minutes * 60 * 1000UL; // UL ensures the result is treated as an unsigned long
   }
 
   /**
@@ -141,12 +141,13 @@ private:
     //
     // Wrapping time class locally
 
-    if (!time->isConn()) return true;
+    if (!time->isConn())
+      return true;
 
     //
     // Check for daytime each minute
     if (spanLg.active())
-      this->isDaytime = time->isDaytime();  //pass state for daytime locally
+      this->isDaytime = time->isDaytime(); //pass state for daytime locally
 
 
     return this->isDaytime;
@@ -205,13 +206,15 @@ private:
     // Check well for daytime
     if (!this->checkDaytime()) {
 
-      if (this->isWarnDaytime) return;
+      if (this->isWarnDaytime)
+        return;
 
-      this->isWarnDaytime = true;  // flag to display only once
+      this->isWarnDaytime = true; // flag to display only once
       setWarn(F("Not a daytime!  "));
       dbgLn(F("Warning: STOP /well/ It is not daytime!"));
       return;
-    } else this->isWarnDaytime = false;
+    } else
+      this->isWarnDaytime = false;
 
     //
     // Prepare, read levels before start
@@ -241,31 +244,31 @@ private:
   void handleWellMode() {
 
     switch (modeWell->value()) {
-      default:
-      case 0:
-        // Noting
-        beatWell(0);  // Disables the led heartbeat
-        break;
+    default:
+    case 0:
+      // Noting
+      beatWell(0); // Disables the led heartbeat
+      break;
 
-      case 1:
-        // Easy
-        beatWell(2400);
-        pumpWellSchedule(ScheduleWellEasy);
+    case 1:
+      // Easy
+      beatWell(2400);
+      pumpWellSchedule(ScheduleWellEasy);
 
-        break;
+      break;
 
-      case 2:
-        // Fast
-        beatWell(1200);
-        pumpWellSchedule(ScheduleWellFast);
-        break;
+    case 2:
+      // Fast
+      beatWell(1200);
+      pumpWellSchedule(ScheduleWellFast);
+      break;
 
-      case 3:
-        // Now!
-        beatWell(400);
-        pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
-        //pumpWell(1, 2);
-        break;
+    case 3:
+      // Now!
+      beatWell(400);
+      pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
+      //pumpWell(1, 2);
+      break;
     }
   }
 
@@ -282,14 +285,29 @@ private:
       cmd.print(F("Combo level"), level);
     }
 
+    if (!read->atNorm()) {
+      if (!isWarnTopTank) {
+        setWarn(F("Top tank missing"));
+        isWarnTopTank = true;
+        //
+        // Reset warning message to be displayed again.
+      } else if (spanLg.active()) {
+        isWarnTopTank = false;
+      }
+
+      return;
+    }
+
     //
     // Will wait for levels to be ready
-    if (level < PumpScheduleCombinedMinLevel) return;
+    if (level < PumpScheduleCombinedMinLevel)
+      return;
 
     //
     // Removeing the empty space from combined level
     level = level - PumpScheduleCombinedAbsence;
-    if (level < 0) level = 0;
+    if (level < 0)
+      level = 0;
 
     //
     // Compare the lavels at "next" loop index (skips for loop each time)
@@ -306,7 +324,7 @@ private:
     }
 
 
-    this->wellSch.stop = schedule.stops[0];  // Sets lowest value as default
+    this->wellSch.stop = schedule.stops[0]; // Sets lowest value as default
 
     for (uint8_t i = 0; i < schedule.intervals; ++i) {
       if (schedule.levels[i] > level) {
@@ -360,18 +378,18 @@ private:
 
     // Mapping values from 20 to 95, like 20 is Full and 95 empty
     switch (modeMain->value()) {
-      default:
-      case 0:  // Noting
-        break;
-      case 1:  // Full
-        if (levelMain > 32 && levelWell < 70)
-          return pumpMain();
-      case 2:  // Half
-        if (levelMain > 47 && levelWell < 55)
-          return pumpMain();
-      case 3:  // Void
-        if (levelMain > 75 && levelWell < 30)
-          return pumpMain();
+    default:
+    case 0: // Noting
+      break;
+    case 1: // Full
+      if (levelMain > 32 && levelWell < 70)
+        return pumpMain();
+    case 2: // Half
+      if (levelMain > 47 && levelWell < 55)
+        return pumpMain();
+    case 3: // Void
+      if (levelMain > 75 && levelWell < 30)
+        return pumpMain();
     }
   }
 
@@ -433,7 +451,7 @@ private:
       beatLedLast = ms;
     }
     if (beatLed.isExpired()) {
-      digitalWrite(pinLedBeat, !digitalRead(pinLedBeat));  // Toggle LED state
+      digitalWrite(pinLedBeat, !digitalRead(pinLedBeat)); // Toggle LED state
       if (ms == beatLedLast && ms != 0) {
         beatLed.repeat();
       }
@@ -447,19 +465,23 @@ private:
 
     //
     // This function will be active only when clock is active.
-    if (!time->isConn()) return;
+    if (!time->isConn())
+      return;
 
     //
     // Reset dayjob for the next day
-    if (!time->isDaytime()) wellHasDayjob = false;
+    if (!time->isDaytime())
+      wellHasDayjob = false;
 
     //
     // Pass the "On" pump state to dayjob state...
-    if (wellCtr.on && !wellHasDayjob) wellHasDayjob = true;
+    if (wellCtr.on && !wellHasDayjob)
+      wellHasDayjob = true;
 
     //
     // Skip dayjob when levels are not available.
-    if (!read->atNorm()) return;
+    if (!read->atNorm())
+      return;
 
     //
     // Turn on well for the dayjob
