@@ -17,7 +17,7 @@ private:
   };
   WellState wellCtr;
 
-  //
+  // 
   // Used to handle the schedule time properly
   struct WellSchedule {
     uint16_t level = 0;
@@ -27,7 +27,6 @@ private:
   };
 
   WellSchedule wellSch;
-
 
 
   //
@@ -134,7 +133,7 @@ private:
   }
 
   /**
-    * Safe way to check for daytime
+    * Safe/local way to check for daytime
     * @return
     */
   bool checkDaytime() {
@@ -193,12 +192,12 @@ private:
 
     //
     // Ignore next code when tank is full
-    if (!ctrlWell.isOn() && LevelSensorBothMax >= read->getWellLevel()) {
+    if (!ctrlWell.isOn() && LevelSensorWellMax >= read->getWellLevel()) {
       return;
     }
-
-    // Data is not ready
-    if (!ctrlWell.isOn() && read->getWellLevel() < 19) {
+    // 
+    // Data is not ready, brake the function
+    if (!ctrlWell.isOn() && read->getWellLevel() < LevellSensorBareMax(LevelSensorWellMax)) {
       return;
     }
 
@@ -240,7 +239,7 @@ private:
   }
 
   //
-  // Controls pump1
+  // Controls well pump 
   void handleWellMode() {
 
     switch (modeWell->value()) {
@@ -281,10 +280,12 @@ private:
     int16_t level = read->getWellLevel() + read->getMainLevel();
     uint8_t mode = modeWell->value();
 
-    if (cmd.show(F("combo"), F("Shows combined level for scedule"))) {
+    if (cmd.show(F("combo"), F("Shows combined level for schedule"))) {
       cmd.print(F("Combo level"), level);
     }
 
+    //
+    // Break the function when top tank is missing.
     if (!read->atNorm()) {
       if (!isWarnTopTank) {
         setWarn(F("Top tank missing"));
@@ -299,12 +300,12 @@ private:
     }
 
     //
-    // Will wait for levels to be ready
+    // Will wait for levels to be ready.
     if (level < PumpScheduleCombinedMinLevel)
       return;
 
     //
-    // Removeing the empty space from combined level
+    // Removing the empty space from combined level.
     level = level - PumpScheduleCombinedAbsence;
     if (level < 0)
       level = 0;
@@ -323,8 +324,9 @@ private:
       return;
     }
 
-
-    this->wellSch.stop = schedule.stops[0]; // Sets lowest value as default
+    //
+    // Sets lowest value as default/backup value.
+    this->wellSch.stop = schedule.stops[0]; 
 
     for (uint8_t i = 0; i < schedule.intervals; ++i) {
       if (schedule.levels[i] > level) {
@@ -350,7 +352,7 @@ private:
   }
 
   /**
-    * Just turns on the pump to main
+    * Starts the pump for main tank.
     */
   void pumpMain() {
 
@@ -368,18 +370,21 @@ private:
     }
   }
 
+  /**
+   * Main pump work setup
+   */
   void handleMainMode() {
     uint8_t levelMain = read->getMainLevel();
     uint8_t levelWell = read->getWellLevel();
     //
     // Stop this function when sensor is not available
-    if (levelMain < 19)
+    if (levelMain < LevellSensorBareMax(LevelSensorMainMax))
       return;
 
     // Mapping values from 20 to 95, like 20 is Full and 95 empty
     switch (modeMain->value()) {
     default:
-    case 0: // Noting
+    case 0: // Do noting
       break;
     case 1: // Full
       if (levelMain > 32 && levelWell < 70)
@@ -410,7 +415,7 @@ private:
 
     // MAIN
     // Stop Main when Main is full
-    if (ctrlMain.isOn() && LevelSensorBothMax >= levelMain) {
+    if (ctrlMain.isOn() && LevelSensorMainMax >= levelMain) {
       ctrlMain.setOn(false);
       ctrlMain.terminate();
 
@@ -450,6 +455,7 @@ private:
       beatLed.start(ms, AsyncDelay::MILLIS);
       beatLedLast = ms;
     }
+
     if (beatLed.isExpired()) {
       digitalWrite(pinLedBeat, !digitalRead(pinLedBeat)); // Toggle LED state
       if (ms == beatLedLast && ms != 0) {

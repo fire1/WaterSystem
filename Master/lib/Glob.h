@@ -125,8 +125,19 @@ const uint8_t pinMainRx = 10;    //Recive data pin from slave
 //
 // This value defines safe level
 // point for max u-s sensor reads.
-// Should be common for both sensors.
+// DEPRECATED
 const uint8_t LevelSensorBothMax = 20;
+
+//
+// Min value should be +1cm to the bare minimum.
+//  This +1cm is used as a safe margin...
+const uint8_t LevelSensorWellMax = 20;
+const uint8_t LevelSensorMainMax = 20;
+
+//
+// Macro to get the bare minimum when is needed.
+#define LevellSensorBareMax(x) ((x) - 1)
+
 const uint8_t LevelSensorMainMin = 105;
 //
 // Well levels
