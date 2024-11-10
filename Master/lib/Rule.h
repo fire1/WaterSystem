@@ -17,7 +17,7 @@ private:
   };
   WellState wellCtr;
 
-  // 
+  //
   // Used to handle the schedule time properly
   struct WellSchedule {
     uint16_t level = 0;
@@ -43,7 +43,9 @@ private:
   AsyncDelay beatLed;
   uint16_t beatLedLast = 0;
   bool isDaytime = true;
+  bool isLowTemp = false;
   bool isWarnDaytime = false;
+  bool isWarnLowTemp = false;
   bool isWarnTopTank = false;
   uint32_t timePrepareTurnOn;
   unsigned long nextToOn = 0;
@@ -79,7 +81,6 @@ public:
     this->handleMainMode();
 
     this->handleMainStop();
-    this->handleDayjob();
   }
 
   /**
@@ -153,6 +154,19 @@ private:
   }
 
   /**
+   * When temperature is too low to pump will return true
+   */
+  bool checkLowTemp() {
+    if (!time->isConn())
+      return true;
+
+    if (spanLg.active())
+      this->isLowTemp = 15 < time->getTemp();
+
+    return this->isLowTemp;
+  }
+
+  /**
   * Pumping well amplitude
   * @param workMin
   * @param stopMin
@@ -195,25 +209,15 @@ private:
     if (!ctrlWell.isOn() && LevelSensorWellMax >= read->getWellLevel()) {
       return;
     }
-    // 
+    //
     // Data is not ready, brake the function
     if (!ctrlWell.isOn() && read->getWellLevel() < LevellSensorBareMax(LevelSensorWellMax)) {
       return;
     }
 
-    //
-    // Check well for daytime
-    if (!this->checkDaytime()) {
 
-      if (this->isWarnDaytime)
-        return;
-
-      this->isWarnDaytime = true; // flag to display only once
-      setWarn(F("Not a daytime!  "));
-      dbgLn(F("Warning: STOP /well/ It is not daytime!"));
+    if (isWarnStop())
       return;
-    } else
-      this->isWarnDaytime = false;
 
     //
     // Prepare, read levels before start
@@ -238,8 +242,41 @@ private:
     }
   }
 
+  bool isWarnStop(){
+
+    //
+    // Check well for daytime
+    if (!this->checkDaytime()) {
+
+      if (this->isWarnDaytime)
+        return;
+
+      this->isWarnDaytime = true; // flag to display only once
+      setWarn(F("Not a daytime!  "));
+      dbgLn(F("Warning: STOP /well/ It is not daytime!"));
+      return true;
+    } else
+      this->isWarnDaytime = false;
+
+    //
+    // Check well for low temp
+    if (!this->checkLowTemp()) {
+
+      if (this->isWarnLowTemp)
+        return;
+
+      this->isWarnLowTemp = true; // flag to display only once
+      setWarn(F("Too cold to run!"));
+      dbgLn(F("Warning: STOP /well/ Temperature too low!"));
+      return true;
+    } else
+      this->isWarnLowTemp = false;
+
+    return false; // default state of the function
+  }
+
   //
-  // Controls well pump 
+  // Controls well pump
   void handleWellMode() {
 
     switch (modeWell->value()) {
@@ -253,13 +290,14 @@ private:
       // Easy
       beatWell(2400);
       pumpWellSchedule(ScheduleWellEasy);
-
+      handleDayjob();
       break;
 
     case 2:
       // Fast
       beatWell(1200);
       pumpWellSchedule(ScheduleWellFast);
+      handleDayjob();
       break;
 
     case 3:
@@ -326,7 +364,7 @@ private:
 
     //
     // Sets lowest value as default/backup value.
-    this->wellSch.stop = schedule.stops[0]; 
+    this->wellSch.stop = schedule.stops[0];
 
     for (uint8_t i = 0; i < schedule.intervals; ++i) {
       if (schedule.levels[i] > level) {
