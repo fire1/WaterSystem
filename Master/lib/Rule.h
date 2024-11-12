@@ -74,7 +74,7 @@ public:
   void hark() {
     this->handleDebug();
 
-    if (millis() < 6000)
+    if (millis() < 60000)
       return;
 
     this->handleWellMode();
