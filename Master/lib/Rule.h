@@ -241,7 +241,9 @@ private:
       ctrlWell.setOn(true);
     }
   }
-
+  /**
+    * Resolve well stop from several warnings
+    */
   bool isWarnStop(){
 
     //
@@ -256,6 +258,7 @@ private:
       dbgLn(F("Warning: STOP /well/ It is not daytime!"));
       return true;
     } else
+      // Reset back to default
       this->isWarnDaytime = false;
 
     //
@@ -270,6 +273,7 @@ private:
       dbgLn(F("Warning: STOP /well/ Temperature too low!"));
       return true;
     } else
+      // Reset back to default
       this->isWarnLowTemp = false;
 
     return false; // default state of the function
@@ -278,7 +282,7 @@ private:
   //
   // Controls well pump
   void handleWellMode() {
-
+    
     switch (modeWell->value()) {
     default:
     case 0:
