@@ -249,7 +249,7 @@ private:
     if (!this->checkDaytime()) {
 
       if (this->isWarnDaytime)
-        return;
+        return true;
 
       this->isWarnDaytime = true; // flag to display only once
       setWarn(F("Not a daytime!  "));
@@ -263,7 +263,7 @@ private:
     if (!this->checkLowTemp()) {
 
       if (this->isWarnLowTemp)
-        return;
+        return true;
 
       this->isWarnLowTemp = true; // flag to display only once
       setWarn(F("Too cold to run!"));
