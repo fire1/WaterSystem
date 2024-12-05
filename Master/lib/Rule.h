@@ -96,7 +96,7 @@ public:
   }
 
   /**
-    * @brief Gets next timer ON action
+    * @brief Gets next timer ON action for display
     */
   unsigned long getNextOn() {
     if (!wellCtr.on)
@@ -106,7 +106,7 @@ public:
   }
 
   /**
-    * @brief Gets next timer OFF action
+    * @brief Gets next timer OFF action for display
     */
   unsigned long getNextOff() {
     if (wellCtr.on)
@@ -161,7 +161,7 @@ private:
       return true;
 
     if (spanLg.active())
-      this->isLowTemp = 15 < time->getTemp();
+      this->isLowTemp = OPT_PROTECT_COLD < time->getTemp();
 
     return this->isLowTemp;
   }
@@ -248,6 +248,7 @@ private:
 
     //
     // Check well for daytime
+#ifdef OPT_DAYTIME_WELL
     if (!this->checkDaytime()) {
 
       if (this->isWarnDaytime)
@@ -260,9 +261,11 @@ private:
     } else
       // Reset back to default
       this->isWarnDaytime = false;
+#endif
 
     //
     // Check well for low temp
+#ifdef OPT_PROTECT_COLD
     if (!this->checkLowTemp()) {
 
       if (this->isWarnLowTemp)
@@ -275,6 +278,8 @@ private:
     } else
       // Reset back to default
       this->isWarnLowTemp = false;
+#endif
+
 
     return false; // default state of the function
   }
@@ -449,6 +454,7 @@ private:
 
     //
     // After 5min clear terminate.
+
     if (spanLg.active()) {
       ctrlMain.clearTerminate();
       ctrlWell.clearTerminate();
@@ -510,7 +516,7 @@ private:
   	*  The well pump will be turned on once a day when it has not been running.
   	*/
   void handleDayjob() {
-
+#ifdef OPT_DAYJOB_WELL
     //
     // This function will be active only when clock is active.
     if (!time->isConn())
@@ -533,10 +539,12 @@ private:
 
     //
     // Turn on well for the dayjob
-    if (!wellHasDayjob && WellDayjobHour == time->getHour()) {
+    if (!wellHasDayjob && OPT_DAYJOB_WELL == time->getHour()) {
       ctrlWell.setOn(true);
       wellHasDayjob = true;
     }
+
+#endif
   }
 
   /**

@@ -16,11 +16,14 @@
 //
 // Definition setup
 #define DEBUG  // Comment it to disable debugging
-//#define DAYTIME_CHECK // Comment it to disable daytime check for running pumps
 //#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
 #define WELL_MEASURE_UART_47K  // Uses Serial UART to communicate with the sensor
 #define ENABLE_CMD             // Enables Serial input listener for commands
 #define ENABLE_CLOCK           // Enables DS3231 clock usage
+#define OPT_PROTECT_COLD 14        // Do not run well pump below temperature.
+#define OPT_DAYTIME_WELL           // Well pump will work only at daytime.
+#define OPT_DAYJOB_WELL 16         // The well pump will always have at least one run per day, regardless of the tank level.
+                                   // The value of the definition is the hour when to run the pump at daytime.   
 
 //
 // Used as debugging tool for
