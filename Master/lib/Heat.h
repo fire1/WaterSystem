@@ -119,12 +119,14 @@ private:
         if (cmd.show(F("mean"),F("Shows mean temperature for SSR.")))
             cmd.print(F("Mean temp"), TempRead.mean);
 
-        this->heat = map(TempRead.mean, 553, 493, 27, 33); 
+        //this->heat = map(TempRead.mean, 553, 493, 27, 33);
         // raw = C*
         // 553 = 27
         // 493 = 32
 
         // 325 - max
+
+        this->heat = calculate_mf52(TempRead.mean);
 
         //this->heat = this->calculate(TempRead.mean); // <--- use this
         //this->heat = this->calc(TempRead.mean);
@@ -164,6 +166,32 @@ private:
 
         float TempK = (beta / log(Rout / rInf)); // calc for temperature
         return (int8_t) TempK - 273.15;
+    }
+
+
+    const int Rc = 5000; //value of resistance
+    const int Vcc = 5; // voltage
+    // Correction factor for temperature calculation, get from the datasheet.
+    const float A = 1.11492089e-3;
+    const float B = 2.372075385e-4;
+    const float C = 6.954079529e-8;
+    const float K = 2.5; //dissipation factor in mW/C
+
+    float calculate_mf52(int raw){
+
+        float V =  raw / 1024 * Vcc;
+
+          float R = (Rc * V ) / (Vcc - V);
+
+
+          float logR  = log(R);
+          float R_th = 1.0 / (A + B * logR + C * logR * logR * logR );
+
+          float kelvin = R_th - V*V/(K * R)*1000;
+          float celsius = kelvin - 273.15;
+
+          //printf("2/ Temperature: %.2f°C\n", celsius -10);
+          return celsius -10;
     }
 
     /**
