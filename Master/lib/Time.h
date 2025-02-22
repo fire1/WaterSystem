@@ -32,8 +32,8 @@ public:
     return this->tick;
   }
 
-  int getTemp() {
-    return (int)rtc.getTemperature();
+  float getTemp() {
+    return rtc.getTemperature();
   }
 
   //
@@ -108,7 +108,7 @@ public:
 private:
 
   /**
-   * Resolves is a daytime 
+   * Resolves is a daytime
    *  based on the season.
    * */
   bool resolveDaytime() {

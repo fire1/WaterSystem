@@ -1,4 +1,3 @@
-#include <stdint.h>
 
 #ifndef Rule_h
 #define Rule_h
@@ -287,7 +286,7 @@ private:
   //
   // Controls well pump
   void handleWellMode() {
-    
+
     switch (modeWell->value()) {
     default:
     case 0:

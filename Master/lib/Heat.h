@@ -24,7 +24,7 @@ class Heat {
 private:
 
     Buzz *buzz;
-    int heat = 0;
+    float heat = 0;
     uint8_t fan = 0;
 
     bool isAlarmOn = false;
@@ -79,11 +79,11 @@ public:
     // Public access info
     //
 
-    int getTemperature() {
+    float getTemperature() {
         return this->heat;
     }
 
-    void setHeat(int8_t value) {
+    void setHeat(float value) {
         this->heat = value;
         this->handle();
     }

@@ -1,5 +1,3 @@
-#include "WString.h"
-
 #ifndef Menu_h
 #define Menu_h
 
@@ -13,7 +11,7 @@ private:
   Heat *heat;
   Data *modeWell;
   Data *modeMain;
-  char formatBuffer[4];
+  char formatBuffer[5];
 
   //
   // At init state needs to be as same as Draw.h edit state.
@@ -276,12 +274,10 @@ private:
 
     lcd.setCursor(0, 1);
 
-    int temp = heat->getTemperature();
-
-    lcd.print(formatNumTemp(temp));
+    lcd.print(formatNumTemp(heat->getTemperature()));
     lcd.write((char)1);
 
-    lcd.print(F(" FAN:"));
+    lcd.print(F(" Fan:"));
     lcd.print(formatUint8(heat->getFanSpeed()));
     lcd.print(F("   "));
   }
@@ -293,21 +289,22 @@ private:
     dr->noEdit();
     lcd.setCursor(0, 0);
 
+    lcd.print(F("I:"));
     if (time->isConn()) {
       lcd.print(formatNumTemp(time->getTemp()));
-    } else lcd.print(F("---"));
+    } else lcd.print(F("-?- "));
     lcd.write((char)1);
 
     lcd.print(F(" "));
-    lcd.print(F("SSR:"));
+    lcd.print(F("On:"));
     lcd.print(formatNumTemp(heat->getTemperature()));
     lcd.write((char)1);
-    lcd.print(F("   "));
+
 
     lcd.setCursor(0, 1);
-    lcd.print(F(" Fan: "));
+    lcd.print(F("Fan speed: "));
     lcd.print(formatUint8(heat->getFanSpeed()));
-    lcd.print(F("       "));
+    lcd.print(F("  "));
   }
 
   void warnRule(DrawInterface *dr) {
@@ -323,12 +320,21 @@ private:
     * @param value
     * @return
     */
-  char *formatNumTemp(int value) {
+  char *formatNumTemp(float value) {
+      if(value <= -9.9){
+          sprintf(formatBuffer, "%03d ", (int)value);
+      }else{
+        // Since  %f format is not supported on the Arduino...
+        // Manually format float for values >= -9
+        int dig1 = int(value) * 10; // 210
+        int dig2 = int((value * 10) - dig1);
 
-    if (value < 0) {
-      sprintf(formatBuffer, "-%02d", -value);
-    } else
-      sprintf(formatBuffer, " %02d", value);
+            dig1 = dig1 / 10;
+            if (dig2 < 0) {
+                dig2 = dig2 * -1;
+            }
+        sprintf(formatBuffer, "%02d.%1d", dig1, dig2);
+    }
 
     return formatBuffer;
   }
