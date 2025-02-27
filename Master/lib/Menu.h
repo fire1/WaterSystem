@@ -247,7 +247,7 @@ private:
     else lcd.print(F(" "));                         //5
     lcd.print(formatMsToTime(rule->getNextOff()));  //8
 
-    lcd.print(F(" "));  //9
+    lcd.print(F(" / "));  //9
 
     // When stopped
     // Print to on time
@@ -255,12 +255,12 @@ private:
     else lcd.print(F(" "));  //10
     unsigned long next = rule->getNextOn();
     if (next > MaxDaysInMillis) {
-      lcd.print(F("/"));
+      lcd.print(F("["));
       lcd.write((char)243);  // infinity
-      lcd.print(F("/"));
+      lcd.print(F("]"));
     } else lcd.print(formatMsToTime(rule->getNextOn()));  //13
 
-    lcd.print(F("   "));
+    lcd.print(F(" "));
   }
 
 
@@ -289,21 +289,22 @@ private:
     dr->noEdit();
     lcd.setCursor(0, 0);
 
-    lcd.print(F("I:"));
+    lcd.write((char)4);
+    lcd.print(F(" "));
     if (time->isConn()) {
       lcd.print(formatNumTemp(time->getTemp()));
     } else lcd.print(F("-?- "));
     lcd.write((char)1);
 
     lcd.print(F(" "));
-    lcd.print(F("On:"));
+    lcd.print(F("On "));
     lcd.print(formatNumTemp(heat->getTemperature()));
     lcd.write((char)1);
 
 
     lcd.setCursor(0, 1);
     lcd.print(F("Fan speed: "));
-    lcd.print(formatUint8(heat->getFanSpeed()));
+    lcd.print(formatPercentage(heat->getFanSpeed()));
     lcd.print(F("  "));
   }
 
@@ -313,6 +314,24 @@ private:
     lcd.print(F(" Pump stopped..."));
     lcd.setCursor(0, 1);
     lcd.print(dr->getWarnMsg());
+  }
+
+  /**
+    * Format number to percentage
+    * @param value
+    * @return
+    */
+  char  *formatPercentage(uint8_t value){
+      int result = (int)((float)value / 255.0 * 100.0); // Cast to int
+      if(value ==0){
+          snprintf(formatBuffer, 4, "off"); // Display "Off"
+      }else if (result >= 100) {
+          snprintf(formatBuffer, 4, "max"); // Display "Max"
+        } else {
+          sprintf(formatBuffer, "%02d\%", result); // 2 digits + null terminator
+        }
+
+      return formatBuffer;
   }
 
   /**

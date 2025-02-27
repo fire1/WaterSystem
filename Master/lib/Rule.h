@@ -1,4 +1,3 @@
-
 #ifndef Rule_h
 #define Rule_h
 
@@ -156,11 +155,15 @@ private:
    * When temperature is too low to pump will return true
    */
   bool checkLowTemp() {
+      //
+      // Verify the clock is connected in order to check the temperature.
     if (!time->isConn())
       return true;
 
     if (spanLg.active())
-      this->isLowTemp = OPT_PROTECT_COLD < time->getTemp();
+        //
+        // When permperature is lower then value and last runtime is above 2 hours.
+      this->isLowTemp = OPT_PROTECT_COLD < time->getTemp() && (millis() - wellCtr.time) < 7200000;
 
     return this->isLowTemp;
   }

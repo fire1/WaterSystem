@@ -8,17 +8,15 @@
 #include "Glob.h"
 
 //
-// NTC Sensor setup
-// source link https://www.instructables.com/NTC-Temperature-Sensor-With-Arduino/
-const float TempVin = 5.0;     // [V]
-const float TempRt = 10000;    // Resistor t [ohm]
-const float TempR0 = 5000;    // value of rct in T0 [ohm] / original 1000
-const float TempT0 = 298.15;   // use T0 in Kelvin [K]
-// use the datasheet to get this data.
-const float TempT1 = 273.15;      // [K] in datasheet 0º C
-const float TempT2 = 373.15;      // [K] in datasheet 100° C
-const float TempRT1 = 35563;   // [ohms]  resistance in T1
-const float TempRT2 = 550;    // [ohms]   resistance in T2
+// NTC MF52 Sensor setup
+const int Rc = 5000; //value of resistance
+const int Vcc = 5; // voltage
+// Correction factor for temperature calculation, get from the datasheet.
+const float cfA = 1.11492089e-3;
+const float cfB = 2.372075385e-4;
+const float cfC = 6.954079529e-8;
+const float cfK = 2.5; //dissipation factor in mW/C
+
 
 class Heat {
 private:
@@ -30,8 +28,6 @@ private:
     bool isAlarmOn = false;
     bool isReading = true;
     bool isHandle = true;
-    const float beta = (log(TempRT1 / TempRT2)) / ((1 / TempT1) - (1 / TempT2));
-    const float rInf = TempR0 * exp(-beta / TempT0);
 
     const uint8_t edgeWorkingTemp = stopMaxTemp - 10;
 
@@ -116,8 +112,7 @@ private:
         TempRead.index = 1;
         TempRead.summary = TempRead.mean;
 
-        if (cmd.show(F("mean"),F("Shows mean temperature for SSR.")))
-            cmd.print(F("Mean temp"), TempRead.mean);
+
 
         //this->heat = map(TempRead.mean, 553, 493, 27, 33);
         // raw = C*
@@ -146,48 +141,40 @@ private:
             analogWrite(pinFanSsr, this->fan);
         }
         //
-        // Debug temperature
+        // Set debug temperature
         if (cmd.set(F("heat"), this->heat, F("Overwrites SSR temperature."))) this->isReading = false;
+
+        //
+        // Second set debug temperature
+        if (cmd.set(F("mean"), TempRead.mean, F("Overwrites raw mean temperature."))) this->isReading = false;
 
         //
         // Show internal values for cooling fan / SSR heat.
         if (cmd.show(F("cool"),  F("Shows fan speed PWM."))) cmd.print(F("Cool:"), this->fan);
         if (cmd.show(F("heat"),  F("Shows SSR temperature."))) cmd.print(F("Heat:"), this->heat);
+        if (cmd.show(F("mf52"),F("Calculate temperature for SSR."))){
+            cmd.print(F("Input from mean value: "),TempRead.mean);
+            cmd.print(F("Result temperature: "), calculate_mf52(TempRead.mean));
+        }
     }
+
 
     /**
-     * Calculate temperature from readings
-     * @param value
-     * @return
-     */
-    int8_t calculate(int value) {
-        float Vout = TempVin * ((float) (value) / 1023.0); // calc for ntc
-        float Rout = (TempRt * Vout / (TempVin - Vout));
-
-        float TempK = (beta / log(Rout / rInf)); // calc for temperature
-        return (int8_t) TempK - 273.15;
-    }
-
-
-    const int Rc = 5000; //value of resistance
-    const int Vcc = 5; // voltage
-    // Correction factor for temperature calculation, get from the datasheet.
-    const float A = 1.11492089e-3;
-    const float B = 2.372075385e-4;
-    const float C = 6.954079529e-8;
-    const float K = 2.5; //dissipation factor in mW/C
-
+    * Calculate temperature from MF52 sensor
+    */
     float calculate_mf52(int raw){
 
-        float V =  raw / 1024 * Vcc;
+        //
+        // Cast raw to float in order to be calculated
+        float V = float(raw) / 1024 * Vcc;
 
           float R = (Rc * V ) / (Vcc - V);
 
 
           float logR  = log(R);
-          float R_th = 1.0 / (A + B * logR + C * logR * logR * logR );
+          float R_th = 1.0 / (cfA + cfB * logR + cfC * logR * logR * logR );
 
-          float kelvin = R_th - V*V/(K * R)*1000;
+          float kelvin = R_th - V*V/(cfK * R)*1000;
           float celsius = kelvin - 273.15;
 
           //printf("2/ Temperature: %.2f°C\n", celsius -10);
