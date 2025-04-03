@@ -122,11 +122,6 @@ private:
         // 325 - max
 
         this->heat = calculate_mf52(TempRead.mean);
-
-        //this->heat = this->calculate(TempRead.mean); // <--- use this
-        //this->heat = this->calc(TempRead.mean);
-
-        //Serial.println(this->heat);
     }
 
     /**

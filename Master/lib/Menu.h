@@ -422,6 +422,15 @@ private:
   }
 
   void handleDebug() {
+
+      uint8_t index = 0;
+      if(cmd.set(F("mode:well"), index, F("Test overwrite of mode well"))){
+          modeWell->setIndex(index);
+      }
+
+      if(cmd.set(F("mode:main"), index, F("Test overwrite of mode main"))){
+          modeMain->setIndex(index);
+      }
   }
 
 public:
