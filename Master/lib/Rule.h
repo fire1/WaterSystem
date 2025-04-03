@@ -53,7 +53,7 @@ private:
 
 public:
   Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
-      : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
+    : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
   }
 
   void begin() {
@@ -72,7 +72,8 @@ public:
   void hark() {
     this->handleDebug();
 
-    if (millis() < 60000)
+    // Wait a while
+    if (millis() < 45000)
       return;
 
     this->handleWellMode();
@@ -128,7 +129,7 @@ private:
     * @return
     */
   unsigned long calcMinutes(unsigned long minutes) {
-    return minutes * 60 * 1000UL; // UL ensures the result is treated as an unsigned long
+    return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
   }
 
   /**
@@ -145,9 +146,10 @@ private:
     //
     // Check for daytime each minute
     if (spanLg.active())
-      this->isDaytime = time->isDaytime(); //pass state for daytime locally
+      this->isDaytime = time->isDaytime();  //pass state for daytime locally
 
-
+    //
+    // Returns last resolve state
     return this->isDaytime;
   }
 
@@ -155,17 +157,75 @@ private:
    * When temperature is too low to pump will return true
    */
   bool checkLowTemp() {
-      //
-      // Verify the clock is connected in order to check the temperature.
-    if (!time->isConn())
+
+    //
+    // Verify the clock is connected in order to check the temperature.
+    if (!time->isConn()) {
+      this->isLowTemp = false;  // Reset back to default
       return true;
+    }
 
-    if (spanLg.active())
-        //
-        // When permperature is lower then value and last runtime is above 2 hours.
-      this->isLowTemp = OPT_PROTECT_COLD < time->getTemp() && (millis() - wellCtr.time) < 7200000;
 
+    if (spanLg.active()) {
+
+        if(time->getTemp() < OPT_PROTECT_COLD){
+            this->isLowTemp = true; // it is too cold to run....
+            //
+            //  last runtime is below 2 hours, (pump head still hot).
+            if( (millis() - wellCtr.time) < 7200000)
+                this->isLowTemp =  false;
+
+
+        }else this->isLowTemp = false;
+    }
+
+    //
+    // Returns last resolve state
     return this->isLowTemp;
+  }
+
+  /**
+    * Resolve well stop from several warnings
+    */
+  bool isWarnStop() {
+
+    //
+    // Check well for daytime
+#ifdef OPT_DAYTIME_WELL
+    if (!this->checkDaytime()) {
+
+      if (this->isWarnDaytime)
+        return true;
+
+      this->isWarnDaytime = true;  // flag to display only once
+      setWarn(F("Not a daytime!  "));
+      dbgLn(F("Warning: STOP /well/ It is not daytime!"));
+      return true;
+    } else
+      // Reset back to default
+      this->isWarnDaytime = false;
+#endif
+
+      //
+      // Check well for low temp
+#ifdef OPT_PROTECT_COLD
+    if (this->checkLowTemp()) {
+
+      if (this->isWarnLowTemp)
+        return true;
+
+      this->isWarnLowTemp = true;  // flag to display only once
+      setWarn(F("Too cold to run!"));
+      dbgLn(F("Warning: STOP /well/ Temperature too low!"));
+      return true;
+    } else
+      // Reset back to default
+      this->isWarnLowTemp = false;
+
+#endif
+
+
+    return false;  // default state of the function
   }
 
   /**
@@ -243,80 +303,38 @@ private:
       ctrlWell.setOn(true);
     }
   }
-  /**
-    * Resolve well stop from several warnings
-    */
-  bool isWarnStop(){
-
-    //
-    // Check well for daytime
-#ifdef OPT_DAYTIME_WELL
-    if (!this->checkDaytime()) {
-
-      if (this->isWarnDaytime)
-        return true;
-
-      this->isWarnDaytime = true; // flag to display only once
-      setWarn(F("Not a daytime!  "));
-      dbgLn(F("Warning: STOP /well/ It is not daytime!"));
-      return true;
-    } else
-      // Reset back to default
-      this->isWarnDaytime = false;
-#endif
-
-    //
-    // Check well for low temp
-#ifdef OPT_PROTECT_COLD
-    if (!this->checkLowTemp()) {
-
-      if (this->isWarnLowTemp)
-        return true;
-
-      this->isWarnLowTemp = true; // flag to display only once
-      setWarn(F("Too cold to run!"));
-      dbgLn(F("Warning: STOP /well/ Temperature too low!"));
-      return true;
-    } else
-      // Reset back to default
-      this->isWarnLowTemp = false;
-#endif
-
-
-    return false; // default state of the function
-  }
 
   //
   // Controls well pump
   void handleWellMode() {
 
     switch (modeWell->value()) {
-    default:
-    case 0:
-      // Noting
-      beatWell(0); // Disables the led heartbeat
-      break;
+      default:
+      case 0:
+        // Noting
+        beatWell(0);  // Disables the led heartbeat
+        break;
 
-    case 1:
-      // Easy
-      beatWell(2400);
-      pumpWellSchedule(ScheduleWellEasy);
-      handleDayjob();
-      break;
+      case 1:
+        // Easy
+        beatWell(2400);
+        pumpWellSchedule(ScheduleWellEasy);
+        handleDayjob();
+        break;
 
-    case 2:
-      // Fast
-      beatWell(1200);
-      pumpWellSchedule(ScheduleWellFast);
-      handleDayjob();
-      break;
+      case 2:
+        // Fast
+        beatWell(1200);
+        pumpWellSchedule(ScheduleWellFast);
+        handleDayjob();
+        break;
 
-    case 3:
-      // Now!
-      beatWell(400);
-      pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
-      //pumpWell(1, 2);
-      break;
+      case 3:
+        // Now!
+        beatWell(400);
+        pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
+        //pumpWell(1, 2);
+        break;
     }
   }
 
@@ -430,20 +448,25 @@ private:
     if (levelMain < LevellSensorBareMax(LevelSensorMainMax))
       return;
 
+    //
+    // Run the pump when it's daytime
+    if (!this->isDaytime)  // todo, make also a freezing temperature check
+      return;
+
     // Mapping values from 20 to 95, like 20 is Full and 95 empty
     switch (modeMain->value()) {
-    default:
-    case 0: // Do noting
-      break;
-    case 1: // Full
-      if (levelMain > 32 && levelWell < 70)
-        return pumpMain();
-    case 2: // Half
-      if (levelMain > 47 && levelWell < 55)
-        return pumpMain();
-    case 3: // Void
-      if (levelMain > 75 && levelWell < 30)
-        return pumpMain();
+      default:
+      case 0:  // Do noting
+        break;
+      case 1:  // Full
+        if (levelMain > 34 && levelWell < 70)
+          return pumpMain();
+      case 2:  // Half
+        if (levelMain > 52 && levelWell < 55)
+          return pumpMain();
+      case 3:  // Void
+        if (levelMain > 78 && levelWell < 30)
+          return pumpMain();
     }
   }
 
@@ -507,7 +530,7 @@ private:
     }
 
     if (beatLed.isExpired()) {
-      digitalWrite(pinLedBeat, !digitalRead(pinLedBeat)); // Toggle LED state
+      digitalWrite(pinLedBeat, !digitalRead(pinLedBeat));  // Toggle LED state
       if (ms == beatLedLast && ms != 0) {
         beatLed.repeat();
       }
@@ -554,12 +577,23 @@ private:
       */
   void handleDebug() {
 
-    if (cmd.show("timer:on", F("Shows work timer to next ON state.")))
-      cmd.print("Time to on", getNextOn());
+
+    if(cmd.show(F("timer:on"), F("Shows work timer to next ON state.")))
+      cmd.print("Time to on", this->getNextOn());
 
 
-    if (cmd.show("timer:off", F("Shows work timer to next OFF state.")))
-      cmd.print("Time to off", getNextOff());
+    if (cmd.show(F("timer:off"), F("Shows work timer to next OFF state.")))
+        cmd.print("Time to off", getNextOff());
+
+    int  tmpTime = 0;
+    if(cmd.set( F("timer:on"), tmpTime, F("Overwrite to \"on\" timer."))){
+          this->nextToOn = tmpTime;
+    }
+
+      if (cmd.set("timer:off", tmpTime, F("Overwrite to \"off\" timer."))) {
+          this->nextToOff = tmpTime;
+      }
+
   }
 };
 
