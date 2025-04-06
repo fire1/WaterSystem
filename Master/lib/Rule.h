@@ -15,6 +15,7 @@ private:
   };
   WellState wellCtr;
 
+  unsigned long mainStartTime = 0; 
   //
   // Used to handle the schedule time properly
   struct WellSchedule {
@@ -73,13 +74,18 @@ public:
     this->handleDebug();
 
     // Wait a while
-    if (millis() < 45000)
+    if (millis() < 50000)
       return;
 
     this->handleWellMode();
     this->handleMainMode();
 
     this->handleMainStop();
+
+    //
+    // Options for detecting an overtime
+    this->handleWellOvertime();
+    this->handleMainOvertime();
   }
 
   /**
@@ -510,6 +516,49 @@ private:
     }
   }
 
+  /**
+   * @brief Function to protect from overtime for well pump
+   * 
+   */
+  void handleWellOvertime(){
+#ifdef OPT_WELL_OVERTIME
+    if(ctrlWell.isOn() && wellCtr.time > OPT_WELL_OVERTIME){
+      ctrlWell.setOn(false);
+      setWarn(F("Well overtime!  "));
+      dbgLn(F("Warning: STOP /well/ Overtime work detected!"));
+    }
+#endif
+  }
+  /**
+   * @brief Function to protect from overtime for main pump
+   * 
+   */
+  void handleMainOvertime(){
+    #ifdef OPT_MAIN_OVERTIME
+
+    //
+    // Wait for main pump to start...
+    if(!ctrlMain.isOn()){
+      mainStartTime = 0;
+      return;
+    }
+    //
+    // Mark starting point of the work time for main pump.
+    if(mainStartTime == 0){
+        mainStartTime = millis();
+        return;
+    }
+
+    if(millis() - mainStartTime > OPT_MAIN_OVERTIME){
+      ctrlMain.setOn(false);
+      mainStartTime = 0;
+      setWarn(F("Main overtime!  "));
+      dbgLn(F("Warning: STOP /main/ Overtime work detected!"));
+    }
+
+#endif    
+  }
+
 
   /**
     * Led beet for indicating the modes
@@ -570,6 +619,36 @@ private:
     }
 
 #endif
+  }
+
+  void handleInactivityDays(){
+    #ifdef OPT_DAYS_JOB_WELL 
+      if (!time->isConn())
+      return;
+
+    //
+    // Reset dayjob for the next day
+    if (!time->isDaytime())
+      wellHasDayjob = false;
+
+    //
+    // Pass the "On" pump state to dayjob state...
+    if (wellCtr.on && !wellHasDayjob)
+      wellHasDayjob = true;
+
+    //
+    // Skip dayjob when levels are not available.
+    if (!read->atNorm())
+      return;
+
+    //
+    // Turn on well when well controll timer is above defined days (days of inactivity).
+    if (!wellHasDayjob && !ctrlWell.isOn && wellCtr.time > DAYS_TO_MILLIS(OPT_DAYS_JOB_WELL)) {
+      ctrlWell.setOn(true);
+      wellHasDayjob = true;
+    }
+
+    #endif
   }
 
   /**

@@ -20,6 +20,11 @@
 // Macro to define PROGMEM array
 #define PROGMEM_ARRAY(name, ...) const char* PROGMEM name[] = {__VA_ARGS__}
 
+//
+// Convert days to millis
+#define DAYS_TO_MILLIS(days) ((unsigned long)(days) * 24UL * 60UL * 60UL * 1000UL)
+
+
 // 
 // Macro to define PROGMEM array with strings
 #define DefineData(name, ...) \

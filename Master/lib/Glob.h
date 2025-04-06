@@ -22,9 +22,10 @@
 #define ENABLE_CLOCK           // Enables DS3231 clock usage
 #define OPT_PROTECT_COLD 14        // Do not run well pump below temperature.
 #define OPT_DAYTIME_WELL           // Well pump will work only at daytime.
-//#define OPT_DAYJOB_WELL 16         // The well pump will always have at least one run per day, regardless of the tank level.
-                                   // The value of the definition is the hour when to run the pump at daytime.
-
+//#define OPT_DAYJOB_WELL 16       // The well pump will always have at least one run per day, regardless of the tank level.
+#define OPT_DAYS_JOB_WELL 3        // Maximum days of inactivite for the well pump.
+#define OPT_WELL_OVERTIME 1800000  // Well pump overtime work limitation in millis. (1800000 limit of 30minutes)
+#define OPT_MAIN_OVERTIME 1800000  // Main pump overtime work limitation in millis. (or 2700000 for 45 minutes)
 //
 // Used as debugging tool for
 //  Serial Input/Output.

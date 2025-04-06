@@ -1,0 +1,8 @@
+CompileFlags:
+  Add:
+    - -I/home/fire1/Arduino/hardware/arduino/avr/cores/arduino # Arduino core
+    - -I/home/fire1/.arduino15/packages/arduino/hardware/avr/1.8.6/libraries
+    - -I/home/fire1/.arduino15/packages/arduino/hardware/avr/1.8.6/libraries
+    - -I/home/fire1/Arduino/libraries
+    - -I/home/fire1/snap/arduino-cli/58/.arduino15/packages/arduino
+    - -I${ProjectRoot}/lib # Additional source files
