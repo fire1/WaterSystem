@@ -275,7 +275,7 @@ private:
     String message = dr->getWarnMsg();
     if(message.length()> 0)
       lcd.print(message);
-    else lcd.print(F(" --no warning-- "));
+    else lcd.print(F(" [ no warning ] "));
 
   }
 
