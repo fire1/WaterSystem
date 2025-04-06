@@ -12,6 +12,7 @@ private:
   Data *modeWell;
   Data *modeMain;
   char formatBuffer[5];
+ uint8_t lastWarnCursor =0;
 
   //
   // At init state needs to be as same as Draw.h edit state.
@@ -263,6 +264,20 @@ private:
     lcd.print(F(" "));
   }
 
+
+  void infoWarn(DrawInterface *dr){
+    dr->noEdit();
+    
+    lcd.setCursor(0, 0);
+    lcd.print(F("Last warning:   "));
+    
+    lcd.setCursor(0, 1);
+    String message = dr->getWarnMsg();
+    if(message.length()> 0)
+      lcd.print(message);
+    else lcd.print(F(" --no warning-- "));
+
+  }
 
   /**
     * Heat warning
@@ -516,21 +531,28 @@ public:
         return this->pumpWell(dr);
       case MenuPump_Main:
         return this->pumpMain(dr);
+
+        //
+        // Interuption warning messages.
       case MenuWarn_Heat:
         return this->warnHeat(dr);
       case MenuWarn_Rule:
         return this->warnRule(dr);
 
-
+      
+        //
+        // Backward menu 3
+      case MenuInfo_Warn:
+        return this->infoWarn(dr); // Show last warning
         //
         // Backward menu 2
       case MenuInfo_Heat:
-        return this->infoHeat(dr);
+        return this->infoHeat(dr); // Heat information.
 
         //
         // Backward menu 1
       case MenuInfo_Time:
-        return this->infoTime(dr);
+        return this->infoTime(dr); // Time information.
     }
   }
 };

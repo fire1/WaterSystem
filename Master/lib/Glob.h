@@ -190,7 +190,7 @@ const int8_t WellDayjobHour = 16;  //Clock hour
 
 #define SuspendDisplayTime 240000  // After 4min will turn off the display.
 #define DisableSensorError 20      // How many errors will disable sensor read.
-#define WarnScreenTimeout 5000     // Time to display warning message.
+#define WarnScreenTimeout 8000     // Time to display warning message.
 
 //
 // Cursor map of the menu UI
@@ -201,6 +201,7 @@ const uint8_t MenuPump_Well = 5;
 const uint8_t MenuPump_Main = 6;
 const uint8_t MenuInfo_Time = 255;
 const uint8_t MenuInfo_Heat = 254;
+const uint8_t MenuInfo_Warn = 253;
 //
 // Warn (notification) screens
 const uint8_t MenuWarn_Heat = 7;

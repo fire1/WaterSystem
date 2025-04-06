@@ -388,6 +388,10 @@ public:
         return this->cursor;
     }
 
+    void overwriteCurosr(uint8_t cursor){
+        this->cursor = cursor;
+    }
+
     /**
        * Notification handler
        * @param index

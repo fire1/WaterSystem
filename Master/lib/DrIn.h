@@ -9,6 +9,8 @@ public:
   // Pure virtual functions - These functions must be implemented by derived classes
   virtual uint8_t getCursor() = 0;
 
+  virtual void overwriteCurosr(uint8_t cursor) = 0;
+
   virtual void edit(Data *d) = 0;
 
   virtual void pump(Pump *p, Pump *s) = 0;

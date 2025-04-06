@@ -643,7 +643,7 @@ private:
 
     //
     // Turn on well when well controll timer is above defined days (days of inactivity).
-    if (!wellHasDayjob && !ctrlWell.isOn && wellCtr.time > DAYS_TO_MILLIS(OPT_DAYS_JOB_WELL)) {
+    if (!wellHasDayjob && !ctrlWell.isOn() && wellCtr.time > DAYS_TO_MILLIS(OPT_DAYS_JOB_WELL)) {
       ctrlWell.setOn(true);
       wellHasDayjob = true;
     }
