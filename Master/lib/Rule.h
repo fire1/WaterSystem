@@ -52,6 +52,10 @@ private:
 
   String warnCase = "";
 
+  unsigned long getWellWorkTimer(){
+    return millis() - wellCtr.time;
+  }
+
 public:
   Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
     : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
@@ -105,7 +109,7 @@ public:
     */
   unsigned long getNextOn() {
     if (!wellCtr.on)
-      return this->nextToOn - (millis() - wellCtr.time);
+      return this->nextToOn - (getWellWorkTimer());
 
     return this->nextToOn;
   }
@@ -115,7 +119,7 @@ public:
     */
   unsigned long getNextOff() {
     if (wellCtr.on)
-      return this->nextToOff - (millis() - this->wellCtr.time);
+      return this->nextToOff - (getWellWorkTimer());
 
     return this->nextToOff;
   }
@@ -178,7 +182,7 @@ private:
             this->isLowTemp = true; // it is too cold to run....
             //
             //  last runtime is below 2 hours, (pump head still hot).
-            if( (millis() - wellCtr.time) < 7200000)
+            if( (getWellWorkTimer()) < 7200000)
                 this->isLowTemp =  false;
 
 
@@ -262,7 +266,7 @@ private:
 
     //
     // Turn pump OFF by timeout of mode
-    if (ctrlWell.isOn() && (millis() - wellCtr.time >= msTimeToOff)) {
+    if (ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOff)) {
       ctrlWell.setOn(false);
       wellCtr.time = millis();
 
@@ -289,7 +293,7 @@ private:
 
     //
     // Prepare, read levels before start
-    if (!ctrlWell.isOn() && !ctrlWell.isOn() && (millis() - wellCtr.time >= (msTimeToOn - timePrepareTurnOn))) {
+    if (!ctrlWell.isOn() && !ctrlWell.isOn() && (getWellWorkTimer() >= (msTimeToOn - timePrepareTurnOn))) {
       if (spanLg.active()) {
         read->startWorkRead();
         buzz->alarm();
@@ -300,7 +304,7 @@ private:
 
     //
     // Turn the pump on
-    if (!ctrlMain.isOn() && !ctrlWell.isOn() && (millis() - wellCtr.time >= msTimeToOn)) {
+    if (!ctrlMain.isOn() && !ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOn)) {
       wellCtr.time = millis();
 
       dbg(F("[CTRL] Well to ON"));
@@ -522,7 +526,7 @@ private:
    */
   void handleWellOvertime(){
 #ifdef OPT_WELL_OVERTIME
-    if(ctrlWell.isOn() && wellCtr.time > OPT_WELL_OVERTIME){
+    if(ctrlWell.isOn() && getWellWorkTimer() > OPT_WELL_OVERTIME){
       ctrlWell.setOn(false);
       setWarn(F("Well overtime!  "));
       dbgLn(F("Warning: STOP /well/ Overtime work detected!"));
