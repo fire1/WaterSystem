@@ -1,9 +1,9 @@
 #ifndef Rule_h
 #define Rule_h
 
-#include "HardwareSerial.h"
 #include "Arduino.h"
 #include "Glob.h"
+#include "HardwareSerial.h"
 
 class Rule {
 private:
@@ -15,7 +15,7 @@ private:
   };
   WellState wellCtr;
 
-  unsigned long mainStartTime = 0; 
+  unsigned long mainStartTime = 0;
   //
   // Used to handle the schedule time properly
   struct WellSchedule {
@@ -27,11 +27,9 @@ private:
 
   WellSchedule wellSch;
 
-
   //
   // Handles the state of "dayjob" for the well.
   bool wellHasDayjob = false;
-
 
   Read *read;
   Data *modeWell;
@@ -52,14 +50,12 @@ private:
 
   String warnCase = "";
 
-  unsigned long getWellWorkTimer(){
-    return millis() - wellCtr.time;
-  }
+  unsigned long getWellWorkTimer() { return millis() - wellCtr.time; }
 
 public:
   Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
-    : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM), beatLed(500, AsyncDelay::MILLIS) {
-  }
+      : read(rd), time(tm), buzz(tn), modeWell(mdW), modeMain(mdM),
+        beatLed(500, AsyncDelay::MILLIS) {}
 
   void begin() {
 
@@ -71,9 +67,9 @@ public:
   }
 
   /**
-    * @brief Listen for environment changes.
-    *
-    */
+   * @brief Listen for environment changes.
+   *
+   */
   void hark() {
     this->handleDebug();
 
@@ -93,9 +89,9 @@ public:
   }
 
   /**
-    * Display warning message
-    * @param dr
-    */
+   * Display warning message
+   * @param dr
+   */
   void warn(DrawInterface *dr) {
 
     if (this->warnCase == "")
@@ -105,8 +101,8 @@ public:
   }
 
   /**
-    * @brief Gets next timer ON action for display
-    */
+   * @brief Gets next timer ON action for display
+   */
   unsigned long getNextOn() {
     if (!wellCtr.on)
       return this->nextToOn - (getWellWorkTimer());
@@ -115,8 +111,8 @@ public:
   }
 
   /**
-    * @brief Gets next timer OFF action for display
-    */
+   * @brief Gets next timer OFF action for display
+   */
   unsigned long getNextOff() {
     if (wellCtr.on)
       return this->nextToOff - (getWellWorkTimer());
@@ -126,26 +122,25 @@ public:
 
 private:
   /**
-    * Sets warning massage to be displayed.
-    * @param msg
-    */
-  void setWarn(String msg) {
-    this->warnCase = msg;
-  }
+   * Sets warning massage to be displayed.
+   * @param msg
+   */
+  void setWarn(String msg) { this->warnCase = msg; }
 
   /**
-    * Converts minutes to millis
-    * @param minutes
-    * @return
-    */
+   * Converts minutes to millis
+   * @param minutes
+   * @return
+   */
   unsigned long calcMinutes(unsigned long minutes) {
-    return minutes * 60 * 1000UL;  // UL ensures the result is treated as an unsigned long
+    return minutes * 60 *
+           1000UL; // UL ensures the result is treated as an unsigned long
   }
 
   /**
-    * Safe/local way to check for daytime
-    * @return
-    */
+   * Safe/local way to check for daytime
+   * @return
+   */
   bool checkDaytime() {
     //
     // Wrapping time class locally
@@ -156,7 +151,7 @@ private:
     //
     // Check for daytime each minute
     if (spanLg.active())
-      this->isDaytime = time->isDaytime();  //pass state for daytime locally
+      this->isDaytime = time->isDaytime(); // pass state for daytime locally
 
     //
     // Returns last resolve state
@@ -171,22 +166,21 @@ private:
     //
     // Verify the clock is connected in order to check the temperature.
     if (!time->isConn()) {
-      this->isLowTemp = false;  // Reset back to default
+      this->isLowTemp = false; // Reset back to default
       return true;
     }
 
-
     if (spanLg.active()) {
 
-        if(time->getTemp() < OPT_PROTECT_COLD){
-            this->isLowTemp = true; // it is too cold to run....
-            //
-            //  last runtime is below 2 hours, (pump head still hot).
-            if( (getWellWorkTimer()) < 7200000)
-                this->isLowTemp =  false;
+      if (time->getTemp() < OPT_PROTECT_COLD) {
+        this->isLowTemp = true; // it is too cold to run....
+        //
+        //  last runtime is below 2 hours, (pump head still hot).
+        if ((getWellWorkTimer()) < 7200000)
+          this->isLowTemp = false;
 
-
-        }else this->isLowTemp = false;
+      } else
+        this->isLowTemp = false;
     }
 
     //
@@ -195,8 +189,8 @@ private:
   }
 
   /**
-    * Resolve well stop from several warnings
-    */
+   * Resolve well stop from several warnings
+   */
   bool isWarnStop() {
 
     //
@@ -207,7 +201,7 @@ private:
       if (this->isWarnDaytime)
         return true;
 
-      this->isWarnDaytime = true;  // flag to display only once
+      this->isWarnDaytime = true; // flag to display only once
       setWarn(F("Not a daytime!  "));
       dbgLn(F("Warning: STOP /well/ It is not daytime!"));
       return true;
@@ -224,7 +218,7 @@ private:
       if (this->isWarnLowTemp)
         return true;
 
-      this->isWarnLowTemp = true;  // flag to display only once
+      this->isWarnLowTemp = true; // flag to display only once
       setWarn(F("Too cold to run!"));
       dbgLn(F("Warning: STOP /well/ Temperature too low!"));
       return true;
@@ -234,15 +228,14 @@ private:
 
 #endif
 
-
-    return false;  // default state of the function
+    return false; // default state of the function
   }
 
   /**
-  * Pumping well amplitude
-  * @param workMin
-  * @param stopMin
-  */
+   * Pumping well amplitude
+   * @param workMin
+   * @param stopMin
+   */
   void pumpWell(uint8_t workMin, unsigned long stopMin) {
 
     unsigned long msTimeToOff = this->calcMinutes(workMin);
@@ -281,19 +274,26 @@ private:
     if (!ctrlWell.isOn() && LevelSensorWellMax >= read->getWellLevel()) {
       return;
     }
-    //
-    // Data is not ready, brake the function
-    if (!ctrlWell.isOn() && read->getWellLevel() < LevellSensorBareMax(LevelSensorWellMax)) {
+
+    if (ctrlWell.isTerminated()) {
+      if (spanSm.active())
+        dbgLn(F("[CTRL] /Well/ terminated!"));
       return;
     }
-
+    //
+    // Data is not ready, brake the function
+    if (!ctrlWell.isOn() &&
+        read->getWellLevel() < LevellSensorBareMax(LevelSensorWellMax)) {
+      return;
+    }
 
     if (isWarnStop())
       return;
 
     //
     // Prepare, read levels before start
-    if (!ctrlWell.isOn() && !ctrlWell.isOn() && (getWellWorkTimer() >= (msTimeToOn - timePrepareTurnOn))) {
+    if (!ctrlWell.isOn() && !ctrlWell.isOn() &&
+        (getWellWorkTimer() >= (msTimeToOn - timePrepareTurnOn))) {
       if (spanLg.active()) {
         read->startWorkRead();
         buzz->alarm();
@@ -304,7 +304,8 @@ private:
 
     //
     // Turn the pump on
-    if (!ctrlMain.isOn() && !ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOn)) {
+    if (!ctrlMain.isOn() && !ctrlWell.isOn() &&
+        (getWellWorkTimer() >= msTimeToOn)) {
       wellCtr.time = millis();
 
       dbg(F("[CTRL] Well to ON"));
@@ -319,40 +320,39 @@ private:
   void handleWellMode() {
 
     switch (modeWell->value()) {
-      default:
-      case 0:
-        // Noting
-        beatWell(0);  // Disables the led heartbeat
-        break;
+    default:
+    case 0:
+      // Noting
+      beatWell(0); // Disables the led heartbeat
+      break;
 
-      case 1:
-        // Easy
-        beatWell(2400);
-        pumpWellSchedule(ScheduleWellEasy);
-        handleDayjob();
-        break;
+    case 1:
+      // Easy
+      beatWell(2400);
+      pumpWellSchedule(ScheduleWellEasy);
+      handleDayjob();
+      break;
 
-      case 2:
-        // Fast
-        beatWell(1200);
-        pumpWellSchedule(ScheduleWellFast);
-        handleDayjob();
-        break;
+    case 2:
+      // Fast
+      beatWell(1200);
+      pumpWellSchedule(ScheduleWellFast);
+      handleDayjob();
+      break;
 
-      case 3:
-        // Now!
-        beatWell(400);
-        pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
-        //pumpWell(1, 2);
-        break;
+    case 3:
+      // Now!
+      beatWell(400);
+      pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
+      // pumpWell(1, 2);
+      break;
     }
   }
 
-
   /**
-    * Pump schedule for the well mode
-    * @param schedule
-    */
+   * Pump schedule for the well mode
+   * @param schedule
+   */
   void pumpWellSchedule(PumpSchedule schedule) {
     int16_t level = read->getWellLevel() + read->getMainLevel();
     uint8_t mode = modeWell->value();
@@ -429,16 +429,22 @@ private:
   }
 
   /**
-    * Starts the pump for main tank.
-    */
+   * Starts the pump for main tank.
+   */
   void pumpMain() {
 
     uint8_t main = read->getMainLevel();
 
+    if (ctrlMain.isTerminated()) {
+      if (spanSm.active())
+        dbgLn(F("[CTRL] /Main/ terminated!"));
+      return;
+    }
+
     if (!ctrlMain.isOn() && !ctrlWell.isOn() && read->atNorm()) {
       read->startWorkRead();
 
-      dbg(F("CTRL /Main/ at level "));
+      dbg(F("[CTRL] /Main/ at level "));
       dbg(main);
       dbg(F("cm turn ON"));
       dbgLn();
@@ -460,29 +466,29 @@ private:
 
     //
     // Run the pump when it's daytime
-    if (!this->isDaytime)  // todo, make also a freezing temperature check
+    if (!this->isDaytime) // todo, make also a freezing temperature check
       return;
 
     // Mapping values from 20 to 95, like 20 is Full and 95 empty
     switch (modeMain->value()) {
-      default:
-      case 0:  // Do noting
-        break;
-      case 1:  // Full
-        if (levelMain > 34 && levelWell < 70)
-          return pumpMain();
-      case 2:  // Half
-        if (levelMain > 52 && levelWell < 55)
-          return pumpMain();
-      case 3:  // Void
-        if (levelMain > 78 && levelWell < 30)
-          return pumpMain();
+    default:
+    case 0: // Do noting
+      break;
+    case 1: // Full
+      if (levelMain > 34 && levelWell < 70)
+        return pumpMain();
+    case 2: // Half
+      if (levelMain > 52 && levelWell < 55)
+        return pumpMain();
+    case 3: // Void
+      if (levelMain > 78 && levelWell < 30)
+        return pumpMain();
     }
   }
 
   /**
-    * Monitors the levels and turn off on Low or Full tank state
-    */
+   * Monitors the levels and turn off on Low or Full tank state
+   */
   void handleMainStop() {
     uint8_t levelMain = read->getMainLevel();
     uint8_t levelWell = read->getWellLevel();
@@ -494,7 +500,6 @@ private:
       ctrlMain.clearTerminate();
       ctrlWell.clearTerminate();
     }
-
 
     // MAIN
     // Stop Main when Main is full
@@ -522,12 +527,13 @@ private:
 
   /**
    * @brief Function to protect from overtime for well pump
-   * 
+   *
    */
-  void handleWellOvertime(){
+  void handleWellOvertime() {
 #ifdef OPT_WELL_OVERTIME
-    if(ctrlWell.isOn() && getWellWorkTimer() > OPT_WELL_OVERTIME){
+    if (ctrlWell.isOn() && getWellWorkTimer() > OPT_WELL_OVERTIME) {
       ctrlWell.setOn(false);
+      ctrlWell.terminate();
       setWarn(F("Well overtime!  "));
       dbgLn(F("Warning: STOP /well/ Overtime work detected!"));
     }
@@ -535,39 +541,39 @@ private:
   }
   /**
    * @brief Function to protect from overtime for main pump
-   * 
+   *
    */
-  void handleMainOvertime(){
-    #ifdef OPT_MAIN_OVERTIME
+  void handleMainOvertime() {
+#ifdef OPT_MAIN_OVERTIME
 
     //
     // Wait for main pump to start...
-    if(!ctrlMain.isOn()){
+    if (!ctrlMain.isOn()) {
       mainStartTime = 0;
       return;
     }
     //
     // Mark starting point of the work time for main pump.
-    if(mainStartTime == 0){
-        mainStartTime = millis();
-        return;
+    if (mainStartTime == 0) {
+      mainStartTime = millis();
+      return;
     }
 
-    if(millis() - mainStartTime > OPT_MAIN_OVERTIME){
+    if (millis() - mainStartTime > OPT_MAIN_OVERTIME) {
       ctrlMain.setOn(false);
+      ctrlMain.terminate();
       mainStartTime = 0;
       setWarn(F("Main overtime!  "));
       dbgLn(F("Warning: STOP /main/ Overtime work detected!"));
     }
 
-#endif    
+#endif
   }
 
-
   /**
-    * Led beet for indicating the modes
-    * @param ms
-    */
+   * Led beet for indicating the modes
+   * @param ms
+   */
   void beatWell(int ms) {
 
     if (ms == 0) {
@@ -583,7 +589,7 @@ private:
     }
 
     if (beatLed.isExpired()) {
-      digitalWrite(pinLedBeat, !digitalRead(pinLedBeat));  // Toggle LED state
+      digitalWrite(pinLedBeat, !digitalRead(pinLedBeat)); // Toggle LED state
       if (ms == beatLedLast && ms != 0) {
         beatLed.repeat();
       }
@@ -591,8 +597,8 @@ private:
   }
 
   /**
-  	*  The well pump will be turned on once a day when it has not been running.
-  	*/
+   *  The well pump will be turned on once a day when it has not been running.
+   */
   void handleDayjob() {
 #ifdef OPT_DAYJOB_WELL
     //
@@ -625,9 +631,9 @@ private:
 #endif
   }
 
-  void handleInactivityDays(){
-    #ifdef OPT_DAYS_JOB_WELL 
-      if (!time->isConn())
+  void handleInactivityDays() {
+#ifdef OPT_DAYS_JOB_WELL
+    if (!time->isConn())
       return;
 
     //
@@ -646,39 +652,37 @@ private:
       return;
 
     //
-    // Turn on well when well controll timer is above defined days (days of inactivity).
-    if (!wellHasDayjob && !ctrlWell.isOn() && wellCtr.time > DAYS_TO_MILLIS(OPT_DAYS_JOB_WELL)) {
+    // Turn on well when well controll timer is above defined days (days of
+    // inactivity).
+    if (!wellHasDayjob && !ctrlWell.isOn() &&
+        wellCtr.time > DAYS_TO_MILLIS(OPT_DAYS_JOB_WELL)) {
       ctrlWell.setOn(true);
       wellHasDayjob = true;
     }
 
-    #endif
+#endif
   }
 
   /**
-      * Handles debug IO
-      */
+   * Handles debug IO
+   */
   void handleDebug() {
 
-
-    if(cmd.show(F("timer:on"), F("Shows work timer to next ON state.")))
+    if (cmd.show(F("timer:on"), F("Shows work timer to next ON state.")))
       cmd.print("Time to on", this->getNextOn());
 
-
     if (cmd.show(F("timer:off"), F("Shows work timer to next OFF state.")))
-        cmd.print("Time to off", getNextOff());
+      cmd.print("Time to off", getNextOff());
 
-    int  tmpTime = 0;
-    if(cmd.set( F("timer:on"), tmpTime, F("Overwrite to \"on\" timer."))){
-          this->nextToOn = tmpTime;
+    int tmpTime = 0;
+    if (cmd.set(F("timer:on"), tmpTime, F("Overwrite to \"on\" timer."))) {
+      this->nextToOn = tmpTime;
     }
 
-      if (cmd.set("timer:off", tmpTime, F("Overwrite to \"off\" timer."))) {
-          this->nextToOff = tmpTime;
-      }
-
+    if (cmd.set("timer:off", tmpTime, F("Overwrite to \"off\" timer."))) {
+      this->nextToOff = tmpTime;
+    }
   }
 };
-
 
 #endif
