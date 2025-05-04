@@ -13,6 +13,7 @@ private:
     byte pin;
     byte btn;
     byte led;
+    bool isFault = false;
     bool isTerminate = false;
     bool isOverwrite = false;
 
@@ -48,15 +49,23 @@ public:
         */
     void toggle() {
         this->isOverwrite = true;
+        this->isFault = false;
+
         this->on = !this->on;
         lastState = on;
         this->handlePins();
     }
 
+    void failure(){
+        this->isFault = true;
+    }
+
+    bool isFailure(){
+        return this->isFault;
+    }
     void terminate() {
         this->isTerminate = true;
     }
-
     bool isTerminated() {
         return this->isTerminate;
     }

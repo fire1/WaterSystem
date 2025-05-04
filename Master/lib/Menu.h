@@ -46,7 +46,7 @@ private:
     dr->noEdit();
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1"));
-    if (ctrlWell.isTerminated())
+    if (ctrlWell.isTerminated() || ctrlWell.isFailure())
       //lcd.write((char)5);
       lcd.write((char)235);  // buildin char
     else
@@ -63,7 +63,7 @@ private:
     lcd.print(F("Tank2"));
 
     int level2 = read->getMainLevel();
-    if (ctrlMain.isTerminated())
+    if (ctrlMain.isTerminated() || ctrlMain.isFailure())
       //lcd.write((char)5);
       lcd.write((char)235);  // buildin char
     else

@@ -275,9 +275,9 @@ private:
       return;
     }
 
-    if (ctrlWell.isTerminated()) {
+    if (ctrlWell.isFailure()) {
       if (spanSm.active())
-        dbgLn(F("[CTRL] /Well/ terminated!"));
+        dbgLn(F("[CTRL] /Well/ has failure!"));
       return;
     }
     //
@@ -435,9 +435,9 @@ private:
 
     uint8_t main = read->getMainLevel();
 
-    if (ctrlMain.isTerminated()) {
+    if (ctrlMain.isFailure()) {
       if (spanSm.active())
-        dbgLn(F("[CTRL] /Main/ terminated!"));
+        dbgLn(F("[CTRL] /Main/ has failure!"));
       return;
     }
 
@@ -533,7 +533,7 @@ private:
 #ifdef OPT_WELL_OVERTIME
     if (ctrlWell.isOn() && getWellWorkTimer() > OPT_WELL_OVERTIME) {
       ctrlWell.setOn(false);
-      ctrlWell.terminate();
+      ctrlWell.failure();
       setWarn(F("Well overtime!  "));
       dbgLn(F("Warning: STOP /well/ Overtime work detected!"));
     }
@@ -561,7 +561,7 @@ private:
 
     if (millis() - mainStartTime > OPT_MAIN_OVERTIME) {
       ctrlMain.setOn(false);
-      ctrlMain.terminate();
+      ctrlMain.failure();
       mainStartTime = 0;
       setWarn(F("Main overtime!  "));
       dbgLn(F("Warning: STOP /main/ Overtime work detected!"));
