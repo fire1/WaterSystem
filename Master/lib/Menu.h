@@ -492,7 +492,7 @@ public:
     lcd.setCursor(0, 1);
     lcd.print(F("  Water system "));
     lcd.blink();
-    delay(1000);
+    delay(2000);
   }
 
 

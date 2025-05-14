@@ -95,7 +95,9 @@ public:
 
     if (!this->isConnected) return;
 
-    if (!overwrite && spanLg.active()) {
+    //
+    // Resolve daytime at start of sketch
+    if (!overwrite && spanLg.active() || millis() < 3) {
       this->daytime = resolveDaytime();
     }
 
