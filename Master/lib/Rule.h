@@ -40,6 +40,7 @@ private:
 
   AsyncDelay beatLed;
   uint16_t beatLedLast = 0;
+  bool isInit = true;
   bool isDaytime = true;
   bool isLowTemp = false;
   bool isWarnDaytime = false;
@@ -74,13 +75,13 @@ public:
   void hark() {
     this->handleDebug();
       
+    if(isInit) isWarnStop();
 
     // Wait a while...
     // NOTE: 
     // This "wait" depends strongly on collected data from sensors, 
     //  so more time will mean more accurate data before deciding to run pumps (handlers).
     if (millis() < RULE_START_WAIT) {
-      isWarnStop();
       return;
     }
 
@@ -93,6 +94,7 @@ public:
     // Options for detecting an overtime
     this->handleWellOvertime();
     this->handleMainOvertime();
+    isInit = false;
   }
 
   /**
@@ -205,13 +207,15 @@ private:
 #ifdef OPT_DAYTIME_WELL
     if (!this->checkDaytime()) {
 
-      if (this->isWarnDaytime)
-        return true;
+      if(!isInit){
+        if (this->isWarnDaytime)
+          return true;
 
-      this->isWarnDaytime = true; // flag to display only once
-      setWarn(F("Not a daytime!  "));
-      dbgLn(F("Warning: STOP /well/ It is not daytime!"));
-      return true;
+        this->isWarnDaytime = true; // flag to display only once
+        setWarn(F("Not a daytime!  "));
+        dbgLn(F("Warning: STOP /well/ It is not daytime!"));
+        return true;
+      }
     } else
       // Reset back to default
       this->isWarnDaytime = false;
@@ -221,14 +225,15 @@ private:
       // Check well for low temp
 #ifdef OPT_PROTECT_COLD
     if (this->checkLowTemp()) {
+      if(!isInit){
+        if (this->isWarnLowTemp)
+          return true;
 
-      if (this->isWarnLowTemp)
+        this->isWarnLowTemp = true; // flag to display only once
+        setWarn(F("Too cold to run!"));
+        dbgLn(F("Warning: STOP /well/ Temperature too low!"));
         return true;
-
-      this->isWarnLowTemp = true; // flag to display only once
-      setWarn(F("Too cold to run!"));
-      dbgLn(F("Warning: STOP /well/ Temperature too low!"));
-      return true;
+      }
     } else
       // Reset back to default
       this->isWarnLowTemp = false;

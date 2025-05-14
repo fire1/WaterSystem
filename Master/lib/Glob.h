@@ -16,7 +16,7 @@
 //
 // Definition setup
 #define DEBUG  // Comment it to disable debugging
-#define RULE_START_WAIT 5500 // Wait time for sensors at start in Rule class 
+#define RULE_START_WAIT 55000 // Wait time for sensors at start in Rule class 
 //#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
 #define WELL_MEASURE_UART_47K  // Uses Serial UART to communicate with the sensor
 #define ENABLE_CMD             // Enables Serial input listener for commands
