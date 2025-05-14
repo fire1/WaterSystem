@@ -11,6 +11,7 @@ const uint8_t ClockMaxConnectAttempts = 10;
 class Time {
 private:
   RTC_DS3231 rtc;
+  bool isInit = true;
   bool isConnected = false;
   bool tick = false;
   bool daytime = false;
@@ -97,7 +98,7 @@ public:
 
     //
     // Resolve daytime at start of sketch
-    if (!overwrite && spanLg.active() || millis() < 3) {
+    if (!overwrite && spanLg.active() || isInit) {
       this->daytime = resolveDaytime();
     }
 
@@ -105,6 +106,9 @@ public:
       if (spanLg.active())
         digitalWrite(pinLed, !digitalRead(pinLed));
     }
+    //
+    // Close init run
+    isInit = false;
   }
 
 private:

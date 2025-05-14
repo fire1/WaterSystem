@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "Glob.h"
 #include "HardwareSerial.h"
-#define START_WAIT 5500
+
 class Rule {
 private:
 
@@ -79,7 +79,7 @@ public:
     // NOTE: 
     // This "wait" depends strongly on collected data from sensors, 
     //  so more time will mean more accurate data before deciding to run pumps (handlers).
-    if (millis() < START_WAIT) {
+    if (millis() < RULE_START_WAIT) {
       isWarnStop();
       return;
     }
@@ -157,7 +157,7 @@ private:
 
     //
     // Check for daytime each minute
-    if (spanLg.active() || millis() < START_WAIT)
+    if (spanLg.active() || millis() < RULE_START_WAIT)
       this->isDaytime = time->isDaytime(); // pass state for daytime locally
 
     //
