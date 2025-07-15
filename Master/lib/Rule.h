@@ -219,8 +219,27 @@ private:
     } else
       // Reset back to default
       this->isWarnDaytime = false;
-#endif
 
+#endif
+    //
+    // Check well for nighttime, not ready.
+#ifdef OPT_NIGHTTIME_WELL
+    if (!this->checkDaytime()) {
+
+      if(!isInit){
+        if (!this->isWarnDaytime)
+          return true;
+
+        this->isWarnDaytime = true; // flag to display only once
+        setWarn(F("Not a nighttime!"));
+        dbgLn(F("Warning: STOP /well/ It is not nighttime!"));
+        return true;
+      }
+    } else
+      // Reset back to default
+      this->isWarnDaytime = false;
+
+#endif
       //
       // Check well for low temp
 #ifdef OPT_PROTECT_COLD
