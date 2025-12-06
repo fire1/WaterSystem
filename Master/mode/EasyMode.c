@@ -15,6 +15,8 @@ class EasyMode : public ModeInterface  {
  
     private:
     Read* read;
+    Rule* rule;
+    Pump* pump;
     WorkWaterPumped workBuffer[WORK_LEN];
     uint8_t workIndex = 0;
 
@@ -33,8 +35,9 @@ class EasyMode : public ModeInterface  {
 
     }
 
-    void init(Read* rd) override {
+    void init(Read* rd,Rule* rl) override {
         read = rd;
+        rule = rl;
     }
 
     //
@@ -48,7 +51,7 @@ class EasyMode : public ModeInterface  {
         uint16_t interval = (this->workHours * 60) / neededCycles; // in minutes
         
         // "runtime" needs to be adjusted /a bit/ from average value
-        read->pumpWell(runtime, interval);
+        rule->pumpWell(runtime, interval);
 
         //
         // Need to get start/stop level of the well tank in order to calculate 

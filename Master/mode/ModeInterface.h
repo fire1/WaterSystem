@@ -31,6 +31,6 @@ class ModeInterface {
 
         
     public:
-        virtual void init(Read* read, Pump* pump) = 0;
+        virtual void init(Read* read, Rule* rule, Pump* pump) = 0;
         virtual void exec() = 0;
 };
