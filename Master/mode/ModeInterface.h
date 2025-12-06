@@ -8,6 +8,12 @@
 class ModeInterface {
 
 
+        #if defined(OPT_DAYTIME_WELL)
+        const uint8_t workHours = 12
+        #else
+        const uint8_t workHours = 24;
+        #endif
+
     //
     // Shortcut/helper functions
     // 
