@@ -35,6 +35,10 @@ class EasyMode : public ModeInterface  {
 
     }
 
+    const char* title() override {
+        return "Easy";
+    }
+
     void init(Read* rd,Rule* rl) override {
         read = rd;
         rule = rl;
