@@ -4,14 +4,10 @@
 #include "Arduino.h"
 #include "Glob.h"
 #include "HardwareSerial.h"
-#include "../mode/ModeInterface.h"
 
 class Rule {
 private:
 
-
-  ModeInterface* activeMode = nullptr;
-  uint8_t activeModeId = 0xFF;
   //
   // Handle well state localy in order to detect human interaction.
   struct WellState {
@@ -89,17 +85,9 @@ public:
       return;
     }
 
-    applyMode(modeWell->value());
-
-    
-
-    // 
-    // Deprecated
-    /**
     this->handleWellMode();
     this->handleMainMode();
-    */
-   
+
     this->handleMainStop();
 
     //
@@ -142,47 +130,6 @@ public:
   }
 
 private:
-
-  /**
-   * @brief Activates selected mode
-   * 
-   * @param id 
-   */
-  void applyMode(uint8_t id) {
-    if (id >= MODE_COUNT || modes[id] == nullptr) {
-      activeMode = nullptr;
-
-      //dbg(F("[ERROR] Internal mode not found ID: ")); dbgLn(id);
-      return;
-    }
-
-    if(activeModeId != id){
-      activeMode = modes[id];
-      activeModeId = id;
-      activeMode->init(read, this, &ctrlWell);
-    }
-
-    if(activeMode != nullptr)
-      return;
-    //
-    // Break the function when top tank is missing.
-    if (!read->atNorm()) {
-      if (!isWarnAtNorm) {
-        setWarn(F("Read failure!  "));
-        isWarnAtNorm = true;
-        //
-        // Reset warning message to be displayed again.
-      } else if (spanLg.active()) {
-        isWarnAtNorm = false;
-      }
-
-      return;
-    }
-
-
-      activeMode->exec(); 
-  }
-
   /**
    * Sets warning massage to be displayed.
    * @param msg
@@ -433,16 +380,13 @@ private:
     }
   }
 
-
-  
   /**
    * Pump schedule for the well mode
    * @param schedule
    */
   void pumpWellSchedule(PumpSchedule schedule) {
-    
-    uint8_t mode = modeWell->value();
     int16_t level = read->getWellLevel() + read->getMainLevel();
+    uint8_t mode = modeWell->value();
 
     if (cmd.show(F("combo"), F("Shows combined level for schedule"))) {
       cmd.print(F("Combo level"), level);

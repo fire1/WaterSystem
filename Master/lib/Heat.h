@@ -61,7 +61,7 @@ public:
         delay(400);
     }
 
-    void hark() {
+    void loop() {
         this->debug();
         if (spanSm.active()) {
             if (this->isReading) this->read();

@@ -1,5 +1,12 @@
+#ifndef ModeInterface_h
+#define ModeInterface_h
 
 #include "../lib/Glob.h"
+// Forward declarations to avoid circular dependencies
+class Read;
+class Rule;
+class Pump;
+
 
 // Defines title len for LCD
 #define MODE_TITLE_LEN 5 
@@ -11,7 +18,7 @@ class ModeInterface {
         //
         // Resolve working hours
         #if defined(OPT_DAYTIME_WELL)
-        const uint8_t workHours = 12
+        const uint8_t workHours = 12;
         #else
         const uint8_t workHours = 24;
         #endif
@@ -50,3 +57,6 @@ class ModeInterface {
             return buffer;
         }
 };
+
+
+#endif

@@ -90,7 +90,7 @@ public:
     return this->hour;
   }
 
-  void hark() {
+  void loop() {
     this->debug();
 
 

@@ -16,7 +16,7 @@
 //
 // Definition setup
 #define DEBUG  // Comment it to disable debugging
-#define RULE_START_WAIT 55000 // Wait time for sensors at start in Rule class 
+#define RULE_START_WAIT  1500 // 55000 // Wait time for sensors at start in Rule class 
 //#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
 #define WELL_MEASURE_UART_47K  // Uses Serial UART to communicate with the sensor
 #define ENABLE_CMD             // Enables Serial input listener for commands
@@ -142,7 +142,7 @@ const uint8_t LevelSensorMainMax = 20;
 
 //
 // Macro to get the bare minimum when is needed.
-#define LevellSensorBareMax(x) ((x) - 1)
+#define LevelSensorBareMax(x) ((x) - 1)
 
 const uint8_t LevelSensorMainMin = 105;
 //
@@ -233,12 +233,26 @@ extern Span spanMd(250);     //Loop span Middle  /screen refresh/
 extern Span spanLg(7593);    //Loop span Large   /warning messages/
 extern Span spanMx(250005);  //Loop span at 60k loops
 
+
+
+// ModeInterface* Mode::modes[] = { nullptr, &easy, &fast, &now };
+
+const uint8_t MODE_COUNT = 2;
+#include "../mode/ModeInterface.h"
+#include "../mode/EasyMode.h"
+
+static EasyMode easy;
+ModeInterface* modes[] = { nullptr, &easy};
+
 #include "Time.h"
 #include "Read.h"
 #include "Rule.h"
 #include "Heat.h"
 #include "Menu.h"
 #include "Draw.h"
+
+
+
 
 
 #endif

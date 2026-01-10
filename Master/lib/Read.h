@@ -81,7 +81,7 @@ public:
   }
 
 
-  void hark() {
+  void loop() {
     if (millis() < 200) return;
 
     this->debug();
@@ -260,7 +260,7 @@ private:
         if (distance > 0) {
           pushAverage(sensorMain, distance);
           this->main = sensorMain.average;
-          dbg(F("MAIN /UART/ Reciving "));
+          dbg(F("MAIN /UART/ Receiving "));
           dbg(distance);
           dbg(F(" AVR "));
           dbgLn(this->main);

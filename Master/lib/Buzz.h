@@ -115,7 +115,7 @@ public:
     }
 
 
-    void hark() {
+    void loop() {
         if (currentMelody != nullptr && millis() - noteStartTime >= (currentMelody + currentNoteIndex)->duration) {
             currentNoteIndex++;
             playCurrentNote();

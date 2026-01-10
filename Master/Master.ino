@@ -34,13 +34,13 @@ void loop() {
     // Debugging
     cmd.listen();
 
-    time.hark();
+    time.loop();
     //
     // Listeners
-    buzz.hark();
-    rule.hark();
-    read.hark();
-    heat.hark();
+    buzz.loop();
+    rule.loop();
+    read.loop();
+    heat.loop();
 
     //
     // Display menu

@@ -1,0 +1,6 @@
+[wokwi]
+version = 1
+firmware = 'build/Master.ino.hex'
+elf = 'build/Master.ino.elf'
+gdbServerPort=3333
+rfc2217ServerPort  = 4000 # for TCP Serial monitor localhost:4000
