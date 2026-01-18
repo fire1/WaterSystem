@@ -15,7 +15,6 @@ class Buzz;
 #define TARGET_RISE_CM 3 // Target rise in cm per pumping session
 
 struct WellState {
-
   bool on = false;
   uint8_t level = 0;
   unsigned long start;
@@ -27,6 +26,10 @@ struct WellPoint {
   uint8_t work;
   uint8_t wait;
   uint8_t rise;
+  bool flag = false; // Flag for calculate correction
+  float correction = 1.0;
+  uint8_t levelStart = 0;
+  uint8_t levelStop = 0;
 };
 
 
@@ -43,7 +46,7 @@ private:
   unsigned long nextToOn = 0;
   unsigned long nextToOff = 0;
 
-  unsigned long timePrepareTurnOn = 0;
+  const unsigned long timePrepareTurnOn = 10000;
   /**
    * Converts minutes to millis
    * @param minutes
@@ -54,12 +57,81 @@ private:
     return minutes * 60 * 1000UL;
   }
 
+
+  // Adds new entry wor buffer
+    void startWorkPoint() {
+      wellState.start = millis();
+    if (++workIndex >= WORK_LEN)
+      workIndex = 0;
+      pumpBuffer[workIndex].flag = true;
+      pumpBuffer[workIndex].work = 0;
+      pumpBuffer[workIndex].levelStart = read->getWellLevel();
+
+  }
+
+  bool isWorkPointAvailable() {
+    return pumpBuffer[workIndex].flag;
+  }
+
+  /**
+   * @brief  Fill with result data 
+   * 
+   * @param work 
+   * @param wait 
+   * @param rise 
+   */
+  void pointWorkResult() {
+    if(pumpBuffer[workIndex].flag){
+      pumpBuffer[workIndex].levelStop = read->getWellLevel();
+      uint8_t startLevel = pumpBuffer[workIndex].levelStart;
+      uint8_t endLevel = pumpBuffer[workIndex].levelStop; 
+      pumpBuffer[workIndex].rise = endLevel - startLevel;
+      pumpBuffer[workIndex].correction = calculateCorrection(startLevel, endLevel);
+
+      //
+      // Close data entry
+      pumpBuffer[workIndex].flag = false;
+    }else{
+      // Display warn
+      dbgLn(F("[ERROR] Pump buffer overflow!"));
+    }
+
+  void pointWorkTime(unsigned long msWork) {
+    if(pumpBuffer[workIndex].flag){
+      pumpBuffer[workIndex].work = this->calcMinutes(msWork);
+    }else{
+      // Display warn
+      dbgLn(F("[ERROR] Pump buffer overflow!"));
+    }
+
+    void pointWaitTime(unsigned long msWait) {
+      if(pumpBuffer[workIndex].flag){
+        pumpBuffer[workIndex].wait = this->calcMinutes(msWait);
+      }else{
+        // Display warn
+        dbgLn(F("[ERROR] Pump buffer overflow!"));
+      }
+    }
+
+      // Calculates how much the time should change based on actual performance
+  // Returns a multiplier (e.g., 1.1 if pump is slow, 0.9 if pump is too fast)
+  float calculateCorrection(uint8_t startLevel, uint8_t endLevel) {
+    // Since 19cm is FULL and 110cm is EMPTY, rise = start - end
+    int8_t actualRise = (int8_t)startLevel - (int8_t)endLevel;
+    if (actualRise <= 0)
+      return 1.0; // Avoid division by zero or negative
+
+    return (float)TARGET_RISE_CM / (float)actualRise;
+  }
+
+  }
   //
   // Shortcut/helper functions
   //
 
 protected:
-  //
+
+//
 // Resolve working hours
 #if defined(OPT_DAYTIME_WELL)
   const uint8_t workHours = 12;
@@ -72,8 +144,28 @@ protected:
   Buzz *buzz = NULL;
 
   bool isWarnStop(){
-
+// todo
+    return false;
   }
+
+
+float calculateAverageCorrection() {
+    float totalCorrection = 0.0;
+    uint8_t count = 0;
+
+    for (uint8_t i = 0; i < WORK_LEN; i++) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].correction != 1.0) {
+        totalCorrection += pumpBuffer[i].correction;
+        count++;
+      }
+    }
+
+    if (count == 0)
+      return 1.0; // No data, return neutral correction
+
+    return totalCorrection / (float)count;
+  }
+
 
   uint8_t getWellVolume(uint8_t tankLevel) {
     // also need to be used LevelSensorMainMax
@@ -85,24 +177,9 @@ protected:
     return tankLevel - LevelSensorMainMax;
   }
 
-  // Calculates how much the time should change based on actual performance
-  // Returns a multiplier (e.g., 1.1 if pump is slow, 0.9 if pump is too fast)
-  float calculateCorrection(uint8_t startLevel, uint8_t endLevel) {
-    // Since 19cm is FULL and 110cm is EMPTY, rise = start - end
-    int8_t actualRise = (int8_t)startLevel - (int8_t)endLevel;
-    if (actualRise <= 0)
-      return 1.0; // Avoid division by zero or negative
 
-    return (float)TARGET_RISE_CM / (float)actualRise;
-  }
 
-  void setWorkBuffer(uint8_t work, uint8_t wait, uint8_t rise) {
-    pumpBuffer[workIndex].work = work;
-    pumpBuffer[workIndex].wait = wait;
-    pumpBuffer[workIndex].rise = rise;
-    if (++workIndex >= WORK_LEN)
-      workIndex = 0;
-  }
+
   /**
    * Pumping well amplitude
    * @param workMin
@@ -127,6 +204,7 @@ protected:
     if (ctrlWell.isOn() != wellState.on) {
       wellState.on = ctrlWell.isOn();
       wellState.start = millis();
+      this->startWorkPoint();
     }
 
     //
@@ -134,12 +212,18 @@ protected:
     if (ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOff)) {
       ctrlWell.setOn(false);
       wellState.stop = millis();
-
       dbg(F("[CTRL] well to OFF"));
       dbgLn();
-
+      this->pointWorkTime(wellState.stop - wellState.start);
       read->stopWorkRead();
     }
+
+    //
+    // Calculate final for work point
+    if (isWorkPointAvailable() && !ctrlWell.isOn() && spanMx.active()) {
+      this->pointWorkResult();
+    } 
+
 
     //
     // Ignore next code when tank is full
@@ -178,8 +262,8 @@ protected:
     // Turn the pump on
     if (!ctrlMain.isOn() && !ctrlWell.isOn() &&
         (getWellWorkTimer() >= msTimeToOn)) {
-      wellState.start = millis();
-
+      
+      startWorkPoint();
       dbg(F("[CTRL] Well to ON"));
       dbgLn();
 
@@ -219,7 +303,7 @@ public:
    * @brief Gets next timer ON action for display
    */
   unsigned long getNextOn() {
-    if (!wellCtr.on)
+    if (!wellState.on)
       return this->nextToOn - (getWellWorkTimer());
 
     return this->nextToOn;
@@ -229,7 +313,7 @@ public:
    * @brief Gets next timer OFF action for display
    */
   unsigned long getNextOff() {
-    if (wellCtr.on)
+    if (wellState.on)
       return this->nextToOff - (getWellWorkTimer());
 
     return this->nextToOff;
