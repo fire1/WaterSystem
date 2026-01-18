@@ -6,6 +6,9 @@
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
 
+// Helper to get mode title without needing ModeInterface here
+extern const __FlashStringHelper* getModeTitle(uint8_t idx);
+
 class Data {
 public:
     Data(uint8_t numOptions, const char *const *PROGMEM names, uint8_t eepromAddress)
@@ -29,8 +32,45 @@ public:
         //dbgLn(this->index);
     }
 
-    const char *getName() {
-        return pgm_read_word(&(dataNames[index]));
+    // Returns a RAM pointer to a space-padded name with given width
+    const char* getName(uint8_t width) {
+        static char buffer[17]; // LCD lines are 16 chars max
+        if (width > 16) width = 16;
+
+        // Prefill with spaces
+        memset(buffer, ' ', width);
+        buffer[width] = '\0';
+
+        PGM_P src = NULL;
+        if (dataNames) {
+            // Read pointer to PROGMEM string
+            return pgm_read_word(&(dataNames[index]));
+        } else {
+            if (index == 0) {
+                src = PSTR("None");
+            } else {
+                const __FlashStringHelper* t = getModeTitle(index);
+                if (t) src = (PGM_P)t;
+            }
+        }
+
+        // Copy up to width bytes from PROGMEM, stop on NUL, preserve trailing spaces
+        if (src) {
+            for (uint8_t i = 0; i < width; ++i) {
+                uint8_t c = pgm_read_byte(src + i);
+                if (!c) break;
+                buffer[i] = (char)c;
+            }
+        }
+
+#ifdef DEBUG
+        Serial.print(F("Data.getName idx=")); Serial.print(index);
+        Serial.print(F(" src=0x")); Serial.println((unsigned int)src, HEX);
+        Serial.print(F("buffer: '")); Serial.print(buffer); Serial.println(F("'"));
+#endif
+
+        buffer[width] = '\0';
+        return buffer;
     }
 
     uint8_t value() {

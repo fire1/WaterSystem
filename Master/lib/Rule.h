@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "Glob.h"
 #include "HardwareSerial.h"
-#include "../mode/ModeInterface.h"
+#include "mode/ModeInterface.h"
 
 class Rule {
 private:
@@ -159,13 +159,14 @@ private:
     if(activeModeId != id){
       activeMode = modes[id];
       activeModeId = id;
-      activeMode->init(read, this, &ctrlWell);
+      activeMode->init(this,read, buzz);
     }
 
     if(activeMode != nullptr)
       return;
     //
     // Break the function when top tank is missing.
+    /** 
     if (!read->atNorm()) {
       if (!isWarnAtNorm) {
         setWarn(F("Read failure!  "));
@@ -178,7 +179,7 @@ private:
 
       return;
     }
-
+ */
 
       activeMode->exec(); 
   }
@@ -315,7 +316,7 @@ private:
     return false; // default state of the function
   }
 
-  /**
+  /**@deprecated Moved to Mode
    * Pumping well amplitude
    * @param workMin
    * @param stopMin

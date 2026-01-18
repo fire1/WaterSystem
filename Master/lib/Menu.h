@@ -133,9 +133,9 @@ private:
     lcd.print(F("Pumping         "));
     lcd.setCursor(0, 1);
     lcd.print(F("Mode: "));
-    lcd.print(this->modeWell->getName());
-    lcd.print(F("      "));
-    lcd.setCursor(10, 1);
+
+    lcd.print(this->modeWell->getName(10));
+        lcd.setCursor(5, 1);
   }
 
   /**
@@ -148,9 +148,10 @@ private:
     lcd.print(F("Tank top        "));
     lcd.setCursor(0, 1);
     lcd.print(F("Start: "));
-    lcd.print(this->modeMain->getName());
-    lcd.print(F("      "));
-    lcd.setCursor(11, 1);
+
+    lcd.print(this->modeMain->getName(9));
+    lcd.print(F("     "));
+    lcd.setCursor(6, 1);
   }
 
   /**

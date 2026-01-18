@@ -215,6 +215,9 @@ const uint8_t MenuWarn_Rule = 8;
 #define BtnDebounceTime 10
 #define BtnHoldTime 2000  // deprecated
 
+class ModeInterface;
+const uint8_t MODE_COUNT = 2;
+extern ModeInterface* modes[MODE_COUNT];
 //
 // Constructing
 #include "Pump.h"
@@ -223,8 +226,9 @@ const uint8_t MenuWarn_Rule = 8;
 #include "Span.h"
 #include "Buzz.h"
 
-//
-// Pump controlling
+
+
+// Pump definitions (single global instances)
 extern Pump ctrlWell(pinWellPump, pinBtnWell, pinLedWell);
 extern Pump ctrlMain(pinMainPump, pinBtnMain, pinLedMain);
 
@@ -237,22 +241,26 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 
 // ModeInterface* Mode::modes[] = { nullptr, &easy, &fast, &now };
 
-const uint8_t MODE_COUNT = 2;
-#include "../mode/ModeInterface.h"
-#include "../mode/EasyMode.h"
 
-static EasyMode easy;
-ModeInterface* modes[] = { nullptr, &easy};
 
 #include "Time.h"
 #include "Read.h"
 #include "Rule.h"
+#include "mode/ModeInterface.h"
 #include "Heat.h"
 #include "Menu.h"
 #include "Draw.h"
 
 
+#include "mode/WinterMode.h"
 
+ WinterMode winterMode;
+ModeInterface* modes[] = { nullptr, &winterMode };
 
+// Return title for mode index (flash string). Keeps Data.h free of ModeInterface.
+inline const __FlashStringHelper* getModeTitle(uint8_t idx) {
+    if (idx < MODE_COUNT && modes[idx]) return modes[idx]->getTitleFlash();
+    return (const __FlashStringHelper*)PSTR("");
+}
 
 #endif

@@ -7,17 +7,10 @@
 
 
 //
-// Define mode names
-DefineData(
-        modeNames,
-"None",
-"Easy",
-"Fast",
-"Now!");
-
-//
-// Convert names to object data
-Data modeWellTank(4, modeNames, 2);
+// Mode selection is driven by ModeInterface instances in modes[]
+// Data will store the chosen mode index in EEPROM; pass NULL for names so
+// Data::getName() uses titles from the modes[] array.
+Data modeWellTank(MODE_COUNT, nullptr, 2);
 
 //
 // Define tanks mode names
@@ -31,7 +24,7 @@ DefineData(
 //
 // Convert tank names  to data objects
 
-Data modeMainTank(5, tankNames, 1);
+Data modeMainTank(4, tankNames, 1);
 
 Time time;
 
@@ -40,6 +33,9 @@ Buzz buzz;
 Read read;
 
 Heat heat(&buzz);
+
+
+
 //
 // Initialize managment driver
 Rule rule(&read, &time, &buzz, &modeWellTank, &modeMainTank);
