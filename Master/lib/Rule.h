@@ -125,20 +125,18 @@ public:
    * @brief Gets next timer ON action for display
    */
   unsigned long getNextOn() {
-    if (!wellCtr.on)
-      return this->nextToOn - (getWellWorkTimer());
-
-    return this->nextToOn;
+    if(activeMode == nullptr)
+      return 0;
+    return this->activeMode->getNextOn();
   }
 
   /**
    * @brief Gets next timer OFF action for display
    */
   unsigned long getNextOff() {
-    if (wellCtr.on)
-      return this->nextToOff - (getWellWorkTimer());
-
-    return this->nextToOff;
+    if(activeMode == nullptr)
+      return 0;
+    return this->activeMode->getNextOff();  
   }
 
 private:
