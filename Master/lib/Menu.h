@@ -11,7 +11,7 @@ private:
   Heat *heat;
   Data *modeWell;
   Data *modeMain;
-  char formatBuffer[5];
+  char formatBuffer[7];
  uint8_t lastWarnCursor =0;
 
   //
@@ -237,7 +237,7 @@ private:
 
 
     lcd.setCursor(0, 1);
-    lcd.print(F(" "));
+   
     lcd.write((char)4);
     if (time->isDaytime()) lcd.write((char)2);
     else lcd.write((char)3);
@@ -249,7 +249,7 @@ private:
     else lcd.print(F(" "));                         //5
     lcd.print(formatMsToTime(rule->getNextOff()));  //8
 
-    lcd.print(F(" / "));  //9
+    lcd.print(F("/"));  //9
 
     // When stopped
     // Print to on time
@@ -257,9 +257,7 @@ private:
     else lcd.print(F(" "));  //10
     unsigned long next = rule->getNextOn();
     if (next > MaxDaysInMillis) {
-      lcd.print(F("["));
-      lcd.write((char)243);  // infinity
-      lcd.print(F("]"));
+      lcd.print(F("[\xF3]"));
     } else lcd.print(formatMsToTime(rule->getNextOn()));  //13
 
     lcd.print(F(" "));
@@ -398,24 +396,27 @@ private:
     unsigned long remainingMinutes = minutes % 60;
     unsigned long remainingSeconds = seconds % 60;
 
-    // Determine the appropriate time unit
+    // Determine the appropriate time unit and value with decimal
     char timeUnit;
-    int timeValue;
+    float timeValue;
     if (days > 0) {
-      timeValue = days;
+      timeValue = days + (remainingHours / 24.0);
       timeUnit = 'd';
     } else if (hours > 0) {
-      timeValue = remainingHours;
+      timeValue = remainingHours + (remainingMinutes / 60.0);
       timeUnit = 'h';
     } else if (minutes > 0) {
-      timeValue = remainingMinutes;
+      timeValue = remainingMinutes + (remainingSeconds / 60.0);
       timeUnit = 'm';
     } else {
       timeValue = remainingSeconds;
       timeUnit = 's';
     }
 
-    sprintf(formatBuffer, "%02d%c", timeValue, timeUnit);
+    // Format the float value manually since %f is not supported in Arduino sprintf
+    char floatStr[6];
+    dtostrf(timeValue, 4, 1, floatStr); // 4 chars total, 1 decimal
+    sprintf(formatBuffer, "%s%c", floatStr, timeUnit);
     return formatBuffer;
   }
 

@@ -4,14 +4,12 @@
 #include "Arduino.h"
 #include "Glob.h"
 #include "HardwareSerial.h"
-#include "mode/ModeInterface.h"
+#include "Mode.h"
 
 class Rule {
 private:
-
-
-  ModeInterface* activeMode = nullptr;
-  uint8_t activeModeId = 0xFF;
+  Mode *activeMode = nullptr;
+  uint8_t activeModeId = 0;
   //
   // Handle well state localy in order to detect human interaction.
   struct WellState {
@@ -56,7 +54,10 @@ private:
 
   String warnCase = "";
 
-  unsigned long getWellWorkTimer() { return millis() - wellCtr.time; }
+  unsigned long getWellWorkTimer() { 
+    if(!this->activeMode) return 0;
+    return this->activeMode->getWellWorkTimer();
+  }
 
 public:
   Rule(Read *rd, Time *tm, Buzz *tn, Data *mdW, Data *mdM)
@@ -78,28 +79,28 @@ public:
    */
   void loop() {
     this->handleDebug();
-      
-    if(isInit) isWarnStop();
+
+    if (isInit)
+      isWarnStop();
 
     // Wait a while...
-    // NOTE: 
-    // This "wait" depends strongly on collected data from sensors, 
-    //  so more time will mean more accurate data before deciding to run pumps (handlers).
+    // NOTE:
+    // This "wait" depends strongly on collected data from sensors,
+    //  so more time will mean more accurate data before deciding to run pumps
+    //  (handlers).
     if (millis() < RULE_START_WAIT) {
       return;
     }
 
     applyMode(modeWell->value());
 
-    
-
-    // 
+    //
     // Deprecated
     /**
     this->handleWellMode();
     this->handleMainMode();
     */
-   
+
     this->handleMainStop();
 
     //
@@ -125,7 +126,7 @@ public:
    * @brief Gets next timer ON action for display
    */
   unsigned long getNextOn() {
-    if(activeMode == nullptr)
+    if (activeMode == nullptr)
       return 0;
     return this->activeMode->getNextOn();
   }
@@ -134,52 +135,38 @@ public:
    * @brief Gets next timer OFF action for display
    */
   unsigned long getNextOff() {
-    if(activeMode == nullptr)
+    if (activeMode == nullptr)
       return 0;
-    return this->activeMode->getNextOff();  
+    return this->activeMode->getNextOff();
   }
 
 private:
-
   /**
    * @brief Activates selected mode
-   * 
-   * @param id 
+   *
+   * @param id
    */
   void applyMode(uint8_t id) {
+
     if (id >= MODE_COUNT || modes[id] == nullptr) {
       activeMode = nullptr;
-
-      //dbg(F("[ERROR] Internal mode not found ID: ")); dbgLn(id);
       return;
     }
 
-    if(activeModeId != id){
+    if (activeModeId != id) {
       activeMode = modes[id];
       activeModeId = id;
-      activeMode->init(this,read, buzz);
+      activeMode->init(this, read, buzz);
     }
 
-    if(activeMode != nullptr)
-      return;
-    //
-    // Break the function when top tank is missing.
-    /** 
-    if (!read->atNorm()) {
-      if (!isWarnAtNorm) {
-        setWarn(F("Read failure!  "));
-        isWarnAtNorm = true;
-        //
-        // Reset warning message to be displayed again.
-      } else if (spanLg.active()) {
-        isWarnAtNorm = false;
-      }
-
+    if (activeMode == nullptr) {
       return;
     }
- */
 
-      activeMode->exec(); 
+    activeMode->exec();
+
+    activeMode->debug();
+    
   }
 
   /**
@@ -259,7 +246,7 @@ private:
 #ifdef OPT_DAYTIME_WELL
     if (!this->checkDaytime()) {
 
-      if(!isInit){
+      if (!isInit) {
         if (this->isWarnDaytime)
           return true;
 
@@ -273,12 +260,12 @@ private:
       this->isWarnDaytime = false;
 
 #endif
-    //
-    // Check well for nighttime, not ready.
+      //
+      // Check well for nighttime, not ready.
 #ifdef OPT_NIGHTTIME_WELL
     if (!this->checkDaytime()) {
 
-      if(!isInit){
+      if (!isInit) {
         if (!this->isWarnDaytime)
           return true;
 
@@ -296,7 +283,7 @@ private:
       // Check well for low temp
 #ifdef OPT_PROTECT_COLD
     if (this->checkLowTemp()) {
-      if(!isInit){
+      if (!isInit) {
         if (this->isWarnLowTemp)
           return true;
 
@@ -432,14 +419,12 @@ private:
     }
   }
 
-
-  
   /**
    * Pump schedule for the well mode
    * @param schedule
    */
   void pumpWellSchedule(PumpSchedule schedule) {
-    
+
     uint8_t mode = modeWell->value();
     int16_t level = read->getWellLevel() + read->getMainLevel();
 
@@ -754,6 +739,8 @@ private:
    */
   void handleDebug() {
 
+
+
     if (cmd.show(F("timer:on"), F("Shows work timer to next ON state.")))
       cmd.print("Time to on", this->getNextOn());
 
@@ -765,10 +752,14 @@ private:
       this->nextToOn = tmpTime;
     }
 
-    if (cmd.set("timer:off", tmpTime, F("Overwrite to \"off\" timer."))) {
+    if (cmd.set(F("timer:off"), tmpTime, F("Overwrite to \"off\" timer."))) {
       this->nextToOff = tmpTime;
     }
+
+
   }
+
+
 };
 
 #endif

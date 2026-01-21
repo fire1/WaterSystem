@@ -63,12 +63,6 @@ public:
             }
         }
 
-#ifdef DEBUG
-        Serial.print(F("Data.getName idx=")); Serial.print(index);
-        Serial.print(F(" src=0x")); Serial.println((unsigned int)src, HEX);
-        Serial.print(F("buffer: '")); Serial.print(buffer); Serial.println(F("'"));
-#endif
-
         buffer[width] = '\0';
         return buffer;
     }

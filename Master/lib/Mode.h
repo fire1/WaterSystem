@@ -1,7 +1,7 @@
 #ifndef ModeInterface_h
 #define ModeInterface_h
 
-#include "../Glob.h"
+#include "Glob.h"
 
 // Forward declarations to avoid circular dependencies
 class Read;
@@ -32,11 +32,9 @@ struct WellPoint {
   uint8_t levelStop = 0;
 };
 
-
-
 //
 // Defines Mode interface structure.
-class ModeInterface {
+class Mode {
 
 private:
   uint8_t workIndex = 0;
@@ -57,63 +55,70 @@ private:
     return minutes * 60 * 1000UL;
   }
 
-
   // Adds new entry wor buffer
-    void startWorkPoint() {
-      wellState.start = millis();
+  void startWorkPoint() {
+    wellState.start = millis();
     if (++workIndex >= WORK_LEN)
       workIndex = 0;
-      pumpBuffer[workIndex].flag = true;
-      pumpBuffer[workIndex].work = 0;
-      pumpBuffer[workIndex].levelStart = read->getWellLevel();
-
+    pumpBuffer[workIndex].flag = true;
+    pumpBuffer[workIndex].work = 0;
+    pumpBuffer[workIndex].levelStart = read->getWellLevel();
   }
 
-  bool isWorkPointAvailable() {
-    return pumpBuffer[workIndex].flag;
-  }
+  bool isWorkPointAvailable() { return pumpBuffer[workIndex].flag; }
 
   /**
-   * @brief  Fill with result data 
-   * 
-   * @param work 
-   * @param wait 
-   * @param rise 
+   * @brief  Fill with result data
+   *
+   * @param work
+   * @param wait
+   * @param rise
    */
   void pointWorkResult() {
-    if(pumpBuffer[workIndex].flag){
+    if (pumpBuffer[workIndex].flag) {
       pumpBuffer[workIndex].levelStop = read->getWellLevel();
       uint8_t startLevel = pumpBuffer[workIndex].levelStart;
-      uint8_t endLevel = pumpBuffer[workIndex].levelStop; 
+      uint8_t endLevel = pumpBuffer[workIndex].levelStop;
       pumpBuffer[workIndex].rise = endLevel - startLevel;
-      pumpBuffer[workIndex].correction = calculateCorrection(startLevel, endLevel);
+      pumpBuffer[workIndex].correction =
+          calculateCorrection(startLevel, endLevel);
 
       //
       // Close data entry
       pumpBuffer[workIndex].flag = false;
-    }else{
+    } else {
       // Display warn
       dbgLn(F("[ERROR] Pump buffer overflow!"));
     }
-
+  }
+  /**
+   * @brief Work time for the pump
+   *
+   * @param msWork
+   */
   void pointWorkTime(unsigned long msWork) {
-    if(pumpBuffer[workIndex].flag){
+    if (pumpBuffer[workIndex].flag) {
       pumpBuffer[workIndex].work = this->calcMinutes(msWork);
-    }else{
+    } else {
       // Display warn
       dbgLn(F("[ERROR] Pump buffer overflow!"));
     }
-
-    void pointWaitTime(unsigned long msWait) {
-      if(pumpBuffer[workIndex].flag){
-        pumpBuffer[workIndex].wait = this->calcMinutes(msWait);
-      }else{
-        // Display warn
-        dbgLn(F("[ERROR] Pump buffer overflow!"));
-      }
+  }
+  /**
+   * @brief Wait time for the pump
+   *
+   * @param msWait
+   */
+  void pointWaitTime(unsigned long msWait) {
+    if (pumpBuffer[workIndex].flag) {
+      pumpBuffer[workIndex].wait = this->calcMinutes(msWait);
+    } else {
+      // Display warn
+      dbgLn(F("[ERROR] Pump buffer overflow!"));
     }
+  }
 
-      // Calculates how much the time should change based on actual performance
+  // Calculates how much the time should change based on actual performance
   // Returns a multiplier (e.g., 1.1 if pump is slow, 0.9 if pump is too fast)
   float calculateCorrection(uint8_t startLevel, uint8_t endLevel) {
     // Since 19cm is FULL and 110cm is EMPTY, rise = start - end
@@ -123,14 +128,11 @@ private:
 
     return (float)TARGET_RISE_CM / (float)actualRise;
   }
-
-  }
   //
   // Shortcut/helper functions
   //
 
 protected:
-
 //
 // Resolve working hours
 #if defined(OPT_DAYTIME_WELL)
@@ -143,13 +145,12 @@ protected:
   Rule *rule = NULL;
   Buzz *buzz = NULL;
 
-  bool isWarnStop(){
-// todo
+  bool isWarnStop() {
+    // todo
     return false;
   }
 
-
-float calculateAverageCorrection() {
+  float calculateAverageCorrection() {
     float totalCorrection = 0.0;
     uint8_t count = 0;
 
@@ -166,19 +167,35 @@ float calculateAverageCorrection() {
     return totalCorrection / (float)count;
   }
 
+  float calculateLastCorrection() {
+    for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].correction != 1.0) {
+        return pumpBuffer[i].correction;
+      }
+    }
+    return 1.0; // No data, return neutral correction
+  }
 
+  /**
+   * @brief Get the Well Volume object
+   *
+   * @param tankLevel
+   * @return uint8_t
+   */
   uint8_t getWellVolume(uint8_t tankLevel) {
     // also need to be used LevelSensorMainMax
     return tankLevel - LevelSensorWellMax;
   }
-
+  /**
+   * @brief Get the Main Volume object
+   *
+   * @param tankLevel
+   * @return uint8_t
+   */
   uint8_t getMainVolume(uint8_t tankLevel) {
     // also need to be used LevelSensorMainMax
     return tankLevel - LevelSensorMainMax;
   }
-
-
-
 
   /**
    * Pumping well amplitude
@@ -222,8 +239,7 @@ float calculateAverageCorrection() {
     // Calculate final for work point
     if (isWorkPointAvailable() && !ctrlWell.isOn() && spanMx.active()) {
       this->pointWorkResult();
-    } 
-
+    }
 
     //
     // Ignore next code when tank is full
@@ -262,7 +278,7 @@ float calculateAverageCorrection() {
     // Turn the pump on
     if (!ctrlMain.isOn() && !ctrlWell.isOn() &&
         (getWellWorkTimer() >= msTimeToOn)) {
-      
+
       startWorkPoint();
       dbg(F("[CTRL] Well to ON"));
       dbgLn();
@@ -272,14 +288,36 @@ float calculateAverageCorrection() {
   }
 
 public:
-  void init(Rule *rl, Read *rd,  Buzz *bz) {
+  void init(Rule *rl, Read *rd, Buzz *bz) {
     read = rd;
     rule = rl;
+
+
   }
   virtual void exec() = 0;
   // Return flash string helper so implementations can return F("...")
   virtual const __FlashStringHelper *title() = 0;
 
+
+  void debug(){
+        int testMode = 0;
+    if (cmd.set(F("mode:test"), testMode, F("Set mode to TEST"))) {
+
+        pumpBuffer[0].flag = false; // Clear buffer
+        pumpBuffer[0].levelStart = 90;
+        pumpBuffer[0].levelStop = 83;
+        pumpBuffer[0].rise = 7;
+        pumpBuffer[0].wait = 180;
+        pumpBuffer[0].work = 20;
+        float correction = calculateCorrection(90, 83);
+        pumpBuffer[0].correction = correction;
+        dbgLn(F("Mode set to TEST"));
+      
+    }
+
+        if (cmd.show(F("mode:test"), F("Shows work timer to next ON state.")))
+          cmd.print(F("Internal correction"),pumpBuffer[0].correction);
+  }
   /**
    * Gets title limited by length
    */
@@ -318,8 +356,6 @@ public:
 
     return this->nextToOff;
   }
-
-
 };
 
 #endif

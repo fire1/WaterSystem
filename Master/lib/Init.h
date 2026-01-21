@@ -34,7 +34,14 @@ Read read;
 
 Heat heat(&buzz);
 
+WinterMode winterMode;
+Mode* modes[] = { nullptr, &winterMode };
 
+// Return title for mode index (flash string). Keeps Data.h free of ModeInterface.
+inline const __FlashStringHelper* getModeTitle(uint8_t idx) {
+    if (idx < MODE_COUNT && modes[idx]) return modes[idx]->getTitleFlash();
+    return (const __FlashStringHelper*)PSTR("");
+}
 
 //
 // Initialize managment driver
