@@ -216,7 +216,7 @@ const uint8_t MenuWarn_Rule = 8;
 #define BtnHoldTime 2000  // deprecated
 
 class Mode;
-const uint8_t MODE_COUNT = 2;
+const uint8_t MODE_COUNT = 4; // Including "none" mode
 extern Mode* modes[MODE_COUNT];
 //
 // Constructing
@@ -252,7 +252,11 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 #include "Draw.h"
 
 
+//
+// Include mode implementations
 #include "mode/WinterMode.h"
+#include "mode/HourlyMode.h"
+#include "mode/ThreeHourMode.h"
 
 
 

@@ -27,7 +27,7 @@ struct WellPoint {
   uint8_t wait;
   uint8_t rise;
   bool flag = false; // Flag for calculate correction
-  float correction = 1.0;
+  float correction = -1.0;
   uint8_t levelStart = 0;
   uint8_t levelStop = 0;
 };
@@ -40,6 +40,7 @@ private:
   uint8_t workIndex = 0;
   WellPoint pumpBuffer[WORK_LEN];
   WellState wellState;
+  String warnMessage = "";
 
   unsigned long nextToOn = 0;
   unsigned long nextToOff = 0;
@@ -59,7 +60,7 @@ private:
   void startWorkPoint() {
     //
     // auto close work buffer
-    if(isWorkPointAvailable()){
+    if (isWorkPointAvailable()) {
       this->pointWorkResult();
       pumpBuffer[workIndex].flag = false;
       return;
@@ -81,12 +82,13 @@ private:
    * @param wait
    * @param rise
    */
-  void  pointWorkResult() {
+  void pointWorkResult() {
     if (pumpBuffer[workIndex].flag) {
       pumpBuffer[workIndex].levelStop = read->getWellLevel();
       uint8_t startLevel = pumpBuffer[workIndex].levelStart;
       uint8_t endLevel = pumpBuffer[workIndex].levelStop;
-      pumpBuffer[workIndex].rise = startLevel - endLevel;  // Corrected: rise should be positive
+      pumpBuffer[workIndex].rise =
+          startLevel - endLevel; // Corrected: rise should be positive
       pumpBuffer[workIndex].correction =
           calculateCorrection(startLevel, endLevel);
 
@@ -94,7 +96,7 @@ private:
       // Close data entry
       pumpBuffer[workIndex].flag = false;
       dbg(F("[CTRL] Work result pointed:"));
-      dbgLn( pumpBuffer[workIndex].correction);
+      dbgLn(pumpBuffer[workIndex].correction);
     } else {
       // Display warn
       dbgLn(F("[ERROR] Pump buffer overflow!"));
@@ -130,13 +132,14 @@ private:
   // Calculates how much the time should change based on actual performance
   // Returns a multiplier (e.g., 1.1 if pump is slow, 0.9 if pump is too fast)
   float calculateCorrection(uint8_t startLevel, uint8_t endLevel) {
-    // Since 19cm is FULL and 110cm is EMPTY, rise = start - end
     int8_t actualRise = (int8_t)startLevel - (int8_t)endLevel;
     if (actualRise <= 0)
-      return 1.0; // Avoid division by zero or negative
-
-    return (float)TARGET_RISE_CM / (float)actualRise;
+      return 1.0;
+    float rawCorrection = (float)TARGET_RISE_CM / (float)actualRise;
+    return clamp(rawCorrection, 0.5, 1.5);
   }
+
+
   //
   // Shortcut/helper functions
   //
@@ -159,12 +162,19 @@ protected:
     return false;
   }
 
+
+  float clamp(float val, float minVal, float maxVal) {
+    if (val < minVal) return minVal;
+    if (val > maxVal) return maxVal;
+    return val;
+}
+
   float calculateAverageCorrection() {
     float totalCorrection = 0.0;
     uint8_t count = 0;
 
     for (uint8_t i = 0; i < WORK_LEN; i++) {
-      if (!pumpBuffer[i].flag && pumpBuffer[i].correction != 1.0) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].correction != -1.0) {
         totalCorrection += pumpBuffer[i].correction;
         count++;
       }
@@ -176,19 +186,43 @@ protected:
     return totalCorrection / (float)count;
   }
 
+  /**
+   * @brief Returns the last correction value
+   *
+   * @return float The last correction value, or 1.0 if no data
+   */
   float calculateLastCorrection() {
     for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
-      if (!pumpBuffer[i].flag && pumpBuffer[i].correction != 1.0) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].correction > 0) {
         return pumpBuffer[i].correction;
       }
     }
     return 1.0; // No data, return neutral correction
   }
 
+    float fetchWeightedCorrection() {
+    float avg = calculateAverageCorrection(); // Твоята функция за средно
+    float last = calculateLastCorrection(); // Твоята функция за последно
+
+    // Ако нямаме история, връщаме последното
+    if (avg == 1.0)
+      return last;
+
+    // Комбинираме ги за по-голяма стабилност
+    float driftCorrection = (avg * 0.7) + (last * 0.3);
+
+    if (driftCorrection < 0.5)
+      driftCorrection = 0.5;
+    if (driftCorrection > 1.5)
+      driftCorrection = 1.5;
+
+    return driftCorrection;
+  }
+
   /**
    * @brief Fetch the last rise value
-   * 
-   * @return uint8_t 
+   *
+   * @return uint8_t
    */
   uint8_t fetchLastRise() {
     for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
@@ -199,11 +233,10 @@ protected:
     return 0; // No data
   }
 
-
   /**
    * @brief Fetch average rise value
-   * 
-   * @return uint8_t 
+   *
+   * @return uint8_t
    */
   uint8_t fetchAverageRise() {
     uint8_t totalRise = 0;
@@ -222,14 +255,16 @@ protected:
     return totalRise / count;
   }
 
-  uint8_t fetchRise( uint8_t defaultRise = 3){
+  uint8_t fetchRise(uint8_t defaultRise = 3) {
     uint8_t rise;
     rise = this->fetchAverageRise();
-    if (rise >0) return rise;
-    
+    if (rise > 0)
+      return rise;
+
     rise = this->fetchLastRise();
-    if (rise > 0) return rise;
-    
+    if (rise > 0)
+      return rise;
+
     return defaultRise;
   }
 
@@ -349,32 +384,28 @@ public:
   void init(Rule *rl, Read *rd, Buzz *bz) {
     read = rd;
     rule = rl;
-
-
   }
   virtual void exec() = 0;
   // Return flash string helper so implementations can return F("...")
   virtual const __FlashStringHelper *title() = 0;
 
-
-  void debug(){
-        int testMode = 0;
+  void debug() {
+    int testMode = 0;
     if (cmd.set(F("mode:test"), testMode, F("Set mode to TEST"))) {
 
-        pumpBuffer[0].flag = false; // Clear buffer
-        pumpBuffer[0].levelStart = 90;
-        pumpBuffer[0].levelStop = 83;
-        pumpBuffer[0].rise = 7;
-        pumpBuffer[0].wait = 180;
-        pumpBuffer[0].work = 20;
-        float correction = calculateCorrection(90, 83);
-        pumpBuffer[0].correction = correction;
-        dbgLn(F("Mode set to TEST"));
-      
+      pumpBuffer[0].flag = false; // Clear buffer
+      pumpBuffer[0].levelStart = 90;
+      pumpBuffer[0].levelStop = 83;
+      pumpBuffer[0].rise = 7;
+      pumpBuffer[0].wait = 180;
+      pumpBuffer[0].work = 20;
+      float correction = calculateCorrection(90, 83);
+      pumpBuffer[0].correction = correction;
+      dbgLn(F("Mode set to TEST"));
     }
 
-        if (cmd.show(F("mode:test"), F("Shows work timer to next ON state.")))
-          cmd.print(F("Internal correction"),pumpBuffer[0].correction);
+    if (cmd.show(F("mode:test"), F("Shows work timer to next ON state.")))
+      cmd.print(F("Internal correction"), pumpBuffer[0].correction);
   }
   /**
    * Gets title limited by length

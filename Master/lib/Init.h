@@ -35,7 +35,9 @@ Read read;
 Heat heat(&buzz);
 
 WinterMode winterMode;
-Mode* modes[] = { nullptr, &winterMode };
+HourlyMode hourlyMode;
+ThreeHourMode threeHourMode;
+Mode* modes[] = { nullptr, &hourlyMode, &threeHourMode, &winterMode };
 
 // Return title for mode index (flash string). Keeps Data.h free of ModeInterface.
 inline const __FlashStringHelper* getModeTitle(uint8_t idx) {

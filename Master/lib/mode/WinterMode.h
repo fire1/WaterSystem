@@ -6,8 +6,9 @@
 #include "../Pump.h"
 #include "../Read.h"
 
-#define WELL_BREAK_TIME 80 // minutes minimum rest
-#define WELL_RUNTIME 12    // minutes default run time
+#define MIN_BREAK_TIME 50
+#define MAX_BREAK_TIME 480      // 8 hours
+#define WELL_DEFAULT_RUNTIME 12 // minutes default run time
 
 class WinterMode : public Mode {
 private:
@@ -16,7 +17,7 @@ private:
   uint8_t startLevelCapture = 0;
 
   float timeMultiplier = 1.0;
-  uint8_t currentRuntime = WELL_RUNTIME; // Start with 12 mins base
+  uint8_t currentRuntime = WELL_DEFAULT_RUNTIME; // Start with 12 mins base
 
 public:
   WinterMode() {}
@@ -27,40 +28,82 @@ public:
     if (!read || !rule)
       return;
 
-    uint8_t wellLevel = read->getWellLevel(); // Tank we are FILLING
-    uint8_t mainLevel = read->getMainLevel(); // Tank we are DRAWING from
+    // Fetch levels (distance from sensor to water in cm)
+    uint8_t wellLevel = read->getWellLevel();
+    uint8_t mainLevel = read->getMainLevel();
 
-    // Update multiplier from measured drift
-    float driftCorrection = this->calculateLastCorrection();
-    uint8_t emptySpaceCm =
+    // Calculate empty space for both tanks
+    uint8_t mainEmpty =
+        (mainLevel < LevelSensorMainMax) ? 0 : (mainLevel - LevelSensorMainMax);
+    uint8_t wellEmpty =
         (wellLevel < LevelSensorWellMax) ? 0 : (wellLevel - LevelSensorWellMax);
-    uint8_t levelRise = this->fetchRise(TARGET_RISE_CM);
 
+    // 1. Historical Efficiency Correction (+/- 20% fine-tuning)
+    float driftCorrection = this->fetchWeightedCorrection();
+    driftCorrection = constrain(driftCorrection, 0.8, 1.2);
+
+    // 2. Calculate Break Interval based on demand
+    // Fetch actual rise performance from previous cycles
+    uint8_t realRise = this->fetchRise(TARGET_RISE_CM);
+    if (realRise == 0)
+      realRise = TARGET_RISE_CM;
+
+    // Calculate how many pumping sessions are needed to fill the main tank
+    float sessionsNeeded = (float)mainEmpty / (float)realRise;
+    if (sessionsNeeded < 1.0)
+      sessionsNeeded = 1.0;
+
+    // Distribute sessions across the available work hours (usually 24h)
+    uint16_t totalMinutesAvailable = (uint16_t)workHours * 60;
+    uint16_t breakTimeInterval =
+        (uint16_t)(totalMinutesAvailable / sessionsNeeded);
+
+    // 3. Apply Safety Constraints for the Break Interval
+    if (mainEmpty < 40) {
+      // Main tank is satisfied (>80cm of water), sleep for 24h
+      breakTimeInterval = 1440;
+    } else if (wellEmpty > 100) {
+      // Well is low, force a minimum 3h recovery break
+      if (breakTimeInterval < 180)
+        breakTimeInterval = 180;
+    } else {
+      // Standard minimum break to prevent rapid cycling
+      if (breakTimeInterval < MIN_BREAK_TIME)
+        breakTimeInterval = MIN_BREAK_TIME;
+    }
+
+    // 4. Smooth Runtime Bonus via map()
+    // Longer breaks allow the Air Lift to be more efficient due to higher
+    // static level. Map break interval (60-480  min) to bonus work time (0-8
+    // min).
+    uint16_t cappedBreak = constrain(breakTimeInterval, 60, 480 );
+    long bonus = map(cappedBreak, 40, 480 , 1, 8);
+
+    // 5. Final Runtime Calculation
+    // Base runtime (historically adjusted) + linear bonus for long rest
+    float baseRuntime = WELL_DEFAULT_RUNTIME * driftCorrection;
+    uint8_t adjustedRuntime = (uint8_t)(baseRuntime + bonus);
+
+    // Hard limits to protect the compressor from overheating
+    adjustedRuntime = constrain(adjustedRuntime, 8, 20);
+
+    // Debug output
     if (spanLg.active()) {
-      dbg(F("LevelRs:"));
-      dbg(levelRise);
-      dbg(F(" Corr:"));
-      dbg(driftCorrection);
-      dbgLn();
+      dbg(F("[WINTER] MainEmpty: "));
+      dbg(mainEmpty);
+      dbg(F(" | WellEmpty: "));
+      dbg(wellEmpty);
+      dbg(F(" | Break: "));
+      dbg(breakTimeInterval);
+      dbg(F("m | Bonus: +"));
+      dbg(bonus);
+      dbg(F("m | Work: "));
+      dbg(adjustedRuntime);
+      dbgLn(F("m"));
     }
 
-    uint16_t workMinutes = workHours * 60;
-
-    uint8_t breakTimeInterval = workMinutes / (emptySpaceCm / TARGET_RISE_CM);
-    uint8_t workTimeInterval = workMinutes;
-    //
-    // emptySpace = 60 cm, TARGET_RISE_CM = 3 cm, ако levelRise = 6 cm:
-    // sessions = ceil(60/6) = 10 → interval = 24h/10 = 144 min → pause ≈ 144 -
-    // runtime.
-    if (levelRise > TARGET_RISE_CM) {
-       breakTimeInterval = ceil(workMinutes / (emptySpaceCm / levelRise));
-    }
-
-    if(breakTimeInterval < WELL_BREAK_TIME){
-      breakTimeInterval = WELL_BREAK_TIME;
-    }
-
-    this->pumpWell(currentRuntime, breakTimeInterval);
+    // Execute pumping logic
+    this->pumpWell(adjustedRuntime, (unsigned long)breakTimeInterval);
   }
 };
 #endif
