@@ -17,7 +17,7 @@ public:
     const __FlashStringHelper *title() override { return F("3-Hour"); }
 
     void exec() override {
-        if (!read || !rule) return;
+        if (!read) return;
 
         // Static mode: fixed intervals regardless of sensor data
         uint8_t currentRuntime = THREE_HOUR_RUNTIME;

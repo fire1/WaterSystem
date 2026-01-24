@@ -4,10 +4,6 @@
 #include "Glob.h"
 
 // Forward declarations to avoid circular dependencies
-class Read;
-class Rule;
-class Pump;
-class Buzz;
 
 // Defines title len for LCD
 #define MODE_TITLE_LEN 5
@@ -99,7 +95,7 @@ private:
       dbgLn(pumpBuffer[workIndex].correction);
     } else {
       // Display warn
-      dbgLn(F("[ERROR] Pump buffer overflow!"));
+      dbgLn(F("[ERROR] Result Pump buffer overflow!"));
     }
   }
   /**
@@ -112,7 +108,7 @@ private:
       pumpBuffer[workIndex].work = this->calcMinutes(msWork);
     } else {
       // Display warn
-      dbgLn(F("[ERROR] Pump buffer overflow!"));
+      dbgLn(F("[ERROR] WorkTime Pump buffer overflow!"));
     }
   }
   /**
@@ -125,7 +121,7 @@ private:
       pumpBuffer[workIndex].wait = this->calcMinutes(msWait);
     } else {
       // Display warn
-      dbgLn(F("[ERROR] Pump buffer overflow!"));
+      dbgLn(F("[ERROR] WaitTime Pump buffer overflow!"));
     }
   }
 
@@ -138,7 +134,6 @@ private:
     float rawCorrection = (float)TARGET_RISE_CM / (float)actualRise;
     return clamp(rawCorrection, 0.5, 1.5);
   }
-
 
   //
   // Shortcut/helper functions
@@ -154,7 +149,6 @@ protected:
 #endif
 
   Read *read = NULL;
-  Rule *rule = NULL;
   Buzz *buzz = NULL;
 
   bool isWarnStop() {
@@ -162,15 +156,17 @@ protected:
     return false;
   }
 
-  void setWarn(const __FlashStringHelper* msg) {
+  void setWarn(const __FlashStringHelper *msg) {
     this->warnMessage = String(msg);
   }
 
   float clamp(float val, float minVal, float maxVal) {
-    if (val < minVal) return minVal;
-    if (val > maxVal) return maxVal;
+    if (val < minVal)
+      return minVal;
+    if (val > maxVal)
+      return maxVal;
     return val;
-}
+  }
 
   float calculateAverageCorrection() {
     float totalCorrection = 0.0;
@@ -203,7 +199,7 @@ protected:
     return 1.0; // No data, return neutral correction
   }
 
-    float fetchWeightedCorrection() {
+  float fetchWeightedCorrection() {
     float avg = calculateAverageCorrection(); // Твоята функция за средно
     float last = calculateLastCorrection(); // Твоята функция за последно
 
@@ -384,10 +380,7 @@ protected:
   }
 
 public:
-  void init(Rule *rl, Read *rd, Buzz *bz) {
-    read = rd;
-    rule = rl;
-  }
+  void init(Read *rd, Buzz *bz) { read = rd; }
   virtual void exec() = 0;
   // Return flash string helper so implementations can return F("...")
   virtual const __FlashStringHelper *title() = 0;
@@ -449,10 +442,15 @@ public:
     return this->nextToOff;
   }
 
-   String getWarnMessage() {
+  String getWarnMessage() {
+    if (this->warnMessage.length() > 0) {
+      String msg = this->warnMessage;
+      this->warnMessage = "";
+      return msg;
+    }
+
     return this->warnMessage;
   }
-
 };
 
 #endif

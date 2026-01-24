@@ -54,8 +54,9 @@ private:
 
   String warnCase = "";
 
-  unsigned long getWellWorkTimer() { 
-    if(!this->activeMode) return 0;
+  unsigned long getWellWorkTimer() {
+    if (!this->activeMode)
+      return 0;
     return this->activeMode->getWellWorkTimer();
   }
 
@@ -156,7 +157,7 @@ private:
     if (activeModeId != id) {
       activeMode = modes[id];
       activeModeId = id;
-      activeMode->init(this, read, buzz);
+      activeMode->init(read, buzz);
     }
 
     if (activeMode == nullptr) {
@@ -165,13 +166,12 @@ private:
 
     activeMode->exec();
 
-
     // Display mode warning if any
-    if(activeMode->getWarnMessage().length() > 0)
-      this->setWarn(activeMode->getWarnMessage());
+    String warnMsg = activeMode->getWarnMessage();
+    if ( warnMsg.length() > 0)
+      this->setWarn(warnMsg);
 
     activeMode->debug();
-    
   }
 
   /**
@@ -744,8 +744,6 @@ private:
    */
   void handleDebug() {
 
-
-
     if (cmd.show(F("timer:on"), F("Shows work timer to next ON state.")))
       cmd.print("Time to on", this->getNextOn());
 
@@ -760,11 +758,7 @@ private:
     if (cmd.set(F("timer:off"), tmpTime, F("Overwrite to \"off\" timer."))) {
       this->nextToOff = tmpTime;
     }
-
-
   }
-
-
 };
 
 #endif

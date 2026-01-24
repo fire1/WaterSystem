@@ -5,7 +5,6 @@
 #ifndef Init_h
 #define Init_h
 
-
 //
 // Mode selection is driven by ModeInterface instances in modes[]
 // Data will store the chosen mode index in EEPROM; pass NULL for names so
@@ -14,12 +13,7 @@ Data modeWellTank(MODE_COUNT, nullptr, 2);
 
 //
 // Define tanks mode names
-DefineData(
-        tankNames,
-"None",
-"Full",
-"Half",
-"Void");
+DefineData(tankNames, "None", "Full", "Half", "Void");
 
 //
 // Convert tank names  to data objects
@@ -35,14 +29,18 @@ Read read;
 Heat heat(&buzz);
 
 SlowlyMode slowlyMode;
+WinterMode winterMode;
 HourlyMode hourlyMode;
 ThreeHourMode threeHourMode;
-Mode* modes[] = { nullptr, &hourlyMode, &threeHourMode, &slowlyMode };
+Mode *modes[] = {nullptr, &hourlyMode, &threeHourMode, &slowlyMode,
+                 &winterMode};
 
-// Return title for mode index (flash string). Keeps Data.h free of ModeInterface.
-inline const __FlashStringHelper* getModeTitle(uint8_t idx) {
-    if (idx < MODE_COUNT && modes[idx]) return modes[idx]->getTitleFlash();
-    return (const __FlashStringHelper*)PSTR("");
+// Return title for mode index (flash string). Keeps Data.h free of
+// ModeInterface.
+inline const __FlashStringHelper *getModeTitle(uint8_t idx) {
+  if (idx < MODE_COUNT && modes[idx])
+    return modes[idx]->getTitleFlash();
+  return (const __FlashStringHelper *)PSTR("");
 }
 
 //

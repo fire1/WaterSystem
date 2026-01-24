@@ -12,17 +12,19 @@ private:
   Data *modeWell;
   Data *modeMain;
   char formatBuffer[7];
- uint8_t lastWarnCursor =0;
+  uint8_t lastWarnCursor = 0;
 
   //
   // At init state needs to be as same as Draw.h edit state.
-  bool isEditLast = true;  // TRUE - Since welcome message begin with blink this will strop it.
+  bool isEditLast =
+      true; // TRUE - Since welcome message begin with blink this will strop it.
+  uint8_t toggleClock = 0;
 
   /**
-        * Draw level from 0 to 10 bars
-        * @param level The level of the tank, from 100 /empty/ and 20 /full/
-        * @param min An accured min value /100/
-        */
+   * Draw level from 0 to 10 bars
+   * @param level The level of the tank, from 100 /empty/ and 20 /full/
+   * @param min An accured min value /100/
+   */
   void drawLevel(byte level, byte min) {
 
     uint8_t bars = map(level, min - 5, LevelSensorBothMax + 1, 0, 10);
@@ -34,21 +36,23 @@ private:
     // Serial.println(bars);
     if (level > 0)
       for (byte i = 0; i <= 10; i++) {
-        if (i < bars) lcd.write((uint8_t)0);
-        else lcd.print(F(" "));
+        if (i < bars)
+          lcd.write((uint8_t)0);
+        else
+          lcd.print(F(" "));
       }
   }
 
   /**
-        * Display home screen
-        */
+   * Display home screen
+   */
   void home(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
     lcd.print(F("Tank1"));
     if (ctrlWell.isTerminated() || ctrlWell.isFailure())
-      //lcd.write((char)5);
-      lcd.write((char)235);  // buildin char
+      // lcd.write((char)5);
+      lcd.write((char)235); // buildin char
     else
       lcd.print(F(" "));
 
@@ -64,8 +68,8 @@ private:
 
     int level2 = read->getMainLevel();
     if (ctrlMain.isTerminated() || ctrlMain.isFailure())
-      //lcd.write((char)5);
-      lcd.write((char)235);  // buildin char
+      // lcd.write((char)5);
+      lcd.write((char)235); // buildin char
     else
       lcd.print(F(" "));
 
@@ -76,9 +80,9 @@ private:
   }
 
   /**
-     * Home screen version 2
-     * @param dr
-     */
+   * Home screen version 2
+   * @param dr
+   */
   void homeV2(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
@@ -86,8 +90,10 @@ private:
     lcd.write((char)6);
 
     // daytime mark
-    if (time->isDaytime()) lcd.write((char)2);
-    else lcd.write((char)3);
+    if (time->isDaytime())
+      lcd.write((char)2);
+    else
+      lcd.write((char)3);
 
     lcd.print(formatUint8(level1));
 
@@ -95,7 +101,8 @@ private:
     if (ctrlWell.isTerminated())
       // lcd.write((char)5);
       lcd.write((char)235);
-    else lcd.print(F(" "));
+    else
+      lcd.print(F(" "));
 
     if (level1 == 0 || level1 > LevelSensorWellMin)
       lcd.print(F("[-?-]     "));
@@ -115,7 +122,8 @@ private:
     if (ctrlMain.isTerminated())
       // lcd.write((char)5);
       lcd.write((char)235);
-    else lcd.print(F(" "));
+    else
+      lcd.print(F(" "));
 
     if (level2 == 0 || level2 > LevelSensorMainMin)
       lcd.print(F("[-?-]     "));
@@ -124,9 +132,9 @@ private:
   }
 
   /**
-       * Menu tank well
-       * @param dr
-       */
+   * Menu tank well
+   * @param dr
+   */
   void menuWell(DrawInterface *dr) {
     dr->edit(this->modeWell);
     lcd.setCursor(0, 0);
@@ -135,13 +143,13 @@ private:
     lcd.print(F("Mode: "));
 
     lcd.print(this->modeWell->getName(10));
-        lcd.setCursor(5, 1);
+    lcd.setCursor(5, 1);
   }
 
   /**
-       * Main tank menu
-       * @param dr
-       */
+   * Main tank menu
+   * @param dr
+   */
   void menuMain(DrawInterface *dr) {
     dr->edit(this->modeMain);
     lcd.setCursor(0, 0);
@@ -155,9 +163,9 @@ private:
   }
 
   /**
-       * Pump menu Well tank
-       * @param dr
-       */
+   * Pump menu Well tank
+   * @param dr
+   */
   void pumpWell(DrawInterface *dr) {
 
     dr->pump(&ctrlWell, &ctrlMain);
@@ -175,9 +183,9 @@ private:
   }
 
   /**
-       * Pumping menu Main tank
-       * @param dr
-       */
+   * Pumping menu Main tank
+   * @param dr
+   */
   void pumpMain(DrawInterface *dr) {
     dr->pump(&ctrlMain, &ctrlWell);
 
@@ -194,93 +202,107 @@ private:
   }
 
   /**
-       * Info menu
-       */
+   * Info menu
+   */
   void infoTime(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
-    if (time->isConn()) {
-      // format 00-00 0000-00-00
-      DateTime now = time->now();
-      if (now.hour() < 10)
-        lcd.print(F("0"));
+    
+    
+    if(toggleClock>40) toggleClock=0;
+    if (toggleClock++ > 20) {
+      if (time->isConn()) {
+        // format 00-00 0000-00-00
+        DateTime now = time->now();
+        if (now.hour() < 10)
+          lcd.print(F("0"));
 
-      lcd.print(now.hour());
+        lcd.print(now.hour());
 
-      if (time->tickClock())
-        lcd.print(F(":"));  // simple ticking
-      else lcd.print(F(" "));
+        if (time->tickClock())
+          lcd.print(F(":")); // simple ticking
+        else
+          lcd.print(F(" "));
 
-      if (now.minute() < 10)
-        lcd.print(F("0"));
-      lcd.print(now.minute());
+        if (now.minute() < 10)
+          lcd.print(F("0"));
+        lcd.print(now.minute());
 
-      lcd.print(F(" "));
-      lcd.print(now.year());
+        lcd.print(F(" "));
+        lcd.print(now.year());
 
-      lcd.print(F("-"));
-      if (now.month() < 10)
-        lcd.print(F("0"));
+        lcd.print(F("-"));
+        if (now.month() < 10)
+          lcd.print(F("0"));
 
-      lcd.print(now.month());
-      lcd.print(F("-"));
+        lcd.print(now.month());
+        lcd.print(F("-"));
 
-      if (now.day() < 10)
-        lcd.print(F("0"));
+        if (now.day() < 10)
+          lcd.print(F("0"));
 
-      lcd.print(now.day());
+        lcd.print(now.day());
 
+      } else {
+        lcd.setCursor(0, 0);
+        lcd.print(F("No clock...     "));
+      }
     } else {
-      lcd.setCursor(0, 0);
-      lcd.print(F("No clock...     "));
+      lcd.write((char)4);
+      lcd.print(F("  WORK /   STOP"));
     }
 
-
     lcd.setCursor(0, 1);
-   
+
     lcd.write((char)4);
-    if (time->isDaytime()) lcd.write((char)2);
-    else lcd.write((char)3);
-    lcd.print(F(" "));
+    // if (time->isDaytime()) lcd.write((char)2);
+    // else lcd.write((char)3);
+
+    // lcd.print(F(" "));
 
     // When runs
     // Print to off time
-    if (ctrlWell.isOn()) lcd.print(F("~"));
-    else lcd.print(F(" "));                         //5
-    lcd.print(formatMsToTime(rule->getNextOff()));  //8
+    if (ctrlWell.isOn())
+      lcd.print(F("~"));
+    else
+      lcd.print(F(" ")); // 4
 
-    lcd.print(F("/"));  //9
+    lcd.print(formatMsToTime(rule->getNextOff())); // 8
+
+    lcd.print(F(" / ")); // 9
 
     // When stopped
     // Print to on time
-    if (!ctrlWell.isOn()) lcd.print(F("~"));
-    else lcd.print(F(" "));  //10
+    if (!ctrlWell.isOn())
+      lcd.print(F("~"));
+    else
+      lcd.print(F(" ")); // 10
     unsigned long next = rule->getNextOn();
     if (next > MaxDaysInMillis) {
       lcd.print(F("[\xF3]"));
-    } else lcd.print(formatMsToTime(rule->getNextOn()));  //13
+    } else
+      lcd.print(formatMsToTime(rule->getNextOn())); // 13
 
-    lcd.print(F(" "));
+    // lcd.print(F(" "));
   }
 
-
-  void infoWarn(DrawInterface *dr){
+  void infoWarn(DrawInterface *dr) {
     dr->noEdit();
-    
+
     lcd.setCursor(0, 0);
     lcd.print(F("Last warning:   "));
-    
+
     lcd.setCursor(0, 1);
     String message = dr->getWarnMsg();
-    if(message.length()> 0)
+    if (message.length() > 0)
       lcd.print(message);
-    else lcd.print(F(" [ no warning ] "));
-
+    else
+      lcd.print(F(" [ no warning ] "));
   }
 
   /**
-    * Heat warning
-    */
+   * Heat warning
+   */
   void warnHeat(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
@@ -297,8 +319,8 @@ private:
   }
 
   /**
-    * Heat information
-    */
+   * Heat information
+   */
   void infoHeat(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
@@ -307,14 +329,14 @@ private:
     lcd.print(F(" "));
     if (time->isConn()) {
       lcd.print(formatNumTemp(time->getTemp()));
-    } else lcd.print(F("-?- "));
+    } else
+      lcd.print(F("-?- "));
     lcd.write((char)1);
 
     lcd.print(F(" "));
     lcd.print(F("On "));
     lcd.print(formatNumTemp(heat->getTemperature()));
     lcd.write((char)1);
-
 
     lcd.setCursor(0, 1);
     lcd.print(F("Fan speed: "));
@@ -325,68 +347,68 @@ private:
   void warnRule(DrawInterface *dr) {
     dr->noEdit();
     lcd.setCursor(0, 0);
-    lcd.print(F(" Pump stopped..."));
+    lcd.print(F("Warning:        "));
     lcd.setCursor(0, 1);
     lcd.print(dr->getWarnMsg());
   }
 
   /**
-    * Format number to percentage
-    * @param value
-    * @return
-    */
-  char  *formatPercentage(uint8_t value){
-      int result = (int)((float)value / 255.0 * 100.0); // Cast to int
-      if(value ==0){
-          snprintf(formatBuffer, 4, "off"); // Display "Off"
-      }else if (result >= 100) {
-          snprintf(formatBuffer, 4, "max"); // Display "Max"
-        } else {
-          sprintf(formatBuffer, "%02d\%", result); // 2 digits + null terminator
-        }
-
-      return formatBuffer;
-  }
-
-  /**
-    * Formats numbers to proper display format
-    * @param value
-    * @return
-    */
-  char *formatNumTemp(float value) {
-      if(value <= -9.9){
-          sprintf(formatBuffer, "%03d ", (int)value);
-      }else{
-        // Since  %f format is not supported on the Arduino...
-        // Manually format float for values >= -9
-        int dig1 = int(value) * 10; // 210
-        int dig2 = int((value * 10) - dig1);
-
-            dig1 = dig1 / 10;
-            if (dig2 < 0) {
-                dig2 = dig2 * -1;
-            }
-        sprintf(formatBuffer, "%02d.%1d", dig1, dig2);
+   * Format number to percentage
+   * @param value
+   * @return
+   */
+  char *formatPercentage(uint8_t value) {
+    int result = (int)((float)value / 255.0 * 100.0); // Cast to int
+    if (value == 0) {
+      snprintf(formatBuffer, 4, "off"); // Display "Off"
+    } else if (result >= 100) {
+      snprintf(formatBuffer, 4, "max"); // Display "Max"
+    } else {
+      sprintf(formatBuffer, "%02d\%", result); // 2 digits + null terminator
     }
 
     return formatBuffer;
   }
 
   /**
-    * Formats uint8_t numbers to be displayed.
-    * @param value
-    * @return
-    */
+   * Formats numbers to proper display format
+   * @param value
+   * @return
+   */
+  char *formatNumTemp(float value) {
+    if (value <= -9.9) {
+      sprintf(formatBuffer, "%03d ", (int)value);
+    } else {
+      // Since  %f format is not supported on the Arduino...
+      // Manually format float for values >= -9
+      int dig1 = int(value) * 10; // 210
+      int dig2 = int((value * 10) - dig1);
+
+      dig1 = dig1 / 10;
+      if (dig2 < 0) {
+        dig2 = dig2 * -1;
+      }
+      sprintf(formatBuffer, "%02d.%1d", dig1, dig2);
+    }
+
+    return formatBuffer;
+  }
+
+  /**
+   * Formats uint8_t numbers to be displayed.
+   * @param value
+   * @return
+   */
   char *formatUint8(uint8_t value) {
     sprintf(formatBuffer, "%03d", value);
     return formatBuffer;
   }
 
   /**
-    * Formats given ms to time
-    * @param milliseconds
-    * @return
-    */
+   * Formats given ms to time
+   * @param milliseconds
+   * @return
+   */
   char *formatMsToTime(unsigned long milliseconds) {
     unsigned long seconds = milliseconds / 1000;
     unsigned long minutes = seconds / 60;
@@ -413,7 +435,8 @@ private:
       timeUnit = 's';
     }
 
-    // Format the float value manually since %f is not supported in Arduino sprintf
+    // Format the float value manually since %f is not supported in Arduino
+    // sprintf
     char floatStr[6];
     dtostrf(timeValue, 4, 1, floatStr); // 4 chars total, 1 decimal
     sprintf(formatBuffer, "%s%c", floatStr, timeUnit);
@@ -421,9 +444,9 @@ private:
   }
 
   /**
-    * Shows blinking cursor
-    * @param dr
-    */
+   * Shows blinking cursor
+   * @param dr
+   */
   void handleEditState(DrawInterface *dr) {
     //
     // Execute only when is changed
@@ -440,52 +463,57 @@ private:
 
   void handleDebug() {
 
-      uint8_t index = 0;
-      if(cmd.set(F("mode:well"), index, F("Test overwrite of mode well"))){
-          modeWell->setIndex(index);
-      }
+    uint8_t index = 0;
+    if (cmd.set(F("mode:well"), index, F("Test overwrite of mode well"))) {
+      modeWell->setIndex(index);
+    }
 
-      if(cmd.set(F("mode:main"), index, F("Test overwrite of mode main"))){
-          modeMain->setIndex(index);
-      }
+    if (cmd.set(F("mode:main"), index, F("Test overwrite of mode main"))) {
+      modeMain->setIndex(index);
+    }
   }
 
 public:
-
-
   //
   // Construct menu
   Menu(Rule *ru, Read *rd, Time *tm, Heat *ht, Data *mdW, Data *mdM)
-    : rule(ru), read(rd), time(tm), heat(ht), modeWell(mdW), modeMain(mdM) {
-  }
+      : rule(ru), read(rd), time(tm), heat(ht), modeWell(mdW), modeMain(mdM) {}
 
   void begin() {
     //
     // Start the display
     lcd.begin(16, 2);
 
-    byte charBarLevel[8] = { B11111, B11111, B11111, B11111, B11111, B11111, B11111, B00000 };
-    byte charCelsius[8] = { B00000, B01000, B00011, B00100, B00100, B00100, B00011, B00000 };
-    byte charDayIcon[8] = { B00000, B00110, B01010, B01100, B00000, B00000, B00000, B00000 };
-    byte charNightIcon[8] = { B00000, B00110, B01100, B00000, B00000, B00000, B00000, B00000 };
-    byte charClockIcon[8] = { B00000, B01110, B10101, B10111, B10001, B01110, B00000, B00000 };
-    byte charTerminate[8] = { B10100, B01000, B10100, B00000, B00000, B00000, B00000, B00000 };
+    byte charBarLevel[8] = {B11111, B11111, B11111, B11111,
+                            B11111, B11111, B11111, B00000};
+    byte charCelsius[8] = {B00000, B01000, B00011, B00100,
+                           B00100, B00100, B00011, B00000};
+    byte charDayIcon[8] = {B00000, B00110, B01010, B01100,
+                           B00000, B00000, B00000, B00000};
+    byte charNightIcon[8] = {B00000, B00110, B01100, B00000,
+                             B00000, B00000, B00000, B00000};
+    byte charClockIcon[8] = {B00000, B01110, B10101, B10111,
+                             B10001, B01110, B00000, B00000};
+    byte charTerminate[8] = {B10100, B01000, B10100, B00000,
+                             B00000, B00000, B00000, B00000};
 
-    byte charOneLine[8] = { B00000, B01000, B11001, B01000, B01000, B01001, B11100, B11111 };
-    byte charTwoLine[8] = { B00000, B01000, B10101, B00100, B01000, B10001, B11100, B11111 };
+    byte charOneLine[8] = {B00000, B01000, B11001, B01000,
+                           B01000, B01001, B11100, B11111};
+    byte charTwoLine[8] = {B00000, B01000, B10101, B00100,
+                           B01000, B10001, B11100, B11111};
 
     lcd.createChar(0, charBarLevel);
     lcd.createChar(1, charCelsius);
     lcd.createChar(2, charDayIcon);
     lcd.createChar(3, charNightIcon);
     lcd.createChar(4, charClockIcon);
-    lcd.createChar(5, charTerminate);  // todo: free to replace since LCD has same charater
+    lcd.createChar(
+        5, charTerminate); // todo: free to replace since LCD has same charater
     lcd.createChar(6, charOneLine);
     lcd.createChar(7, charTwoLine);
 
     //   lcd.write((char)162); // - bracket
     //   lcd.write((char)163); // - bracket
-
 
     //
     // Print a Welcome message to the LCD.
@@ -496,7 +524,6 @@ public:
     lcd.blink();
     delay(2000);
   }
-
 
   /**
    * Draw the menu
@@ -513,48 +540,47 @@ public:
     if (dr->getCursor() == 0 && dr->isDisplayOn()) {
       read->startWorkRead();
     } else
-      read->stopWorkRead();  // Stop fast read
+      read->stopWorkRead(); // Stop fast read
 
     switch (dr->getCursor()) {
 
-      case MenuInfo_Home:
-      default:
-        //this->home(dr);
-        this->homeV2(dr);
-        dr->resetCursor();
-        break;
+    case MenuInfo_Home:
+    default:
+      // this->home(dr);
+      this->homeV2(dr);
+      dr->resetCursor();
+      break;
 
-      case MenuEdit_Well:
-        return this->menuWell(dr);
-      case MenuEdit_Main:
-        return this->menuMain(dr);
+    case MenuEdit_Well:
+      return this->menuWell(dr);
+    case MenuEdit_Main:
+      return this->menuMain(dr);
 
-      case MenuPump_Well:
-        return this->pumpWell(dr);
-      case MenuPump_Main:
-        return this->pumpMain(dr);
+    case MenuPump_Well:
+      return this->pumpWell(dr);
+    case MenuPump_Main:
+      return this->pumpMain(dr);
 
-        //
-        // Interuption warning messages.
-      case MenuWarn_Heat:
-        return this->warnHeat(dr);
-      case MenuWarn_Rule:
-        return this->warnRule(dr);
+      //
+      // Interuption warning messages.
+    case MenuWarn_Heat:
+      return this->warnHeat(dr);
+    case MenuWarn_Rule:
+      return this->warnRule(dr);
 
-      
-        //
-        // Backward menu 3
-      case MenuInfo_Warn:
-        return this->infoWarn(dr); // Show last warning
-        //
-        // Backward menu 2
-      case MenuInfo_Heat:
-        return this->infoHeat(dr); // Heat information.
+      //
+      // Backward menu 3
+    case MenuInfo_Warn:
+      return this->infoWarn(dr); // Show last warning
+      //
+      // Backward menu 2
+    case MenuInfo_Heat:
+      return this->infoHeat(dr); // Heat information.
 
-        //
-        // Backward menu 1
-      case MenuInfo_Time:
-        return this->infoTime(dr); // Time information.
+      //
+      // Backward menu 1
+    case MenuInfo_Time:
+      return this->infoTime(dr); // Time information.
     }
   }
 };

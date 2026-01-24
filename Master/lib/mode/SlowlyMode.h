@@ -1,6 +1,6 @@
 
-#ifndef WinterMode_h
-#define WinterMode_h
+#ifndef SlowlyMode_h
+#define SlowlyMode_h
 
 #include "../Mode.h"
 #include "../Pump.h"
@@ -25,7 +25,7 @@ public:
   const __FlashStringHelper *title() override { return F("Slowly"); }
 
   void exec() override {
-    if (!read || !rule)
+    if (!read)
       return;
 
     // Fetch levels (distance from sensor to water in cm)

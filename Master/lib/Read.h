@@ -5,16 +5,13 @@
 
 #include "Glob.h"
 
-
 volatile unsigned long startTime;
 volatile unsigned long endTime;
 volatile bool echoReceived = false;
 
-
 class Read {
 
 private:
-
   SoftwareSerial com;
   AsyncDelay timerIdle;
   AsyncDelay timerWork;
@@ -34,9 +31,7 @@ private:
 
   //
   // Average from sensors
-  LevelSensorAverage
-    sensorWell,
-    sensorMain;
+  LevelSensorAverage sensorWell, sensorMain;
 
   bool isWorkRead = false;
   bool isWellReadSent;
@@ -46,9 +41,12 @@ private:
   uint8_t well;
   uint8_t main;
 
+  //
+  // Well water temperature
+  float wellWaterTemp = 0;
+
 public:
-  Read()
-    : com(pinMainRx, -1) {}
+  Read() : com(pinMainRx, -1) {}
 
   void begin() {
     //
@@ -77,12 +75,13 @@ public:
     pinMode(pinMainPower, OUTPUT);
     digitalWrite(pinMainPower, LOW);
 
-    //  attachInterrupt(digitalPinToInterrupt(pinWellEcho), echoInterrupt, CHANGE);
+    //  attachInterrupt(digitalPinToInterrupt(pinWellEcho), echoInterrupt,
+    //  CHANGE);
   }
 
-
   void loop() {
-    if (millis() < 200) return;
+    if (millis() < 200)
+      return;
 
     this->debug();
 
@@ -91,18 +90,17 @@ public:
       sensorMain.error = 0;
     }
 
-
-    if (!sensorWell.done /*&& sensorWell.error < DisableSensorError*/) this->readWell();
+    if (!sensorWell.done /*&& sensorWell.error < DisableSensorError*/)
+      this->readWell();
 
     if (!sensorMain.done /*&& sensorMain.error < DisableSensorError*/) {
-      powerMain.start(TimeoutPowerSlave, AsyncDelay::MILLIS);  // Set power downtime for main sensor
+      powerMain.start(TimeoutPowerSlave,
+                      AsyncDelay::MILLIS); // Set power downtime for main sensor
       this->readMain();
     }
 
-
-    this->readAtIdle();  // Monitoring
-    this->readAtWork();  // Pumping
-
+    this->readAtIdle(); // Monitoring
+    this->readAtWork(); // Pumping
 
     if (powerMain.isExpired() && spanMd.active()) {
       if (digitalRead(pinMainPower)) {
@@ -134,31 +132,30 @@ public:
     }
   }
 
-
   //
   // Output to pass  information from this methods
   //
-  uint8_t getWellLevel() {
-    return this->well;
-  }
+  uint8_t getWellLevel() { return this->well; }
 
-  uint8_t getMainLevel() {
-    return this->main;
-  }
+  uint8_t getMainLevel() { return this->main; }
 
   //
   // Verifies both tanks levels
   bool atNorm() {
-    if (this->well < 19 || this->main < 19) return false;
-    if (this->main > LevelSensorMainMin) return false;
-    if (this->well > LevelSensorWellMin) return false;
+    if (this->well < 19 || this->main < 19)
+      return false;
+    if (this->main > LevelSensorMainMin)
+      return false;
+    if (this->well > LevelSensorWellMin)
+      return false;
 
     return true;
   }
 
-  int getWellWaterTemp() {
-    return 0;
-  } 
+  //
+  // Temperature inside the mode tank used for winter anti-freeze mode
+  float getWellWaterTemp() { return this->wellWaterTemp; }
+
   //
   // Sorter period for sensors
   void startWorkRead() {
@@ -172,45 +169,40 @@ public:
   }
 
   void stopWorkRead() {
-    if (ctrlWell.isOn() || ctrlMain.isOn()) return;  // do not interrupt when working ...
-    //dbgLn(F("Work read /Stop/"));
+    if (ctrlWell.isOn() || ctrlMain.isOn())
+      return; // do not interrupt when working ...
+    // dbgLn(F("Work read /Stop/"));
     this->isWorkRead = false;
   }
 
-  bool isWork() {
-    return this->isWorkRead;
-  }
+  bool isWork() { return this->isWorkRead; }
 
   void resetLevels() {
     sensorWell.done = false;
-    if (!isWorkRead) sensorWell.error = 0;
+    if (!isWorkRead)
+      sensorWell.error = 0;
     sensorMain.done = false;
-    if (!isWorkRead) sensorMain.error = 0;
+    if (!isWorkRead)
+      sensorMain.error = 0;
   }
 
   //
   // Overwrites value
-  void setWell(uint8_t value) {
-    this->well = value;
-  }
+  void setWell(uint8_t value) { this->well = value; }
 
   //
   // Overwrites value
-  void setMain(uint8_t value) {
-    this->main = value;
-  }
+  void setMain(uint8_t value) { this->main = value; }
 
-  void expireWorkTimer() {
-    timerWork.expire();
-  }
+  void expireWorkTimer() { timerWork.expire(); }
 
 private:
-
   //
   // When pumps are on or displays tank levels, this timer will be executed.
   void startShortReadTimer() {
     if (this->main < 22)
-      // When main tanks is reaching almost full is good to switch to faster read,
+      // When main tanks is reaching almost full is good to switch to faster
+      // read,
       //  since the pumping is faster than well.
       timerWork.start(LevelRefreshTimeWork / 2, AsyncDelay::MILLIS);
     else
@@ -221,15 +213,16 @@ private:
   //
   // Read a well tank.
   void readWell() {
-    if (sensorWell.done) return;
+    if (sensorWell.done)
+      return;
 
     uint16_t distance;
     //
     // About onReadWellSensorDistance:
     //  Read well sensor has two variants of reading distance.
-    //  The default type for the module is not recommended since disturbs main loop.
-    //  Soldering 47k Ohm resistor for R19 on the module is HIGHLY recommended,
-    //  this will enable UART of the module.
+    //  The default type for the module is not recommended since disturbs main
+    //  loop. Soldering 47k Ohm resistor for R19 on the module is HIGHLY
+    //  recommended, this will enable UART of the module.
     if (onReadWellSensorDistance(distance)) {
       if (distance == 0) {
         sensorWell.error++;
@@ -251,7 +244,8 @@ private:
   //  communication from the serial Slave sensor.
   // Https://forum.arduino.cc/t/jsn-sr04t-2-0/456255/10
   void readMain() {
-    if (sensorMain.done) return;
+    if (sensorMain.done)
+      return;
     if (digitalRead(pinMainPower) && com.isListening()) {
       if (com.available() > 0) {
         uint8_t distance = 0;
@@ -273,7 +267,8 @@ private:
         digitalWrite(pinLed, LOW);
       }
     } else {
-      if (!com.isListening()) com.listen();
+      if (!com.isListening())
+        com.listen();
       digitalWrite(pinMainPower, HIGH);
     }
   }
@@ -284,7 +279,7 @@ private:
     //
     // When we idle pumps just will check levels
     if (timerIdle.isExpired()) {
-      //this->resetLevels();// old version
+      // this->resetLevels();// old version
 
       //
       // New iteration
@@ -312,7 +307,6 @@ private:
       this->startShortReadTimer();
     }
 
-
     if (this->isWorkRead && timerWork.isExpired()) {
       this->resetLevels();
       timerWork.repeat();
@@ -320,11 +314,11 @@ private:
   }
 
   /**
-     * Sets average for a sensor.
-     * @param sensor
-     * @param newValue
-     */
-  void pushAverage(LevelSensorAverage& sensor, int newValue) {
+   * Sets average for a sensor.
+   * @param sensor
+   * @param newValue
+   */
+  void pushAverage(LevelSensorAverage &sensor, int newValue) {
     // Subtract the oldest reading from the total
     sensor.average -= sensor.readings[sensor.index];
     // Store the new reading
@@ -349,17 +343,18 @@ private:
 #ifdef WELL_MEASURE_UART_47K
 
   /**
-     * Parse distance from the sensor /RECOMMENDED/
-     * @param distance
-     * @return
-     */
-  bool onReadWellSensorDistance(uint16_t& distance) {
+   * Parse distance from the sensor /RECOMMENDED/
+   * @param distance
+   * @return
+   */
+  bool onReadWellSensorDistance(uint16_t &distance) {
     distance = 0;
     if (this->isWellReadSent && Serial3.available()) {
       digitalWrite(pinLed, HIGH);
       byte startByte, dataTop, dataLow, dataSum = 0;
       startByte = Serial3.read();
-      if (startByte != 255) return true;
+      if (startByte != 255)
+        return true;
 
       dbg(F("WELL /UART/ Receiving "));
 
@@ -380,7 +375,7 @@ private:
         distance = ((dataTop << 8) + dataLow) * 0.1;
 
       digitalWrite(pinLed, LOW);
-      return true;  // finish the reading
+      return true; // finish the reading
     } else if (spanLg.active()) {
       Serial3.setTimeout(50);
       Serial3.write(startUartCommand);
@@ -395,11 +390,11 @@ private:
   // Using pulseIn method, but not recommended since using delay
 #ifdef WELL_MEASURE_DEFAULT
   /**
-     * Parse distance from the sensor /BACKUP/
-     * @param distance
-     * @return
-     */
-  bool onReadWellSensorDistance(uint16_t& distance) {
+   * Parse distance from the sensor /BACKUP/
+   * @param distance
+   * @return
+   */
+  bool onReadWellSensorDistance(uint16_t &distance) {
     digitalWrite(pinWellSend, LOW);
     delayMicroseconds(2);
     digitalWrite(pinWellSend, HIGH);
@@ -420,8 +415,8 @@ private:
 #endif
 
   /**
-     * Handles debug
-     */
+   * Handles debug
+   */
   void debug() {
     cmd.set(F("well"), this->well, F("Overwrite well tank level."));
     cmd.set(F("main"), this->main, F("Overwrite main tank level."));
@@ -441,9 +436,11 @@ private:
       cmd.print(F("Main pwr state:"), digitalRead(pinMainPower));
     }
 
-    int tmp = 0;
-    if(cmd.set(F("well:tmp",tmp, F("Overwrite well water temperature."))) {
+    float tmp = 0;
+    if (cmd.set(F("well:tmp"), tmp, F("Overwrite well water temperature."))) {
       this->wellWaterTemp = tmp;
+      cmd.print(F("Changed water temp:"), this->wellWaterTemp);
+    }
   }
 };
 

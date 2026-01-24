@@ -215,9 +215,7 @@ const uint8_t MenuWarn_Rule = 8;
 #define BtnDebounceTime 10
 #define BtnHoldTime 2000  // deprecated
 
-class Mode;
-const uint8_t MODE_COUNT = 4; // Including "none" mode
-extern Mode* modes[MODE_COUNT];
+
 //
 // Constructing
 #include "Pump.h"
@@ -239,24 +237,31 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 
 
 
-// ModeInterface* Mode::modes[] = { nullptr, &easy, &fast, &now };
 
-
+// Forward declaration of Mode class and modes array
+class Mode;
+#define MODE_COUNT  5 // Including "none" mode
+extern Mode* modes[MODE_COUNT];
 
 #include "Time.h"
 #include "Read.h"
-#include "Rule.h"
 #include "Mode.h"
+#include "Rule.h"
 #include "Heat.h"
 #include "Menu.h"
 #include "Draw.h"
-
-
 //
 // Include mode implementations
+#include "mode/WinterMode.h"
 #include "mode/SlowlyMode.h"
 #include "mode/HourlyMode.h"
 #include "mode/ThreeHourMode.h"
+
+
+
+
+
+
 
 
 

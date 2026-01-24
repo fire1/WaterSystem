@@ -20,7 +20,7 @@ public:
     const __FlashStringHelper *title() override { return F("1-Hour"); }
 
     void exec() override {
-        if (!read || !rule) return;
+        if (!read) return;
 
         // In this mode, we ignore levels and drift correction.
         // We simply cycle the pump every hour.
