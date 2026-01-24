@@ -165,6 +165,11 @@ private:
 
     activeMode->exec();
 
+
+    // Display mode warning if any
+    if(activeMode->getWarnMessage().length() > 0)
+      this->setWarn(activeMode->getWarnMessage());
+
     activeMode->debug();
     
   }

@@ -162,6 +162,9 @@ protected:
     return false;
   }
 
+  void setWarn(const __FlashStringHelper* msg) {
+    this->warnMessage = String(msg);
+  }
 
   float clamp(float val, float minVal, float maxVal) {
     if (val < minVal) return minVal;
@@ -445,6 +448,11 @@ public:
 
     return this->nextToOff;
   }
+
+  return String getWarnMessage() {
+    return this->warnMessage;
+  }
+
 };
 
 #endif
