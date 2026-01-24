@@ -254,7 +254,7 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 
 //
 // Include mode implementations
-#include "mode/WinterMode.h"
+#include "mode/SlowlyMode.h"
 #include "mode/HourlyMode.h"
 #include "mode/ThreeHourMode.h"
 

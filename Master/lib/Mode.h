@@ -449,7 +449,7 @@ public:
     return this->nextToOff;
   }
 
-  return String getWarnMessage() {
+   String getWarnMessage() {
     return this->warnMessage;
   }
 

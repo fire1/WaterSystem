@@ -156,6 +156,9 @@ public:
     return true;
   }
 
+  int getWellWaterTemp() {
+    return 0;
+  } 
   //
   // Sorter period for sensors
   void startWorkRead() {
@@ -437,6 +440,10 @@ private:
       digitalWrite(pinMainPower, pwr);
       cmd.print(F("Main pwr state:"), digitalRead(pinMainPower));
     }
+
+    int tmp = 0;
+    if(cmd.set(F("well:tmp",tmp, F("Overwrite well water temperature."))) {
+      this->wellWaterTemp = tmp;
   }
 };
 
