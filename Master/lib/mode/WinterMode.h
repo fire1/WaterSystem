@@ -1,109 +1,86 @@
-
-#ifndef WinterMode_h
-#define WinterMode_h
+#ifndef ThermalWinterMode_h
+#define ThermalWinterMode_h
 
 #include "../Mode.h"
 #include "../Pump.h"
 #include "../Read.h"
 
-#define MIN_BREAK_TIME 50
-#define MAX_BREAK_TIME 480      // 8 hours
-#define WELL_DEFAULT_RUNTIME 12 // minutes default run time
+#define WELL_DEFAULT_RUNTIME 12
+#define WELL_SENSOR_FULL 20
+#define WELL_SAFE_ZONE 65     // Над 65см (сензор) почваме да пълним сериозно
+#define MAIN_DRAIN_LIMIT 85   // Авариен праг за горния съд
 
-class WinterMode : public Mode {
-private:
-  unsigned long pumpOffTime = 0;
-  unsigned long lastFinishTime = 0;
-  uint8_t startLevelCapture = 0;
-
-  float timeMultiplier = 1.0;
-  uint8_t currentRuntime = WELL_DEFAULT_RUNTIME; // Start with 12 mins base
-
+class ThermalWinterMode : public Mode {
 public:
-  WinterMode() {}
+  ThermalWinterMode() {}
 
-  const __FlashStringHelper *title() override { return F("Winter"); }
+  const __FlashStringHelper *title() override { return F("Thermal"); }
 
   void exec() override {
-    if (!read || !rule)
-      return;
+    if (!read || !rule) return;
 
-    // Fetch levels (distance from sensor to water in cm)
+    float outsideTemp = read->getOutsideTemp();
     uint8_t wellLevel = read->getWellLevel();
     uint8_t mainLevel = read->getMainLevel();
 
-    // Calculate empty space for both tanks
-    uint8_t mainEmpty =
-        (mainLevel < LevelSensorMainMax) ? 0 : (mainLevel - LevelSensorMainMax);
-    uint8_t wellEmpty =
-        (wellLevel < LevelSensorWellMax) ? 0 : (wellLevel - LevelSensorWellMax);
-
-    // 1. Historical Efficiency Correction (+/- 20% fine-tuning)
-    float driftCorrection = this->fetchWeightedCorrection();
-    driftCorrection = constrain(driftCorrection, 0.8, 1.2);
-
-    // 2. Calculate Break Interval based on demand
-    // Fetch actual rise performance from previous cycles
+    // 1. Вземаме реалното покачване от последните цикли (самообучение)
     uint8_t realRise = this->fetchRise(TARGET_RISE_CM);
-    if (realRise == 0)
-      realRise = TARGET_RISE_CM;
+    if (realRise == 0) realRise = 5; // По подразбиране 5см (~75л)
 
-    // Calculate how many pumping sessions are needed to fill the main tank
-    float sessionsNeeded = (float)mainEmpty / (float)realRise;
-    if (sessionsNeeded < 1.0)
-      sessionsNeeded = 1.0;
+    // 2. Базови изчисления за капацитет
+    uint8_t wellEmpty = (wellLevel <= WELL_SENSOR_FULL) ? 0 : (wellLevel - WELL_SENSOR_FULL);
+    float driftCorrection = constrain(this->fetchWeightedCorrection(), 0.8, 1.2);
+    
+    // Стандартен интервал според нуждите
+    uint16_t breakTimeInterval = (uint16_t)((workHours * 60) / (wellEmpty / (float)realRise + 1));
 
-    // Distribute sessions across the available work hours (usually 24h)
-    uint16_t totalMinutesAvailable = (uint16_t)workHours * 60;
-    uint16_t breakTimeInterval =
-        (uint16_t)(totalMinutesAvailable / sessionsNeeded);
+    uint8_t finalRuntime = WELL_DEFAULT_RUNTIME;
 
-    // 3. Apply Safety Constraints for the Break Interval
-    if (mainEmpty < 40) {
-      // Main tank is satisfied (>80cm of water), sleep for 24h
-      breakTimeInterval = 1440;
-    } else if (wellEmpty > 100) {
-      // Well is low, force a minimum 3h recovery break
-      if (breakTimeInterval < 180)
-        breakTimeInterval = 180;
-    } else {
-      // Standard minimum break to prevent rapid cycling
-      if (breakTimeInterval < MIN_BREAK_TIME)
-        breakTimeInterval = MIN_BREAK_TIME;
+    // 3. КОМБИНИРАНА ТЕРМАЛНА ЛОГИКА
+    
+    // А) Ако някой от съдовете е под критичното ниво
+    if (mainLevel > MAIN_DRAIN_LIMIT || wellLevel > WELL_SAFE_ZONE) {
+      breakTimeInterval = MIN_BREAK_TIME;
+      if (spanLg.active()) this->setWarn(F("Priority Filling..."));
+    }
+    // Б) Термално подгряване при ПЪЛЕН WELL (wellLevel <= WELL_SAFE_ZONE)
+    else if (outsideTemp <= -3.0) {
+      // Динамичен мапинг: Колкото по-студено е, толкова по-често въртим.
+      // Колкото по-голям е realRise (повече топла вода), толкова по-дълго чакаме.
+      
+      int tempIn = constrain((int)outsideTemp, -15, -3);
+      
+      // Базов престой от 180 до 600 мин
+      uint16_t basePulseBreak = map(tempIn, -15, -3, 120, 480);
+      
+      // Корекция спрямо количеството вкарана вода:
+      // Ако realRise е 10см вместо 5см, удвояваме времето за чакане
+      float volumeFactor = (float)realRise / 5.0; 
+      breakTimeInterval = (uint16_t)(basePulseBreak * volumeFactor);
+      
+      finalRuntime = 8; // Кратък импулс
+    }
+    // В) Топло време и пълни съдове
+    else if (wellLevel <= WELL_SENSOR_FULL) {
+      breakTimeInterval = 1440; // 24ч престой
     }
 
-    // 4. Smooth Runtime Bonus via map()
-    // Longer breaks allow the Air Lift to be more efficient due to higher
-    // static level. Map break interval (60-480  min) to bonus work time (0-8
-    // min).
-    uint16_t cappedBreak = constrain(breakTimeInterval, 60, 480 );
-    long bonus = map(cappedBreak, 40, 480 , 1, 8);
+    // 4. Финално изчисляване на Runtime (ако не е 8 мин импулс)
+    if (finalRuntime == WELL_DEFAULT_RUNTIME) {
+      uint16_t cappedBreak = constrain(breakTimeInterval, 45, 720);
+      finalRuntime = (uint8_t)((WELL_DEFAULT_RUNTIME * driftCorrection) + map(cappedBreak, 45, 720, 0, 8));
+    }
 
-    // 5. Final Runtime Calculation
-    // Base runtime (historically adjusted) + linear bonus for long rest
-    float baseRuntime = WELL_DEFAULT_RUNTIME * driftCorrection;
-    uint8_t adjustedRuntime = (uint8_t)(baseRuntime + bonus);
+    finalRuntime = constrain(finalRuntime, 8, 22);
 
-    // Hard limits to protect the compressor from overheating
-    adjustedRuntime = constrain(adjustedRuntime, 8, 20);
-
-    // Debug output
     if (spanLg.active()) {
-      dbg(F("[WINTER] MainEmpty: "));
-      dbg(mainEmpty);
-      dbg(F(" | WellEmpty: "));
-      dbg(wellEmpty);
-      dbg(F(" | Break: "));
-      dbg(breakTimeInterval);
-      dbg(F("m | Bonus: +"));
-      dbg(bonus);
-      dbg(F("m | Work: "));
-      dbg(adjustedRuntime);
+      dbg(F("[THERMAL] T: ")); dbg(outsideTemp);
+      dbg(F(" | Rise: ")); dbg(realRise);
+      dbg(F("cm | Break: ")); dbg(breakTimeInterval);
       dbgLn(F("m"));
     }
 
-    // Execute pumping logic
-    this->pumpWell(adjustedRuntime, (unsigned long)breakTimeInterval);
+    this->pumpWell(finalRuntime, (unsigned long)breakTimeInterval);
   }
 };
 #endif
