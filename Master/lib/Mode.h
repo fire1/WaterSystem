@@ -57,6 +57,13 @@ private:
 
   // Adds new entry wor buffer
   void startWorkPoint() {
+    //
+    // auto close work buffer
+    if(isWorkPointAvailable()){
+      this->pointWorkResult();
+      pumpBuffer[workIndex].flag = false;
+      return;
+    }
     wellState.start = millis();
     if (++workIndex >= WORK_LEN)
       workIndex = 0;
@@ -74,18 +81,20 @@ private:
    * @param wait
    * @param rise
    */
-  void pointWorkResult() {
+  void  pointWorkResult() {
     if (pumpBuffer[workIndex].flag) {
       pumpBuffer[workIndex].levelStop = read->getWellLevel();
       uint8_t startLevel = pumpBuffer[workIndex].levelStart;
       uint8_t endLevel = pumpBuffer[workIndex].levelStop;
-      pumpBuffer[workIndex].rise = endLevel - startLevel;
+      pumpBuffer[workIndex].rise = startLevel - endLevel;  // Corrected: rise should be positive
       pumpBuffer[workIndex].correction =
           calculateCorrection(startLevel, endLevel);
 
       //
       // Close data entry
       pumpBuffer[workIndex].flag = false;
+      dbg(F("[CTRL] Work result pointed:"));
+      dbgLn( pumpBuffer[workIndex].correction);
     } else {
       // Display warn
       dbgLn(F("[ERROR] Pump buffer overflow!"));
@@ -177,6 +186,54 @@ protected:
   }
 
   /**
+   * @brief Fetch the last rise value
+   * 
+   * @return uint8_t 
+   */
+  uint8_t fetchLastRise() {
+    for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].rise != 0) {
+        return pumpBuffer[i].rise;
+      }
+    }
+    return 0; // No data
+  }
+
+
+  /**
+   * @brief Fetch average rise value
+   * 
+   * @return uint8_t 
+   */
+  uint8_t fetchAverageRise() {
+    uint8_t totalRise = 0;
+    uint8_t count = 0;
+
+    for (uint8_t i = 0; i < WORK_LEN; i++) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].rise != 0) {
+        totalRise += pumpBuffer[i].rise;
+        count++;
+      }
+    }
+
+    if (count == 0)
+      return 0; // No data
+
+    return totalRise / count;
+  }
+
+  uint8_t fetchRise( uint8_t defaultRise = 3){
+    uint8_t rise;
+    rise = this->fetchAverageRise();
+    if (rise >0) return rise;
+    
+    rise = this->fetchLastRise();
+    if (rise > 0) return rise;
+    
+    return defaultRise;
+  }
+
+  /**
    * @brief Get the Well Volume object
    *
    * @param tankLevel
@@ -221,6 +278,7 @@ protected:
     if (ctrlWell.isOn() != wellState.on) {
       wellState.on = ctrlWell.isOn();
       wellState.start = millis();
+
       this->startWorkPoint();
     }
 
@@ -237,7 +295,7 @@ protected:
 
     //
     // Calculate final for work point
-    if (isWorkPointAvailable() && !ctrlWell.isOn() && spanMx.active()) {
+    if (isWorkPointAvailable() && !ctrlWell.isOn() && spanLg.active()) {
       this->pointWorkResult();
     }
 
