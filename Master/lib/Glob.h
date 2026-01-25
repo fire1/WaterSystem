@@ -22,7 +22,7 @@
 #define ENABLE_CMD             // Enables Serial input listener for commands
 #define ENABLE_CLOCK           // Enables DS3231 clock usage
 #define OPT_PROTECT_COLD 14        // Do not run well pump below temperature.
-#define OPT_DAYTIME_WELL           // Well pump will work only at daytime.
+// #define OPT_DAYTIME_WELL           // Well pump will work only at daytime.
 //#define OPT_NIGHTTIME_WELL         // Well pump will work only at night time 
 //#define OPT_DAYJOB_WELL 16       // The well pump will always have at least one run per day, regardless of the tank level.
 #define OPT_DAYS_JOB_WELL 3        // Maximum days of inactivite for the well pump.

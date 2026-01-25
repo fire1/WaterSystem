@@ -6,7 +6,7 @@
 #include "../Pump.h"
 #include "../Read.h"
 
-#define MIN_BREAK_TIME 50
+#define MIN_BREAK_TIME 60       // 1 hour
 #define MAX_BREAK_TIME 480      // 8 hours
 #define WELL_DEFAULT_RUNTIME 12 // minutes default run time
 
@@ -24,85 +24,41 @@ public:
 
   const __FlashStringHelper *title() override { return F("Slowly"); }
 
-  RunWell well(Read* read) override {
-    
+  RunWell well(Read *read) override {
 
-    // Fetch levels (distance from sensor to water in cm)
-    uint8_t wellLevel = read->getWellLevel();
-    uint8_t mainLevel = read->getMainLevel();
+    uint8_t wellVol = this->getWellVolume(read->getWellLevel());
+    uint8_t mainVol = this->getMainVolume(read->getMainLevel());
 
-    // Calculate empty space for both tanks
-    uint8_t mainEmpty =
-        (mainLevel < LevelSensorMainMax) ? 0 : (mainLevel - LevelSensorMainMax);
-    uint8_t wellEmpty =
-        (wellLevel < LevelSensorWellMax) ? 0 : (wellLevel - LevelSensorWellMax);
-
-    // 1. Historical Efficiency Correction (+/- 20% fine-tuning)
-    float driftCorrection = this->fetchWeightedCorrection();
-    driftCorrection = constrain(driftCorrection, 0.8, 1.2);
-
-    // 2. Calculate Break Interval based on demand
-    // Fetch actual rise performance from previous cycles
     uint8_t realRise = this->fetchRise(TARGET_RISE_CM);
-    if (realRise == 0)
-      realRise = TARGET_RISE_CM;
+    float drift = constrain(this->fetchWeightedCorrection(), 0.6, 1.2);
 
-    // Calculate how many pumping sessions are needed to fill the main tank
-    float sessionsNeeded = (float)mainEmpty / (float)realRise;
+    float sessionsNeeded = (float)wellVol / (float)realRise;
     if (sessionsNeeded < 1.0)
       sessionsNeeded = 1.0;
 
-    // Distribute sessions across the available work hours (usually 24h)
-    uint16_t totalMinutesAvailable = (uint16_t)workHours * 60;
-    uint16_t breakTimeInterval =
-        (uint16_t)(totalMinutesAvailable / sessionsNeeded);
+    uint8_t runtime = (uint8_t)(WELL_DEFAULT_RUNTIME * drift);
+    uint16_t breaktime =
+        (uint16_t)((workHours * 60 + runtime) / sessionsNeeded);
 
-    // 3. Apply Safety Constraints for the Break Interval
-    if (mainEmpty < 40) {
-      // Main tank is satisfied (>80cm of water), sleep for 24h
-      breakTimeInterval = 1440;
-    } else if (wellEmpty > 100) {
-      // Well is low, force a minimum 3h recovery break
-      if (breakTimeInterval < 180)
-        breakTimeInterval = 180;
-    } else {
-      // Standard minimum break to prevent rapid cycling
-      if (breakTimeInterval < MIN_BREAK_TIME)
-        breakTimeInterval = MIN_BREAK_TIME;
-    }
+    int8_t overtime = map(breaktime, MIN_BREAK_TIME, MAX_BREAK_TIME, -4, 6);
 
-    // 4. Smooth Runtime Bonus via map()
-    // Longer breaks allow the Air Lift to be more efficient due to higher
-    // static level. Map break interval (60-600 min) to bonus work time (0-8
-    // min).
-    uint16_t cappedBreak = constrain(breakTimeInterval, MIN_BREAK_TIME, MAX_BREAK_TIME);
-    long bonus = map(cappedBreak, MIN_BREAK_TIME, MAX_BREAK_TIME, 0, 8);
+    runtime = constrain(runtime + overtime, 7, 16);
 
-    // 5. Final Runtime Calculation
-    // Base runtime (historically adjusted) + linear bonus for long rest
-    float baseRuntime = WELL_DEFAULT_RUNTIME * driftCorrection;
-    uint8_t adjustedRuntime = (uint8_t)(baseRuntime + bonus);
-
-    // Hard limits to protect the compressor from overheating
-    adjustedRuntime = constrain(adjustedRuntime, 8, 16);
-
-    // Debug output
+    // Debug output for monitoring
     if (spanLg.active()) {
-      dbg(F("[Slowly] MainEmpty: "));
-      dbg(mainEmpty);
-      dbg(F(" | WellEmpty: "));
-      dbg(wellEmpty);
-      dbg(F(" | Break: "));
-      dbg(breakTimeInterval);
-      dbg(F("m | Bonus: +"));
-      dbg(bonus);
-      dbg(F("m | Work: "));
-      dbg(adjustedRuntime);
-      dbgLn(F("m"));
+      dbg(F("[SLOWLY] Work: "));
+      dbg(runtime);
+      dbg(F("m | Break: "));
+      dbg(breaktime);
+      dbg(F("m | Rise: "));
+      dbg(realRise);
+      dbg(F("cm | Drift: "));
+      dbg(drift);
+      dbg(F(" | WellVol: "));
+      dbg(wellVol);
+      dbgLn();
     }
-
-    // Execute pumping logic
-    return RunWell{adjustedRuntime, breakTimeInterval};
+    return RunWell{runtime, breaktime};
   }
 };
 #endif
