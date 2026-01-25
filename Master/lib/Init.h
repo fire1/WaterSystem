@@ -31,8 +31,8 @@ Heat heat(&buzz);
 SlowlyMode slowlyMode;
 WinterMode winterMode;
 HourlyMode hourlyMode;
-ThreeHourMode threeHourMode;
-Mode *modes[] = {nullptr, &hourlyMode, &threeHourMode, &slowlyMode,
+Hours3Mode hours3Mode;
+Mode *modes[] = {nullptr, &hourlyMode, &hours3Mode, &slowlyMode,
                  &winterMode};
 
 // Return title for mode index (flash string). Keeps Data.h free of

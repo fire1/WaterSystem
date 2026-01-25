@@ -18,8 +18,7 @@ public:
 
   const __FlashStringHelper *title() override { return F("Winter"); }
 
-  RunWell well() override {
-    if (!read) return;
+  RunWell well(Read* read) override {
 
     // 1. Basic Data Acquisition
     float waterTemp = read->getWellWaterTemp();
@@ -42,10 +41,7 @@ public:
     // A) EMERGENCY: House tank is low
     if (mainLevel > MAIN_DRAIN_LIMIT) {
       breakTimeInterval = MIN_BREAK_TIME;
-      if(spanLg.active()) {
-        //                "1234567890123456"
         this->setWarn(F("HOUSE WATER LOW ")); 
-      }
     }
     // B) FREEZE PROTECTION: Water near 0°C
     else if (waterTemp < 1.0) {
@@ -66,13 +62,13 @@ public:
     // C) THERMAL CONSERVATION: Mass is OK (Level > 50cm), stay in standby
     else if (wellLevel <= WELL_MIDPOINT) {
       breakTimeInterval = MAX_BREAK_TIME; //  sleep time
-      if(spanLg.active()) dbgLn(F("[Winter] Mass OK, sleeping."));
+       dbgLn(F("[Winter] Mass OK, sleeping."));
     }
     // D) REPLENISHING MASS: Well is emptier than 50cm
     else if (wellLevel > WELL_MIDPOINT) {
       // Slow refill (min 6 hours break) to keep ground water warm
       breakTimeInterval = max(breakTimeInterval, (uint16_t)360); 
-      if(spanLg.active()) dbgLn(F("[Winter] Refilling mass."));
+       dbgLn(F("[Winter] Refilling mass."));
     }
 
     // 4. Final adjustments

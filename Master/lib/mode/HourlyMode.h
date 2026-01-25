@@ -11,15 +11,13 @@
 
 class HourlyMode : public Mode {
 public:
-  
-
 
     HourlyMode() {}
 
     // Title displayed on LCD
     const __FlashStringHelper *title() override { return F("1-Hour"); }
 
-    RunWell well() override {
+    RunWell well(Read* read) override {
 
         // In this mode, we ignore levels and drift correction.
         // We simply cycle the pump every hour.

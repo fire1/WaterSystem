@@ -9,14 +9,14 @@
 #define THREE_HOUR_RUNTIME 12
 #define THREE_HOUR_BREAK 168
 
-class ThreeHourMode : public Mode {
+class Hours3Mode : public Mode {
 public:
-    ThreeHourMode() {}
+    Hours3Mode() {}
 
     // Title displayed on LCD
     const __FlashStringHelper *title() override { return F("3-Hour"); }
 
-    RunWell well() override {
+    RunWell well(Read* read) override {
     
 
         // Static mode: fixed intervals regardless of sensor data

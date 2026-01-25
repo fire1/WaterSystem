@@ -2,7 +2,7 @@
 #define ModeInterface_h
 
 #include "Glob.h"
-
+#include "Read.h"
 // Forward declarations to avoid circular dependencies
 
 // Defines title len for LCD
@@ -139,6 +139,13 @@ private:
     float rawCorrection = (float)TARGET_RISE_CM / (float)actualRise;
     return clamp(rawCorrection, 0.5, 1.5);
   }
+
+/**
+   * Pumping well amplitude
+   * @param workMin
+   * @param stopMin
+   */
+  void pumpWell(uint8_t workMin, unsigned long stopMin) {
 
   //
   // Shortcut/helper functions
@@ -293,13 +300,6 @@ protected:
     return tankLevel - LevelSensorMainMax;
   }
 
-  /**
-   * Pumping well amplitude
-   * @param workMin
-   * @param stopMin
-   */
-  void pumpWell(uint8_t workMin, unsigned long stopMin) {
-
     unsigned long msTimeToOff = this->calcMinutes(workMin);
     unsigned long msTimeToOn = this->calcMinutes(stopMin);
 
@@ -384,9 +384,9 @@ protected:
     }
   }
 
-  virtual RunWell well() = 0;
+  virtual RunWell well(Read* read) = 0;
 
-  virtual bool main(){
+  virtual bool main(Read *read){
     return false;
   }
 
@@ -395,14 +395,28 @@ protected:
   virtual bool cutoff() { return false; }
 
 public:
-  void init(Read *rd, Buzz *bz) { read = rd; }
+  void init(Read *rd, Buzz *bz) { read = rd, buzz = bz; }
   void exec() {
 
     this->listen();
+
     if (!ctrlWell.isOn()) {
-      RunWell run = this->well();
+      RunWell run = this->well(read);
       this->pumpWell(run.runtime, run.breaktime);
     }
+
+    if (!ctrlMain.isOn()) {
+      if (this->main(read)) ctrlMain.setOn(true);
+    }
+
+    if (cutoff())
+    {
+      ctrlMain.setOn(false);
+      ctrlWell.setOn(false);
+      dbgLn(F("[CTRL] CUT OFF both pumps!"));
+    }
+    
+
   }
   // Return flash string helper so implementations can return F("...")
   virtual const __FlashStringHelper *title() = 0;

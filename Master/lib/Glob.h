@@ -255,7 +255,7 @@ extern Mode* modes[MODE_COUNT];
 #include "mode/WinterMode.h"
 #include "mode/SlowlyMode.h"
 #include "mode/HourlyMode.h"
-#include "mode/ThreeHourMode.h"
+#include "mode/Hours3Mode.h"
 
 
 

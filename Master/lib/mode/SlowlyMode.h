@@ -24,7 +24,7 @@ public:
 
   const __FlashStringHelper *title() override { return F("Slowly"); }
 
-  RunWell well() override {
+  RunWell well(Read* read) override {
     
 
     // Fetch levels (distance from sensor to water in cm)
