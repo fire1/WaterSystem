@@ -24,9 +24,8 @@ public:
 
   const __FlashStringHelper *title() override { return F("Slowly"); }
 
-  void exec() override {
-    if (!read)
-      return;
+  RunWell well() override {
+    
 
     // Fetch levels (distance from sensor to water in cm)
     uint8_t wellLevel = read->getWellLevel();
@@ -103,7 +102,7 @@ public:
     }
 
     // Execute pumping logic
-    this->pumpWell(adjustedRuntime, (unsigned long)breakTimeInterval);
+    return RunWell{adjustedRuntime, breakTimeInterval};
   }
 };
 #endif

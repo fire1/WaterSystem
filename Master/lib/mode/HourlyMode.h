@@ -19,8 +19,7 @@ public:
     // Title displayed on LCD
     const __FlashStringHelper *title() override { return F("1-Hour"); }
 
-    void exec() override {
-        if (!read) return;
+    RunWell well() override {
 
         // In this mode, we ignore levels and drift correction.
         // We simply cycle the pump every hour.
@@ -36,7 +35,7 @@ public:
         }
 
         // Call the base pump logic
-        this->pumpWell(currentRuntime, breakTimeInterval);
+        return RunWell{currentRuntime, breakTimeInterval};
     }
 };
 

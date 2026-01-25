@@ -31,6 +31,11 @@ struct WellPoint {
 //
 // Defines Mode interface structure.
 class Mode {
+protected:
+  struct RunWell {
+    uint8_t runtime;
+    unsigned long breaktime;
+  };
 
 private:
   uint8_t workIndex = 0;
@@ -379,9 +384,26 @@ protected:
     }
   }
 
+  virtual RunWell well() = 0;
+
+  virtual bool main(){
+    return false;
+  }
+
+  virtual void listen() {};
+
+  virtual bool cutoff() { return false; }
+
 public:
   void init(Read *rd, Buzz *bz) { read = rd; }
-  virtual void exec() = 0;
+  void exec() {
+
+    this->listen();
+    if (!ctrlWell.isOn()) {
+      RunWell run = this->well();
+      this->pumpWell(run.runtime, run.breaktime);
+    }
+  }
   // Return flash string helper so implementations can return F("...")
   virtual const __FlashStringHelper *title() = 0;
 
@@ -425,7 +447,7 @@ public:
   /**
    * @brief Gets next timer ON action for display
    */
-  unsigned long getNextOn() {
+  unsigned long getNextOn() { // ISSUE
     if (!wellState.on)
       return this->nextToOn - (getWellWorkTimer());
 

@@ -18,7 +18,7 @@ public:
 
   const __FlashStringHelper *title() override { return F("Winter"); }
 
-  void exec() override {
+  RunWell well() override {
     if (!read) return;
 
     // 1. Basic Data Acquisition
@@ -54,7 +54,7 @@ public:
       
       // CRITICAL: Force start ONLY if system is NOT busy (Power Safety)
       if (waterTemp < 0 && !systemBusy) {
-          ctrlWell.setOn(true); 
+          ctrlWell.setOn(true); // enters in infinity loop until temp rises
           //                "1234567890123456"
           this->setWarn(F("WELL FREEZING!!!")); 
       }
@@ -85,7 +85,8 @@ public:
 
     // Final Power Safety Check: If we calculated a start now but system is busy, 
     // the pumpWell method handles the timing, but we log it.
-    this->pumpWell(finalRuntime, (unsigned long)breakTimeInterval);
+
+    return RunWell{finalRuntime, breakTimeInterval};
   }
 };
 #endif

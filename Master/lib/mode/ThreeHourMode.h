@@ -16,8 +16,8 @@ public:
     // Title displayed on LCD
     const __FlashStringHelper *title() override { return F("3-Hour"); }
 
-    void exec() override {
-        if (!read) return;
+    RunWell well() override {
+    
 
         // Static mode: fixed intervals regardless of sensor data
         uint8_t currentRuntime = THREE_HOUR_RUNTIME;
@@ -31,7 +31,7 @@ public:
         }
 
         // Execute pumping
-        this->pumpWell(currentRuntime, breakTimeInterval);
+        return RunWell{currentRuntime, breakTimeInterval};
     }
 };
 
