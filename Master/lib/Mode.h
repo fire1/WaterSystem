@@ -10,14 +10,6 @@
 #define WORK_LEN 10
 #define TARGET_RISE_CM 3 // Target rise in cm per pumping session
 
-struct WellState {
-  bool on = false;
-  uint8_t level = 0;
-  unsigned long start;
-  unsigned long stop;
-  uint8_t mode = 0;
-};
-
 struct WellPoint {
   uint8_t work;
   uint8_t wait;
@@ -40,6 +32,17 @@ protected:
 private:
   Read *read;
   Buzz *buzz;
+
+  RunWell runWell;
+
+  struct WellState {
+    bool on = false;
+    uint8_t level = 0;
+    unsigned long timer;
+    unsigned long start;
+    unsigned long stop;
+    uint8_t mode = 0;
+  };
 
   uint8_t workIndex = 0;
   WellPoint pumpBuffer[WORK_LEN];
@@ -156,16 +159,24 @@ private:
     // Reset the clock when pump is manually run
     if (ctrlWell.isOn() != wellState.on) {
       wellState.on = ctrlWell.isOn();
-      wellState.start = millis();
+      wellState.start = wellState.timer = millis();
 
       this->startWorkPoint();
     }
 
+    if (spanLg.active()) {
+      dbg(F("[CTRL] Well prepare time to OFF: "));
+      dbg(getWellWorkTimer());
+      dbg(F(" / "));
+      dbg(msTimeToOff);
+      dbgLn(F(" ms"));
+    }
     //
     // Turn pump OFF by timeout of mode
     if (ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOff)) {
       ctrlWell.setOn(false);
-      wellState.stop = millis();
+      wellState.stop = wellState.timer = millis();
+
       dbg(F("[CTRL] well to OFF"));
       dbgLn();
       this->pointWorkTime(wellState.stop - wellState.start);
@@ -185,8 +196,10 @@ private:
     }
 
     if (ctrlWell.isFailure()) {
-      if (spanSm.active())
+      if (spanLg.active()) {
+        setWarn(F("WELL pump FAULT"));
         dbgLn(F("[CTRL] /Well/ has failure!"));
+      }
       return;
     }
     //
@@ -224,269 +237,272 @@ private:
     }
   }
 
+  //
+  // Shortcut/helper functions
+  //
 
-//
-// Shortcut/helper functions
-//
-
-protected :
+protected:
 //
 // Resolve working hours
 #if defined(OPT_DAYTIME_WELL)
-    const uint8_t workHours = 12;
+  const uint8_t workHours = 12;
 #else
-    const uint8_t workHours = 24;
+  const uint8_t workHours = 24;
 #endif
 
-bool isWarnStop() {
-  // todo
-  return false;
-}
-
-void setWarn(const __FlashStringHelper *msg) {
-  this->warnMessage = String(msg);
-}
-
-float clamp(float val, float minVal, float maxVal) {
-  if (val < minVal)
-    return minVal;
-  if (val > maxVal)
-    return maxVal;
-  return val;
-}
-
-float calculateAverageCorrection() {
-  float totalCorrection = 0.0;
-  uint8_t count = 0;
-
-  for (uint8_t i = 0; i < WORK_LEN; i++) {
-    if (!pumpBuffer[i].flag && pumpBuffer[i].correction != -1.0) {
-      totalCorrection += pumpBuffer[i].correction;
-      count++;
-    }
+  bool isWarnStop() {
+    // todo
+    return false;
   }
 
-  if (count == 0)
+  void setWarn(const __FlashStringHelper *msg) {
+    this->warnMessage = String(msg);
+  }
+
+  float clamp(float val, float minVal, float maxVal) {
+    if (val < minVal)
+      return minVal;
+    if (val > maxVal)
+      return maxVal;
+    return val;
+  }
+
+  float calculateAverageCorrection() {
+    float totalCorrection = 0.0;
+    uint8_t count = 0;
+
+    for (uint8_t i = 0; i < WORK_LEN; i++) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].correction != -1.0) {
+        totalCorrection += pumpBuffer[i].correction;
+        count++;
+      }
+    }
+
+    if (count == 0)
+      return 1.0; // No data, return neutral correction
+
+    return totalCorrection / (float)count;
+  }
+
+  // Calculates how much the time should change based on actual performance
+  // Returns a multiplier (e.g., 1.1 if pump is slow, 0.9 if pump is too fast)
+  float calculateCorrection(uint8_t startLevel, uint8_t endLevel) {
+    int8_t actualRise = (int8_t)startLevel - (int8_t)endLevel;
+    if (actualRise <= 0)
+      return 1.0;
+    float rawCorrection = (float)TARGET_RISE_CM / (float)actualRise;
+    return clamp(rawCorrection, 0.5, 1.5);
+  }
+
+  /**
+   * @brief Returns the last correction value
+   *
+   * @return float The last correction value, or 1.0 if no data
+   */
+  float calculateLastCorrection() {
+    for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].correction > 0) {
+        return pumpBuffer[i].correction;
+      }
+    }
     return 1.0; // No data, return neutral correction
-
-  return totalCorrection / (float)count;
-}
-
-// Calculates how much the time should change based on actual performance
-// Returns a multiplier (e.g., 1.1 if pump is slow, 0.9 if pump is too fast)
-float calculateCorrection(uint8_t startLevel, uint8_t endLevel) {
-  int8_t actualRise = (int8_t)startLevel - (int8_t)endLevel;
-  if (actualRise <= 0)
-    return 1.0;
-  float rawCorrection = (float)TARGET_RISE_CM / (float)actualRise;
-  return clamp(rawCorrection, 0.5, 1.5);
-}
-
-/**
- * @brief Returns the last correction value
- *
- * @return float The last correction value, or 1.0 if no data
- */
-float calculateLastCorrection() {
-  for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
-    if (!pumpBuffer[i].flag && pumpBuffer[i].correction > 0) {
-      return pumpBuffer[i].correction;
-    }
-  }
-  return 1.0; // No data, return neutral correction
-}
-
-float fetchWeightedCorrection() {
-  float avg = calculateAverageCorrection(); // Твоята функция за средно
-  float last = calculateLastCorrection(); // Твоята функция за последно
-
-  // Ако нямаме история, връщаме последното
-  if (avg == 1.0)
-    return last;
-
-  // Комбинираме ги за по-голяма стабилност
-  float driftCorrection = (avg * 0.7) + (last * 0.3);
-
-  if (driftCorrection < 0.5)
-    driftCorrection = 0.5;
-  if (driftCorrection > 1.5)
-    driftCorrection = 1.5;
-
-  return driftCorrection;
-}
-
-/**
- * @brief Fetch the last rise value
- *
- * @return uint8_t
- */
-uint8_t fetchLastRise() {
-  for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
-    if (!pumpBuffer[i].flag && pumpBuffer[i].rise != 0) {
-      return pumpBuffer[i].rise;
-    }
-  }
-  return 0; // No data
-}
-
-/**
- * @brief Fetch average rise value
- *
- * @return uint8_t
- */
-uint8_t fetchAverageRise() {
-  uint8_t totalRise = 0;
-  uint8_t count = 0;
-
-  for (uint8_t i = 0; i < WORK_LEN; i++) {
-    if (!pumpBuffer[i].flag && pumpBuffer[i].rise != 0) {
-      totalRise += pumpBuffer[i].rise;
-      count++;
-    }
   }
 
-  if (count == 0)
+  float fetchWeightedCorrection() {
+    float avg = calculateAverageCorrection(); // Твоята функция за средно
+    float last = calculateLastCorrection(); // Твоята функция за последно
+
+    // Ако нямаме история, връщаме последното
+    if (avg == 1.0)
+      return last;
+
+    // Комбинираме ги за по-голяма стабилност
+    float driftCorrection = (avg * 0.7) + (last * 0.3);
+
+    if (driftCorrection < 0.5)
+      driftCorrection = 0.5;
+    if (driftCorrection > 1.5)
+      driftCorrection = 1.5;
+
+    return driftCorrection;
+  }
+
+  /**
+   * @brief Fetch the last rise value
+   *
+   * @return uint8_t
+   */
+  uint8_t fetchLastRise() {
+    for (int8_t i = WORK_LEN - 1; i >= 0; i--) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].rise != 0) {
+        return pumpBuffer[i].rise;
+      }
+    }
     return 0; // No data
+  }
 
-  return totalRise / count;
-}
+  /**
+   * @brief Fetch average rise value
+   *
+   * @return uint8_t
+   */
+  uint8_t fetchAverageRise() {
+    uint8_t totalRise = 0;
+    uint8_t count = 0;
 
-uint8_t fetchRise(uint8_t defaultRise = 3) {
-  uint8_t rise;
-  rise = this->fetchAverageRise();
-  if (rise > 0)
-    return rise;
+    for (uint8_t i = 0; i < WORK_LEN; i++) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].rise != 0) {
+        totalRise += pumpBuffer[i].rise;
+        count++;
+      }
+    }
 
-  rise = this->fetchLastRise();
-  if (rise > 0)
-    return rise;
+    if (count == 0)
+      return 0; // No data
 
-  return defaultRise;
-}
+    return totalRise / count;
+  }
 
-/**
- * @brief Get the Well Volume object
- *
- * @param tankLevel
- * @return uint8_t
- */
-uint8_t getWellVolume(uint8_t tankLevel) {
-  // also need to be used LevelSensorMainMax
-  return tankLevel - LevelSensorWellMax;
-}
-/**
- * @brief Get the Main Volume object
- *
- * @param tankLevel
- * @return uint8_t
- */
-uint8_t getMainVolume(uint8_t tankLevel) {
-  // also need to be used LevelSensorMainMax
-  return tankLevel - LevelSensorMainMax;
-}
+  uint8_t fetchRise(uint8_t defaultRise = 3) {
+    uint8_t rise;
+    rise = this->fetchAverageRise();
+    if (rise > 0)
+      return rise;
 
+    rise = this->fetchLastRise();
+    if (rise > 0)
+      return rise;
 
+    return defaultRise;
+  }
 
-virtual RunWell well(Read *read) = 0;
+  /**
+   * @brief Get the Well Volume object
+   *
+   * @param tankLevel
+   * @return uint8_t
+   */
+  uint8_t getWellVolume(uint8_t tankLevel) {
+    // also need to be used LevelSensorMainMax
+    return tankLevel - LevelSensorWellMax;
+  }
+  /**
+   * @brief Get the Main Volume object
+   *
+   * @param tankLevel
+   * @return uint8_t
+   */
+  uint8_t getMainVolume(uint8_t tankLevel) {
+    // also need to be used LevelSensorMainMax
+    return tankLevel - LevelSensorMainMax;
+  }
 
-virtual bool main(Read *read) { return false; }
+  virtual RunWell well(Read *read) = 0;
 
-virtual void listen() {};
+  virtual bool main(Read *read) { return false; }
 
-virtual bool cutoff() { return false; }
+  virtual void listen() {};
+
+  virtual bool cutoff() { return false; }
 
 public:
-void init(Read *rd, Buzz *bz) { read = rd, buzz = bz; }
-void exec() {
+  void init(Read *rd, Buzz *bz) {
+    read = rd, buzz = bz;
 
-  this->listen();
-
-  if (!ctrlWell.isOn()) {
-    RunWell run = this->well(read);
-    this->pumpWell(run.runtime, run.breaktime);
+    runWell = RunWell{0, 0};
+    //wellState = WellState{false, 0, 0, 0, 0, 0};
   }
 
-  if (!ctrlMain.isOn()) {
-    if (this->main(read))
-      ctrlMain.setOn(true);
+  void exec() {
+
+    this->listen();
+
+    if (!ctrlWell.isOn()) {
+      runWell = this->well(read);
+    }
+    if (runWell.runtime > 0 && runWell.breaktime > 0)
+      this->pumpWell(runWell.runtime, runWell.breaktime);
+
+    if (!ctrlMain.isOn()) {
+      if (this->main(read))
+        ctrlMain.setOn(true);
+    }
+
+    if (cutoff()) {
+      ctrlMain.setOn(false);
+      ctrlWell.setOn(false);
+      dbgLn(F("[CTRL] CUT OFF both pumps!"));
+    }
+  }
+  // Return flash string helper so implementations can return F("...")
+  virtual const __FlashStringHelper *title() = 0;
+
+  void debug() {
+    int testMode = 0;
+    if (cmd.set(F("mode:test"), testMode, F("Set mode to TEST"))) {
+
+      pumpBuffer[0].flag = false; // Clear buffer
+      pumpBuffer[0].levelStart = 90;
+      pumpBuffer[0].levelStop = 83;
+      pumpBuffer[0].rise = 7;
+      pumpBuffer[0].wait = 180;
+      pumpBuffer[0].work = 20;
+      float correction = calculateCorrection(90, 83);
+      pumpBuffer[0].correction = correction;
+      dbgLn(F("Mode set to TEST"));
+    }
+
+    if (cmd.show(F("mode:test"), F("Shows work timer to next ON state.")))
+      cmd.print(F("Internal correction"), pumpBuffer[0].correction);
+  }
+  /**
+   * Gets title limited by length
+   */
+  const char *getTitle() {
+    static char buffer[MODE_TITLE_LEN + 1];
+    // Prefill with spaces so the LCD line is cleared/padded
+    memset(buffer, ' ', MODE_TITLE_LEN);
+    const __FlashStringHelper *flash = title();
+    strncpy_P(buffer, (PGM_P)flash, MODE_TITLE_LEN);
+
+    buffer[MODE_TITLE_LEN] = '\0';
+    return buffer;
   }
 
-  if (cutoff()) {
-    ctrlMain.setOn(false);
-    ctrlWell.setOn(false);
-    dbgLn(F("[CTRL] CUT OFF both pumps!"));
-  }
-}
-// Return flash string helper so implementations can return F("...")
-virtual const __FlashStringHelper *title() = 0;
+  // Returns the flash-resident title directly. Callers that accept
+  // __FlashStringHelper* (e.g., lcd.print) can use this to avoid copying.
+  const __FlashStringHelper *getTitleFlash() { return title(); }
 
-void debug() {
-  int testMode = 0;
-  if (cmd.set(F("mode:test"), testMode, F("Set mode to TEST"))) {
+  unsigned long getWellWorkTimer() { return millis() - wellState.timer; }
+  /**
+   * @brief Gets next timer ON action for display
+   */
+  unsigned long getNextOn() { // ISSUE
+    if (!wellState.on)
+      return this->nextToOn - (getWellWorkTimer());
 
-    pumpBuffer[0].flag = false; // Clear buffer
-    pumpBuffer[0].levelStart = 90;
-    pumpBuffer[0].levelStop = 83;
-    pumpBuffer[0].rise = 7;
-    pumpBuffer[0].wait = 180;
-    pumpBuffer[0].work = 20;
-    float correction = calculateCorrection(90, 83);
-    pumpBuffer[0].correction = correction;
-    dbgLn(F("Mode set to TEST"));
+    return this->nextToOn;
   }
 
-  if (cmd.show(F("mode:test"), F("Shows work timer to next ON state.")))
-    cmd.print(F("Internal correction"), pumpBuffer[0].correction);
-}
-/**
- * Gets title limited by length
- */
-const char *getTitle() {
-  static char buffer[MODE_TITLE_LEN + 1];
-  // Prefill with spaces so the LCD line is cleared/padded
-  memset(buffer, ' ', MODE_TITLE_LEN);
-  const __FlashStringHelper *flash = title();
-  strncpy_P(buffer, (PGM_P)flash, MODE_TITLE_LEN);
+  /**
+   * @brief Gets next timer OFF action for display
+   */
+  unsigned long getNextOff() {
+    if (wellState.on)
+      return this->nextToOff - (getWellWorkTimer());
 
-  buffer[MODE_TITLE_LEN] = '\0';
-  return buffer;
-}
-
-// Returns the flash-resident title directly. Callers that accept
-// __FlashStringHelper* (e.g., lcd.print) can use this to avoid copying.
-const __FlashStringHelper *getTitleFlash() { return title(); }
-
-unsigned long getWellWorkTimer() { return millis() - wellState.start; }
-/**
- * @brief Gets next timer ON action for display
- */
-unsigned long getNextOn() { // ISSUE
-  if (!wellState.on)
-    return this->nextToOn - (getWellWorkTimer());
-
-  return this->nextToOn;
-}
-
-/**
- * @brief Gets next timer OFF action for display
- */
-unsigned long getNextOff() {
-  if (wellState.on)
-    return this->nextToOff - (getWellWorkTimer());
-
-  return this->nextToOff;
-}
-
-String getWarnMessage() {
-  if (this->warnMessage.length() > 0) {
-    String msg = this->warnMessage;
-    this->warnMessage = "";
-    return msg;
+    return this->nextToOff;
   }
 
-  return this->warnMessage;
-}
-}
-;
+  String getWarnMessage() {
+    if (this->warnMessage.length() > 0) {
+      String msg = this->warnMessage;
+      this->warnMessage = "";
+      return msg;
+    }
+
+    return this->warnMessage;
+  }
+};
 
 #endif

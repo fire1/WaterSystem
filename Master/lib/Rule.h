@@ -158,6 +158,7 @@ private:
       activeMode = modes[id];
       activeModeId = id;
       activeMode->init(read, buzz);
+
     }
 
     if (activeMode == nullptr) {
@@ -168,7 +169,7 @@ private:
 
     // Display mode warning if any
     String warnMsg = activeMode->getWarnMessage();
-    if ( warnMsg.length() > 0)
+    if (warnMsg.length() > 0)
       this->setWarn(warnMsg);
 
     activeMode->debug();
