@@ -1,21 +1,21 @@
-#ifndef HourlyMode_h
-#define HourlyMode_h
+#ifndef EvrDayMode_h
+#define EvrDayMode_h
 
 #include "../Mode.h"
 #include "../Pump.h"
 #include "../Read.h"
 
 // Fixed timing: 12 minutes work, 48 minutes break = 1 hour cycle
-#define HOURLY_RUNTIME 10
-#define HOURLY_BREAK 50
+#define HOURLY_RUNTIME 12
+#define HOURLY_BREAK 1440 
 
-class HourlyMode : public Mode {
+class EvrDayMode : public Mode {
 public:
 
-    HourlyMode() {}
+    EvrDayMode() {}
 
     // Title displayed on LCD
-    const __FlashStringHelper *title() override { return F("1-Hour"); }
+    const __FlashStringHelper *title() override { return F("Every Day"); }
 
     RunWell well(Read* read) override {
 
@@ -27,7 +27,7 @@ public:
 
         // Debug output for monitoring
         if (spanLg.active()) {
-            dbg(F("[HOURLY] Fixed cycle - Work: ")); dbg(currentRuntime);
+            dbg(F("[DAILY] Fixed cycle - Work: ")); dbg(currentRuntime);
             dbg(F("m | Break: ")); dbg(breakTimeInterval);
             dbgLn(F("m"));
         }

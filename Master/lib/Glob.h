@@ -240,7 +240,7 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 
 // Forward declaration of Mode class and modes array
 class Mode;
-#define MODE_COUNT  5 // Including "none" mode
+#define MODE_COUNT  6 // Including "none" mode
 extern Mode* modes[MODE_COUNT];
 
 #include "Time.h"
@@ -256,6 +256,8 @@ extern Mode* modes[MODE_COUNT];
 #include "mode/SlowlyMode.h"
 #include "mode/HourlyMode.h"
 #include "mode/Hours3Mode.h"
+#include "mode/EvrDayMode.h"
+#include "mode/CleansMode.h"
 
 
 

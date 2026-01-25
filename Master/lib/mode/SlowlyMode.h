@@ -84,11 +84,11 @@ public:
     uint8_t adjustedRuntime = (uint8_t)(baseRuntime + bonus);
 
     // Hard limits to protect the compressor from overheating
-    adjustedRuntime = constrain(adjustedRuntime, 8, 22);
+    adjustedRuntime = constrain(adjustedRuntime, 8, 16);
 
     // Debug output
     if (spanLg.active()) {
-      dbg(F("[WINTER] MainEmpty: "));
+      dbg(F("[Slowly] MainEmpty: "));
       dbg(mainEmpty);
       dbg(F(" | WellEmpty: "));
       dbg(wellEmpty);

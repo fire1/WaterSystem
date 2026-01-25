@@ -9,7 +9,7 @@
 class Rule {
 private:
   Mode *activeMode = nullptr;
-  uint8_t activeModeId = 0;
+  uint8_t activeModeId = 255; // Invalid mode ID in order to apply at start
   //
   // Handle well state localy in order to detect human interaction.
   struct WellState {

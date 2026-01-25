@@ -26,7 +26,7 @@ class Mode {
 protected:
   struct RunWell {
     uint8_t runtime;
-    unsigned long breaktime;
+    uint16_t breaktime;
   };
 
 private:
@@ -141,7 +141,7 @@ private:
    * @param workMin
    * @param stopMin
    */
-  void pumpWell(uint8_t workMin, unsigned long stopMin) {
+  void pumpWell(uint8_t workMin, uint16_t stopMin) {
 
     unsigned long msTimeToOff = this->calcMinutes(workMin);
     unsigned long msTimeToOn = this->calcMinutes(stopMin);
@@ -409,8 +409,8 @@ public:
   void init(Read *rd, Buzz *bz) {
     read = rd, buzz = bz;
 
-    runWell = RunWell{0, 0};
-    //wellState = WellState{false, 0, 0, 0, 0, 0};
+    runWell = RunWell{10, 5760}; // 4 days inactivity MAX!
+    // wellState = WellState{false, 0, 0, 0, 0, 0};
   }
 
   void exec() {
