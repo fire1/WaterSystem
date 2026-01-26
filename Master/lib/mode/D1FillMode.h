@@ -1,16 +1,15 @@
-
-#ifndef SlowlyMode_h
-#define SlowlyMode_h
+#ifndef D1FillMode_h
+#define D1FillMode_h
 
 #include "../Mode.h"
 #include "../Pump.h"
 #include "../Read.h"
 
-#define MIN_BREAK_TIME 60       // 1 hour
+#define MIN_BREAK_TIME 48       // 1 hour
 #define MAX_BREAK_TIME 480      // 8 hours
 #define WELL_DEFAULT_RUNTIME 12 // minutes default run time
 
-class SlowlyMode : public Mode {
+class D1FillMode : public Mode {
 private:
   unsigned long pumpOffTime = 0;
   unsigned long lastFinishTime = 0;
@@ -20,9 +19,8 @@ private:
   uint8_t currentRuntime = WELL_DEFAULT_RUNTIME; // Start with 12 mins base
 
 public:
-  SlowlyMode() {}
-
-  const __FlashStringHelper *title() override { return F("Slowly"); }
+  D1FillMode() {}
+  const __FlashStringHelper *title() override { return F("Daily Fill"); }
 
   RunWell well(Read *read) override {
 
@@ -46,7 +44,7 @@ public:
 
     // Debug output for monitoring
     if (spanLg.active()) {
-      dbg(F("[SLOWLY] Work: "));
+      dbg(F("[D1FillMode] Work: "));
       dbg(runtime);
       dbg(F("m | Break: "));
       dbg(breaktime);

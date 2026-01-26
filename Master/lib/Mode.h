@@ -267,6 +267,15 @@ protected:
     return val;
   }
 
+  bool hasValidHistory() {
+    for (uint8_t i = 0; i < WORK_LEN; i++) {
+      if (pumpBuffer[i].correction > 0.0 && pumpBuffer[i].correction != 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   float calculateAverageCorrection() {
     float totalCorrection = 0.0;
     uint8_t count = 0;
@@ -374,6 +383,21 @@ protected:
       return rise;
 
     return defaultRise;
+  }
+
+  WellPoint fetchEfficiencyPoint() {
+    float best = 0;
+    uint8_t index = 0;
+    for (uint8_t i = 0; i < WORK_LEN; i++) {
+      if (!pumpBuffer[i].flag && pumpBuffer[i].work > 0) {
+        float eff = (float)pumpBuffer[i].rise;
+        if (eff > best) {
+          best = eff;
+          index = i;
+        }
+      }
+    }
+    return pumpBuffer[index];
   }
 
   /**

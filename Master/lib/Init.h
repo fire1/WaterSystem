@@ -28,14 +28,15 @@ Read read;
 
 Heat heat(&buzz);
 CleansMode cleansMode;
-SlowlyMode slowlyMode;
+D1FillMode d1FillMode;
 WinterMode winterMode;
 HourlyMode hourlyMode;
 Hours3Mode hours3Mode;
 EvrDayMode evrDayMode;
+OptimalMode optimalMode;
 
 Mode *modes[] = {&cleansMode, &hourlyMode, &hours3Mode,
-                 &slowlyMode, &evrDayMode, &winterMode};
+                  &evrDayMode, &d1FillMode, &optimalMode, &winterMode};
 
 // Return title for mode index (flash string). Keeps Data.h free of
 // ModeInterface.
