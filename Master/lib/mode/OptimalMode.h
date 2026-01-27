@@ -2,128 +2,80 @@
 #define OptimalMode_h
 
 #include "../Mode.h"
-#include "../Pump.h"
-#include "../Read.h"
-
-#define MIN_BREAK_TIME 48       // 1 hour
-#define MAX_BREAK_TIME 480      // 8 hours
-#define WELL_DEFAULT_RUNTIME 12 // minutes default run time
-
-#define DRIFT_BAD 1.05
-#define DRIFT_GOOD 0.95
 
 class OptimalMode : public Mode {
 private:
-  struct PumpPlan {
-    uint16_t runtime;   // minutes
-    uint16_t breaktime; // minutes
-    float correction;
-  };
+    struct PumpPlan {
+        uint8_t runtime;    // work minutes
+        uint16_t breaktime; // pause minutes
+        float efficiency;   // actual cm per total cycle minute
+    };
 
-  PumpPlan plan;
-
-  unsigned long pumpOffTime = 0;
-  unsigned long lastFinishTime = 0;
-  uint8_t startLevelCapture = 0;
-  int8_t tuneDir = 0;
-  float lastCorrection = 1.0;
-  uint8_t stableCount = 0;
-  
-
-  float timeMultiplier = 1.0;
-  uint8_t currentRuntime = WELL_DEFAULT_RUNTIME; // Start with 12 mins base
-
-  PumpPlan fetchBestPlan(float drift) {
-    WellPoint p = fetchEfficiencyPoint();
-
-    PumpPlan plan;
-
-    plan.runtime = p.work;
-    plan.breaktime = p.wait;
-
-    // ефективност = rise / runtime
-    plan.correction = p.correction + 0.04; // леко увеличаваме целта
-
-    // ако има дрифт надолу → връщаме се към доказано стабилен режим
-    if (drift > 1.2) {
-      plan.runtime = min(plan.runtime - 1, WELL_DEFAULT_RUNTIME);
-      plan.breaktime += 15; // повече почивка
-    }
-
-    return plan;
-  }
-
-  PumpPlan defaultBootstrapPlan() {
-    PumpPlan p;
-    p.runtime = WELL_DEFAULT_RUNTIME; // 12 мин
-    p.breaktime = 180;                // 3 часа
-    p.correction = 1.0;
-    return p;
-  }
+    PumpPlan current;
+    PumpPlan best;
+    uint8_t searchPhase = 0; 
 
 public:
-  OptimalMode() {}
-
-  const __FlashStringHelper *title() override { return F("Auto Adjst"); }
-
-  RunWell well(Read *read) override {
-    uint8_t wellVol = this->getWellVolume(read->getWellLevel());
-    uint8_t realRise = this->fetchRise(TARGET_RISE_CM);
-    float drift = constrain(this->calculateLastCorrection(), 0.6, 1.6);
-
-    if (!hasValidHistory()) {
-      plan = defaultBootstrapPlan();
-      if (spanLg.active())
-        dbgLn(F("[OPTIMAL] Bootstrap plan applied."));
-    }
-    // ⚠️ ФАЗА 2: влошаване → връщане към златната зона
-    else if (drift > DRIFT_BAD) {
-      // ⚠️ пада ефективността → връщаме се към златната зона
-      plan = fetchBestPlan(drift);
-
-      if (spanLg.active())
-        dbgLn(F("[OPTIMAL]  Correcting BAD drift."));
-    } else if (drift < DRIFT_GOOD) {
-
-      float sessionsNeeded = (float)wellVol / (float)realRise;
-      if (sessionsNeeded < 1.0)
-        sessionsNeeded = 1.0;
-
-      if (tuneDir == 0)
-        tuneDir = -1;
-
-      uint8_t trialRuntime = constrain(currentRuntime + tuneDir, 7, 16);
-
-      plan.runtime = trialRuntime;
-      plan.breaktime =
-          constrain(((workHours * 60 + plan.runtime) / sessionsNeeded),
-                    MIN_BREAK_TIME, MAX_BREAK_TIME);
-
-      plan.correction = (float)realRise / plan.runtime;
-
-      if (plan.correction < lastCorrection) {
-        currentRuntime = plan.runtime;
-        lastCorrection = plan.correction;
-        stableCount = 0;
-      } else {
-        tuneDir = -tuneDir;
-        stableCount++;
-      }
-
-      if (stableCount >= 3) {
-        tuneDir = 0; // зона намерена
-      }
+    OptimalMode() {
+        current = {12, 180, 0.0};
+        best = current;
     }
 
-    if (spanLg.active()) {
-      dbg(F("[OPTIMAL] Drift: "));
-      dbg(drift);
-      dbg(F(" | Eff: "));
-      dbg(plan.correction);
-      dbgLn();
-    }
+    const __FlashStringHelper *title() override { return F("Auto Adjst"); }
 
-    return RunWell{plan.runtime, plan.breaktime};
-  }
+    RunWell well(Read *read) override {
+        // 1. Initial run protection
+        if (!hasValidHistory()) {
+            return RunWell{current.runtime, current.breaktime};
+        }
+
+        // 2. Use your correction logic to see the error
+        // drift > 1.0 means we are under-performing (well is tired)
+        // drift < 1.0 means we are over-performing (well is strong)
+        float drift = constrain(this->calculateLastCorrection(), 0.5, 1.5);
+        
+        // Calculate real rise based on history
+        uint8_t rise = fetchRise(TARGET_RISE_CM);
+        
+        // Calculate Efficiency: (Real CM) / (Work + Pause minutes)
+        uint16_t totalCycle = current.runtime + current.breaktime;
+        float measuredEff = (float)rise / (float)totalCycle;
+
+        if (spanLg.active()) {
+            dbg(F("[OPT] Drift: ")); dbg(drift);
+            dbg(F(" | Eff: ")); dbgLn(measuredEff);
+        }
+
+        // 3. Update Best known efficiency
+        if (measuredEff > best.efficiency) {
+            best = current;
+            best.efficiency = measuredEff;
+        }
+
+        // 4. Optimization Engine using Drift as a guide
+        if (searchPhase == 0) {
+            // Adjust Runtime based on Drift
+            // If drift is 1.2, we need ~20% more time to hit TARGET_RISE_CM
+            if (drift > 1.05) {
+                if (current.runtime < 16) current.runtime++;
+            } else if (drift < 0.95) {
+                if (current.runtime > 7) current.runtime--;
+            }
+            searchPhase = 1;
+        } 
+        else {
+            // Adjust Breaktime based on Efficiency
+            // If current efficiency is dropping compared to BEST, increase rest
+            if (measuredEff < (best.efficiency * 0.95)) {
+                current.breaktime = constrain(current.breaktime + 15, 60, 480);
+            } else {
+                // If we are doing well, try to push the limits by reducing rest
+                current.breaktime = constrain(current.breaktime - 10, 60, 480);
+            }
+            searchPhase = 0;
+        }
+
+        return RunWell{current.runtime, current.breaktime};
+    }
 };
 #endif
