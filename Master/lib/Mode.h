@@ -164,13 +164,7 @@ private:
       this->startWorkPoint();
     }
 
-    if (spanLg.active()) {
-      dbg(F("[CTRL] Well prepare time to OFF: "));
-      dbg(getWellWorkTimer());
-      dbg(F(" / "));
-      dbg(msTimeToOff);
-      dbgLn(F(" ms"));
-    }
+
     //
     // Turn pump OFF by timeout of mode
     if (ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOff)) {
@@ -503,7 +497,7 @@ public:
    */
   unsigned long getNextOn() { // ISSUE
     if (!wellState.on)
-      return this->nextToOn - (getWellWorkTimer());
+      return this->nextToOn - getWellWorkTimer();
 
     return this->nextToOn;
   }
@@ -513,7 +507,7 @@ public:
    */
   unsigned long getNextOff() {
     if (wellState.on)
-      return this->nextToOff - (getWellWorkTimer());
+      return this->nextToOff - getWellWorkTimer();
 
     return this->nextToOff;
   }

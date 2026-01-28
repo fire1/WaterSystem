@@ -57,6 +57,7 @@ private:
   unsigned long getWellWorkTimer() {
     if (!this->activeMode)
       return 0;
+
     return this->activeMode->getWellWorkTimer();
   }
 
@@ -158,7 +159,6 @@ private:
       activeMode = modes[id];
       activeModeId = id;
       activeMode->init(read, buzz);
-
     }
 
     if (activeMode == nullptr) {
@@ -608,7 +608,8 @@ private:
    */
   void handleWellOvertime() {
 #ifdef OPT_WELL_OVERTIME
-    if (ctrlWell.isOn() && getWellWorkTimer() > OPT_WELL_OVERTIME) {
+    if (ctrlWell.isOn() && getWellWorkTimer() != 0 &&
+        getWellWorkTimer() > OPT_WELL_OVERTIME) {
       ctrlWell.setOn(false);
       ctrlWell.failure();
       setWarn(F("Well overtime!  "));
