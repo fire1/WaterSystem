@@ -608,8 +608,7 @@ private:
    */
   void handleWellOvertime() {
 #ifdef OPT_WELL_OVERTIME
-    if (ctrlWell.isOn() && getWellWorkTimer() != 0 &&
-        getWellWorkTimer() > OPT_WELL_OVERTIME) {
+    if (ctrlWell.isOn() && getWellWorkTimer() > OPT_WELL_OVERTIME) {
       ctrlWell.setOn(false);
       ctrlWell.failure();
       setWarn(F("Well overtime!  "));
