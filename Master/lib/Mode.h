@@ -136,6 +136,7 @@ private:
     }
   }
 
+  WellState getWellState() { return wellState; }
   /**
    * Pumping well amplitude
    * @param workMin
@@ -163,7 +164,6 @@ private:
 
       this->startWorkPoint();
     }
-
 
     //
     // Turn pump OFF by timeout of mode
@@ -436,7 +436,8 @@ public:
     this->listen();
 
     if (!ctrlWell.isOn()) {
-      runWell = this->well(read);
+      if (spanLg.active())
+        runWell = this->well(read);
     }
     if (runWell.runtime > 0 && runWell.breaktime > 0)
       this->pumpWell(runWell.runtime, runWell.breaktime);
