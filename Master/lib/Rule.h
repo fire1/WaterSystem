@@ -58,7 +58,7 @@ private:
     if (!this->activeMode)
       return 0;
 
-    return this->activeMode->getWellWorkTimer();
+    return this->activeMode->getWellTimer();
   }
 
 public:
@@ -609,7 +609,7 @@ private:
   void handleWellOvertime() {
 #ifdef OPT_WELL_OVERTIME
     // 1sec to try to avoid millis overflow issue
-    if (ctrlWell.isOn() && getWellWorkTimer() + 1000 > OPT_WELL_OVERTIME) {
+    if (ctrlWell.isOn() && activeMode->getWellStartTimer() > OPT_WELL_OVERTIME) {
       ctrlWell.setOn(false);
       ctrlWell.failure();
       setWarn(F("Well overtime!  "));
@@ -620,14 +620,14 @@ private:
     // Debug info
     if (cmd.show(F("well:overtime"), F("Shows well pump work time."))) {
       dbg(F("Well work time: "));
-      dbg( getWellWorkTimer());
+      dbg(activeMode->getWellStartTimer());
       dbg(F(" overtime "));
       dbg(OPT_WELL_OVERTIME);
       dbg(F(" Well overtime check: "));
-      dbg( getWellWorkTimer() + 1000 > OPT_WELL_OVERTIME);
+      dbg(activeMode->getWellStartTimer() > OPT_WELL_OVERTIME);
       dbgLn();
     }
-    
+
 #endif
   }
   /**

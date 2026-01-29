@@ -167,7 +167,7 @@ private:
 
     //
     // Turn pump OFF by timeout of mode
-    if (ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOff)) {
+    if (ctrlWell.isOn() && (getWellTimer() >= msTimeToOff)) {
       ctrlWell.setOn(false);
       wellState.stop = wellState.timer = millis();
 
@@ -209,7 +209,7 @@ private:
     //
     // Prepare, read levels before start
     if (!ctrlWell.isOn() &&
-        (getWellWorkTimer() >= (msTimeToOn - timePrepareTurnOn))) {
+        (getWellTimer() >= (msTimeToOn - timePrepareTurnOn))) {
       if (spanLg.active()) {
         read->startWorkRead();
         buzz->alarm();
@@ -221,7 +221,7 @@ private:
     //
     // Turn the pump on
     if (!ctrlMain.isOn() && !ctrlWell.isOn() &&
-        (getWellWorkTimer() >= msTimeToOn)) {
+        (getWellTimer() >= msTimeToOn)) {
 
       startWorkPoint();
       dbg(F("[CTRL] Well to ON"));
@@ -492,13 +492,14 @@ public:
   // __FlashStringHelper* (e.g., lcd.print) can use this to avoid copying.
   const __FlashStringHelper *getTitleFlash() { return title(); }
 
-  unsigned long getWellWorkTimer() { return millis() - wellState.timer; }
+  unsigned long getWellTimer() { return millis() - wellState.timer; }
+  unsigned long getWellStartTimer() { return millis() - wellState.start; }
   /**
    * @brief Gets next timer ON action for display
    */
   unsigned long getNextOn() { // ISSUE
     if (!wellState.on)
-      return this->nextToOn - getWellWorkTimer();
+      return this->nextToOn - getWellTimer();
 
     return this->nextToOn;
   }
@@ -508,7 +509,7 @@ public:
    */
   unsigned long getNextOff() {
     if (wellState.on)
-      return this->nextToOff - getWellWorkTimer();
+      return this->nextToOff - getWellTimer();
 
     return this->nextToOff;
   }

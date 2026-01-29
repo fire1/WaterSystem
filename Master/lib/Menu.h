@@ -249,7 +249,7 @@ private:
       }
     } else {
       lcd.write((char)4);
-      lcd.print(F("  WORK /   STOP"));
+      lcd.print(F("  WORK /   WAIT"));
     }
 
     lcd.setCursor(0, 1);
