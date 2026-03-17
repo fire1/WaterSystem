@@ -254,8 +254,12 @@ extern Mode* modes[MODE_COUNT];
 // Include mode implementations
 #include "mode/WinterMode.h"
 #include "mode/D1FillMode.h"
+#include "mode/FasterMode.h"
 #include "mode/HourlyMode.h"
 #include "mode/Hours3Mode.h"
+#include "mode/Hours4Mode.h"
+#include "mode/Hours6Mode.h"
+#include "mode/OptimalMode.h"
 #include "mode/EvrDayMode.h"
 #include "mode/CleansMode.h"
 #include "mode/OptimalMode.h"

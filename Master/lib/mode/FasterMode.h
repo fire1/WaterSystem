@@ -32,3 +32,4 @@ public:
     return RunWell{currentRuntime, breakTimeInterval};
   }
 };
+#endif
