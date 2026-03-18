@@ -1,8 +1,9 @@
-#ifndef OptimalMode_h
-#define OptimalMode_h
+#ifndef PidTnkMode_h
+#define PidTnkMode_h
 #include "../Mode.h"
 
-class OptConMode : public Mode {
+
+class PidTnkMode : public Mode {
 private:
     // ===== Tank Specifications =====
     // Tank dimensions in cm: length × width × height
@@ -25,6 +26,13 @@ private:
     static constexpr uint8_t SENSOR_EMPTY = 100;
     static constexpr uint8_t SENSOR_FULL = 20;
     static constexpr uint8_t SENSOR_RANGE = SENSOR_EMPTY - SENSOR_FULL;  // 80 units
+
+    /*
+     * PID Control (for hitting 3cm target):
+     *  cppP_GAIN = 2.0           // How fast to react to drift errors
+     *  I_GAIN = 0.3              // How to smooth out oscillations
+     *  DRIFT_DEADBAND = 0.03     // Tolerance zone (±3%)
+     */
 
     // ===== Tuning Parameters: PID Control =====
     static constexpr float P_GAIN = 2.0;
@@ -117,7 +125,7 @@ private:
     uint8_t mainTankCriticalCounter;  // Consecutive cycles below critical
 
 public:
-    OptConMode() {
+    PidTnkMode() {
         // Initialize PID state
         current = {12, 180, 0.0};
         best = current;
@@ -463,10 +471,10 @@ private:
     void logDiagnostics(float drift, float measuredEff) {
         dbg(F("[OPT+T] Cycle: ")); dbg(cycleCount);
         dbg(F(" | State: ")); dbg(getStateName());
-        dbg(F(" | Drift: ")); dbg(drift, 2);
-        dbg(F(" | Well: ")); dbg(tanks.wellCurrent.actualHeight, 1);
-        dbg(F("cm | Main: ")); dbg(tanks.mainCurrent.actualHeight, 1);
-        dbg(F("cm | Cons: ")); dbg(consumption.avgConsumptionPerHour, 2);
+        dbg(F(" | Drift: ")); dbg(drift);
+        dbg(F(" | Well: ")); dbg(tanks.wellCurrent.actualHeight );
+        dbg(F("cm | Main: ")); dbg(tanks.mainCurrent.actualHeight);
+        dbg(F("cm | Cons: ")); dbg(consumption.avgConsumptionPerHour);
         dbg(F(" cm/h | RT: ")); dbg(current.runtime);
         dbg(F("m BT: ")); dbgLn(current.breaktime);
     }

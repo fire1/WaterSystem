@@ -1,8 +1,8 @@
-#ifndef OptimalMode_h
-#define OptimalMode_h
+#ifndef PidRunMode_h
+#define PidRunMode_h
 #include "../Mode.h"
 
-class OptimalMode : public Mode {
+class PidRunMode : public Mode {
 private:
     // ===== Tuning Parameters =====
     // PID-like coefficients for runtime adjustment
@@ -55,7 +55,7 @@ private:
     uint8_t driftExtremeCount;  // Consecutive cycles with extreme drift
 
 public:
-    OptimalMode() {
+    PidRunMode() {
         // Initialize with conservative defaults
         current = {12, 180, 0.0};
         best = current;
@@ -68,7 +68,7 @@ public:
     }
 
     const __FlashStringHelper *title() override {
-        return F("Auto Adjst");
+        return F("Auto Run");
     }
 
     RunWell well(Read *read) override {
@@ -303,7 +303,7 @@ private:
  FeatureBenefitEMA + Trend TrackingAdapts to well conditions without peak lock-inPI ControllerSmooth, proportional adjustments instead of binary logicState MachineIntelligent recovery prevents over-exhaustionHysteresis/DeadbandPrevents micro-oscillations around targetWeighted Efficiency BlendingHistorical best gradually incorporates new data
 
  Deliverables
- OptimalMode_Improved.h — Production-ready C++ class with:
+ PidRunMode_Improved.h — Production-ready C++ class with:
 
  350+ lines of well-documented code
  All helper methods preserved from your original

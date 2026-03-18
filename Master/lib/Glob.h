@@ -16,14 +16,14 @@
 //
 // Definition setup
 #define DEBUG  // Comment it to disable debugging
-#define RULE_START_WAIT  1500 // 55000 // Wait time for sensors at start in Rule class 
+#define RULE_START_WAIT  1500 // 55000 // Wait time for sensors at start in Rule class
 //#define WELL_MEASURE_DEFAULT // Uses trigger/echo to get distance (not recommended)
 #define WELL_MEASURE_UART_47K  // Uses Serial UART to communicate with the sensor
 #define ENABLE_CMD             // Enables Serial input listener for commands
 #define ENABLE_CLOCK           // Enables DS3231 clock usage
 #define OPT_PROTECT_COLD 14        // Do not run well pump below temperature.
 // #define OPT_DAYTIME_WELL           // Well pump will work only at daytime.
-//#define OPT_NIGHTTIME_WELL         // Well pump will work only at night time 
+//#define OPT_NIGHTTIME_WELL         // Well pump will work only at night time
 //#define OPT_DAYJOB_WELL 16       // The well pump will always have at least one run per day, regardless of the tank level.
 #define OPT_DAYS_JOB_WELL 3        // Maximum days of inactivite for the well pump.
 #define OPT_WELL_OVERTIME 1200000  //1500000  // Well pump overtime work limitation in millis. (1500000 limit of 25minutes)
@@ -240,7 +240,7 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 
 // Forward declaration of Mode class and modes array
 class Mode;
-#define MODE_COUNT  7 // Including "none" mode
+#define MODE_COUNT  12 // Including "none" mode
 extern Mode* modes[MODE_COUNT];
 
 #include "Time.h"
@@ -259,10 +259,11 @@ extern Mode* modes[MODE_COUNT];
 #include "mode/Hours3Mode.h"
 #include "mode/Hours4Mode.h"
 #include "mode/Hours6Mode.h"
-#include "mode/OptimalMode.h"
+#include "mode/PidRunMode.h"
+#include "mode/PidTnkMode.h"
 #include "mode/EvrDayMode.h"
 #include "mode/CleansMode.h"
-#include "mode/OptimalMode.h"
+
 
 
 

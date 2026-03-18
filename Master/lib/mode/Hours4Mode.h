@@ -1,5 +1,5 @@
-#ifndef ThreeHourMode_h
-#define ThreeHourMode_h
+#ifndef Hours4Mode_h
+#define Hours4Mode_h
 
 #include "../Mode.h"
 #include "../Pump.h"
@@ -17,7 +17,7 @@ public:
     const __FlashStringHelper *title() override { return F("4-Hour"); }
 
     RunWell well(Read* read) override {
-    
+
 
         // Static mode: fixed intervals regardless of sensor data
         uint8_t currentRuntime = THREE_HOUR_RUNTIME;

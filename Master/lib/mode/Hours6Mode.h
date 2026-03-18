@@ -1,5 +1,5 @@
-#ifndef ThreeHourMode_h
-#define ThreeHourMode_h
+#ifndef Hours6Mode_h
+#define Hours6Mode_h
 
 #include "../Mode.h"
 #include "../Pump.h"
@@ -7,7 +7,7 @@
 
 // Fixed timing: 12 minutes work, 168 minutes break = 3 hours cycle
 #define THREE_HOUR_RUNTIME 12
-#define THREE_HOUR_BREAK 360 
+#define THREE_HOUR_BREAK 360
 
 class Hours6Mode : public Mode {
 public:
@@ -17,7 +17,7 @@ public:
     const __FlashStringHelper *title() override { return F("6-Hour"); }
 
     RunWell well(Read* read) override {
-    
+
 
         // Static mode: fixed intervals regardless of sensor data
         uint8_t currentRuntime = THREE_HOUR_RUNTIME;
