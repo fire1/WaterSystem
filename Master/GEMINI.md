@@ -1,58 +1,116 @@
 # WaterSystem Project - Master Sketch
 
 ## Overview
-This project is an automated water management system that extracts water from a well into a **well tank** and then pumps it into a **main tank**. The system consists of a **Master** Arduino (this sketch) which orchestrates the entire operation and a **Slave** Arduino (located in the main tank) which acts as a remote sensor node.
+This project is an automated water management system that extracts water from a well into a **well tank** and then transfers it to a **main tank**. The system is built around an Arduino Mega (Master) and an remote sensor node (Slave).
+
+The system is designed for high reliability and efficiency, especially given the variable extraction rates of the **airlift pump** (slug state). It implements multi-layer safety protections and an adaptive optimization logic to maximize water yield while protecting the equipment.
+
 ## System Architecture
 
-### Master (this sketch)
-The Master is the central controller responsible for:
-- Reading the well tank level (local sensor).
-- Communicating with the Slave to get the main tank level.
-- Controlling two pumps:
-  - **Well Pump (`ctrlWell`)**: An **airlift water pump** operating in **"slug state"** (water mixed with air). This causes significant variability in extraction rates. On average, 12 minutes of pumping yields a ~3cm rise in the well tank.
-  - **Main Pump (`ctrlMain`)**: Transfers water from the well tank to the main tank.
-- Managing the User Interface (LCD, buttons, buzzer).
-- Implementing automation rules via a **Modular Mode System**.
-- Timekeeping and temperature monitoring via a DS3231 RTC.
+### Master (Arduino Mega)
+The central controller responsible for:
+- **Sensing**: Reads well tank level (local UART sensor) and communicates with the Slave for the main tank level.
+- **Actuation**: Controls the Well Pump and the Main Pump via SSRs.
+- **UI**: Manages a 16x2 LCD, navigation buttons, and a buzzer for notifications.
+- **Logic**: Orchestrates automation modes and safety rules.
+- **Cooling**: Monitors SSR temperature and controls a cooling fan.
+
+### Remote Slave
+- Located at the main tank.
+- Powered and polled by the Master via a dedicated line.
+- Returns distance data to the Master using SoftwareSerial.
 
 ### Water Tanks & Sensors
-- **Sensors**: Ultrasonic sensors (parking sensor type).
-- **Calibration**: 100cm reading = Empty / 20cm reading = Full.
-- **Well Tank**: 100cm (W) x 150cm (L) x 100cm (H).
-  - Volume: `~15 Liters per cm of height`.
-- **Main Tank**: 100cm (W) x 120cm (L) x 100cm (H).
-  - Volume: `~12 Liters per cm of height`.
+- **Sensors**: JSN-SR04T-2.0 or similar ultrasonic sensors (Parking sensor style).
+- **Calibration**: 20cm = Full / 100-110cm = Empty.
+- **Well Tank**: ~15 Liters per cm (100x150x100cm).
+- **Main Tank**: ~12 Liters per cm (100x120x100cm).
 
-### Modular Mode System (`lib/Mode.h` & `lib/mode/`)
-...
+---
 
-The system now uses a polymorphic approach to well pumping. The `Mode` base class defines the interface, and various specialized modes implement the logic for calculating pump runtime and breaktime:
-- **Basic Timing Modes**: `HourlyMode`, `Hours3Mode`, `Hours4Mode`, `Hours6Mode`, `EvrDayMode`.
-- **Optimization Modes**:
-  - `PidRunMode`: Uses PID-like control and a state machine (SEARCH, RECOVERY, LONG_REST) to hit a target water rise (3cm).
-  - `PidTnkMode`: Extends PID logic with tank volume awareness and consumption tracking.
-- **Specialized Modes**:
-  - `WinterMode`: Includes freeze protection and thermal mass conservation.
-  - `D1FillMode`: Optimized for daily filling with drift correction.
-  - `CleansMode`: A maintenance/idle mode with long intervals.
-  - `FasterMode`: A high-intensity pumping mode.
+## Modular Mode System (`lib/Mode.h` & `lib/mode/`)
 
-## Key Logic and Rules (`Rule.h`)
-- **Mode Management**: The `Rule` class now manages the `activeMode`, switching between them based on user selection or system state.
-- **Main Pumping**: 
-  - Triggered based on main tank levels (Full, Half, Void).
-  - Safety checks ensure the well tank has enough water before transferring.
-- **Safety Protections**:
-  - **Cold Protection**: Prevents well pump operation in extreme cold (unless in `WinterMode` freeze protection).
-  - **Overtime Protection**: Integrated into the mode execution and monitored by `Rule.h`.
-  - **Dry Run Protection**: Critical levels in the source tank automatically stop the pumps.
+The system uses a polymorphic approach to well pumping. Each mode implements its own logic for `well()` (calculating work/break time) and `main()` (transfer conditions).
 
-## File Structure Highlights
-- `Master.ino`: Main entry point and loop.
-- `lib/Mode.h`: Base class for all pumping modes.
-- `lib/mode/`: Directory containing specific mode implementations.
-- `lib/Glob.h`: Global definitions, pin assignments, and constants.
-- `lib/Read.h`: Logic for reading local and remote sensors.
-- `lib/Rule.h`: Orchestrates the active mode and handles system-wide safety.
-- `lib/Pump.h`: Pump control abstraction.
-- `lib/Menu.h` & `lib/Draw.h`: UI and LCD handling.
+### Key Modes
+- **Adaptive Optimization (`PidRunMode` & `PidTnkMode`)**:
+    - **Goal**: Hits a target rise (3cm) per session.
+    - **Logic**: Uses a PID-like proportional controller to adjust runtime based on past performance (drift).
+    - **States**: 
+        - `SEARCH`: Normal optimization.
+        - `RECOVERY`: Well is depleting; extends rest periods.
+        - `LONG_REST`: Emergency recovery for extremely low well levels.
+    - **Volume Awareness**: `PidTnkMode` adds tank geometry and consumption tracking.
+- **Timed Modes**: `HourlyMode`, `Hours3Mode`, `Hours4Mode`, `Hours6Mode`, `EvrDayMode` (Fixed intervals).
+- **Specialized**:
+    - `WinterMode`: Includes freeze protection logic.
+    - `D1FillMode`: Daily filling optimization.
+    - `FasterMode`: High-intensity extraction.
+    - `CleansMode`: Maintenance/idle state.
+
+---
+
+## Multi-Layer Safety & Rules (`Rule.h`)
+
+The `Rule` class is the primary safety orchestrator. While `Mode` classes implement the logic for *when* to pump, the `Rule` class acts as the final gatekeeper to ensure hardware safety.
+
+### Critical Safety Constraint: Mutual Exclusion
+**The Well Pump and the Main Pump must NEVER operate at the same time.** 
+The pumps are high-power machines, and simultaneous operation can lead to electrical overload or hydraulic issues. The `Rule` class is responsible for monitoring the state of both pumps and enforcing this mutual exclusion, regardless of the active `Mode`'s intent or manual overrides.
+
+### Safety Responsibilities:
+1.  **Mutual Exclusion**: Ensures only one pump is active at any given time.
+2.  **Dry Run Protection**: Automatically stops the Main pump if the well tank is empty or the Well pump if the main tank is full.
+3.  **Final Fallback: Overtime Protection**: 
+    - This is the absolute last line of defense, designed to trigger if sensors fail or provide incorrect data (e.g., a "stuck" level reading).
+    - The `Rule` class independently monitors the total continuous runtime of each pump.
+    - If a pump exceeds its hard-coded time limit, it is forcibly shut down and marked as a "FAILURE," requiring investigation.
+    - **Well Pump Limit**: 15 minutes (`OPT_WELL_OVERTIME`).
+    - **Main Pump Limit**: 30-45 minutes (`OPT_MAIN_OVERTIME`).
+4.  **Environmental Safety**:
+    - **Cold Protection**: Prevents well pump operation in extreme cold unless in specific anti-freeze modes.
+    - **Daytime/Nighttime Logic**: Restricts operation based on the RTC clock to comply with local noise or power constraints.
+5.  **SSR Heat Management (`Heat.h`)**: Monitors Solid State Relay temperatures and triggers emergency shutdowns if thresholds are exceeded.
+
+---
+
+## Hardware & Communication Details
+
+### Well Sensor (UART Mode)
+- The well sensor is modified with a 47kΩ resistor (R19) to enable UART mode.
+- Master communicates via `Serial3` at 9600 baud.
+- Provides more reliable readings than the default pulse-echo mode.
+
+### Main Sensor (Slave MCU)
+- Master controls power to the Slave (`pinMainPower`).
+- Communicates via SoftwareSerial at 4800 baud (`BaudSlaveRx`).
+- Polling sequence: Power ON -> Listen -> Receive Byte -> Power OFF.
+
+### Timekeeping
+- Uses a DS3231 RTC for accurate time and temperature monitoring.
+- Enables scheduled tasks like "Dayjob" (ensuring at least one pump run per day).
+
+---
+
+## User Interface & Menu (`Menu.h` & `Draw.h`)
+
+The system features a structured menu for monitoring and configuration:
+- **Home Screen**: Displays tank levels and pump status.
+- **Mode Selection**: Allows users to switch between the different pumping strategies.
+- **Manual Control**: Instant toggle for Well and Main pumps.
+- **Feedback**:
+    - **Buzzer**: Alarm on errors or preparation for pumping.
+    - **LED Heartbeat**: Indicates system health and active mode intensity.
+    - **Warning Screens**: Displays descriptive errors (e.g., "Too cold to run!", "SSR Overheat").
+
+---
+
+## File Structure
+- `Master.ino`: Application entry point and main loop.
+- `lib/Glob.h`: Global configuration, pin assignments, and constants.
+- `lib/Rule.h`: The high-level orchestrator for modes and safety.
+- `lib/Read.h`: Sensor data acquisition and smoothing (moving average).
+- `lib/Mode.h`: Base class for all well pumping strategies.
+- `lib/Heat.h`: Thermal management logic for SSR.
+- `lib/Pump.h`: Low-level pump control and fault tracking.
+- `lib/Data.h`: Handles EEPROM persistence for settings.

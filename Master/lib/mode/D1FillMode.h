@@ -7,7 +7,7 @@
 
 #define MIN_BREAK_TIME 48       // 1 hour
 #define MAX_BREAK_TIME 480      // 8 hours
-#define WELL_DEFAULT_RUNTIME 12 // minutes default run time
+#define WELL_DEFAULT_RUNTIME 10 // minutes default run time
 
 class D1FillMode : public Mode {
 private:
@@ -16,7 +16,7 @@ private:
   uint8_t startLevelCapture = 0;
 
   float timeMultiplier = 1.0;
-  uint8_t currentRuntime = WELL_DEFAULT_RUNTIME; // Start with 12 mins base
+  uint8_t currentRuntime = WELL_DEFAULT_RUNTIME; // Start with 10 mins base
 
 public:
   D1FillMode() {}
@@ -40,7 +40,7 @@ public:
 
     int8_t overtime = map(breaktime, MIN_BREAK_TIME, MAX_BREAK_TIME, -4, 6);
 
-    runtime = constrain(runtime + overtime, 7, 16);
+    runtime = constrain(runtime + overtime, 7, 12);
 
     // Debug output for monitoring
     if (spanLg.active()) {

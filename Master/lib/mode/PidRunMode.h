@@ -6,17 +6,18 @@ class PidRunMode : public Mode {
 private:
     // ===== Tuning Parameters =====
     // PID-like coefficients for runtime adjustment
-    static constexpr float P_GAIN = 2.0;           // Proportional gain for drift compensation
-    static constexpr float I_GAIN = 0.3;           // Integral smoothing for cumulative error
-    static constexpr float DRIFT_DEADBAND = 0.03;  // Hysteresis to prevent oscillation
+    // Reduced for airlift "slug state" variability to prevent over-correction
+    static constexpr float P_GAIN = 0.8;           // Reduced from 2.0
+    static constexpr float I_GAIN = 0.15;          // Reduced from 0.3
+    static constexpr float DRIFT_DEADBAND = 0.05;  // Increased from 0.03 to ignore small noise
 
     // Efficiency weighting for first-run bias mitigation
-    static constexpr float EFFICIENCY_ALPHA = 0.6; // Weight for new efficiency (higher = more responsive)
-    static constexpr float BEST_EFF_WEIGHT = 0.75; // Blend factor when updating best (avoids peak lock-in)
+    static constexpr float EFFICIENCY_ALPHA = 0.2; // Reduced from 0.6 for better smoothing of slug flow
+    static constexpr float BEST_EFF_WEIGHT = 0.5;  // Reduced from 0.75
 
     // Recovery thresholds and limits
-    static constexpr float EXTREME_DRIFT = 1.5;    // Trigger emergency long-rest
-    static constexpr float CRITICAL_EFF_DROP = 0.85; // If efficiency drops to 85% of best, increase break
+    static constexpr float EXTREME_DRIFT = 1.6;    // Increased slightly
+    static constexpr float CRITICAL_EFF_DROP = 0.75; // More tolerant of variability
     static constexpr float BREAKTIME_EMERGENCY = 480; // Max breaktime for recovery (8 hours)
 
     // ===== Adaptive State Machine =====
@@ -28,7 +29,7 @@ private:
 
     // ===== Data Structures =====
     struct PumpPlan {
-        uint8_t runtime;    // Work minutes (5-20)
+        uint8_t runtime;    // Work minutes (5-12)
         uint16_t breaktime; // Pause minutes (45-480)
         float efficiency;   // Actual cm per total cycle minute
     };
@@ -57,7 +58,7 @@ private:
 public:
     PidRunMode() {
         // Initialize with conservative defaults
-        current = {12, 180, 0.0};
+        current = {10, 180, 0.0};
         best = current;
         effTracker = {0.0, 0.0, 0};
         controller = {0.0, 0.0};
@@ -78,7 +79,8 @@ public:
         }
 
         // ===== Step 1: Fetch Real Data =====
-        float drift = constrain(this->calculateLastCorrection(), 0.5, 1.5);
+        // Use weighted correction to smooth out slug flow variability
+        float drift = constrain(this->fetchWeightedCorrection(), 0.5, 1.5);
         uint8_t rise = fetchRise(TARGET_RISE_CM);
         uint16_t totalCycle = current.runtime + current.breaktime;
         float measuredEff = (float)rise / (float)totalCycle;
@@ -115,7 +117,7 @@ public:
         optimizeBreaktime(drift, measuredEff);
 
         // ===== Step 7: Finalize and Constrain =====
-        current.runtime = constrain(current.runtime, 5, 20);
+        current.runtime = constrain(current.runtime, 5, 12);
         current.breaktime = constrain(current.breaktime, 45, 480);
 
         cycleCount++;
@@ -178,6 +180,7 @@ private:
 
     // ===== Runtime Optimization: PID-like Control =====
     // Goal: Achieve TARGET_RISE_CM (3cm) by adjusting pump duration
+    // Optimized for efficiency: Reluctant to increase runtime past 8-10 mins
     void optimizeRuntime(float drift) {
         // Accumulate integral error for smoothing
         controller.integral = constrain(
@@ -194,10 +197,17 @@ private:
         // PID-like adjustment: P-term reacts to current error, I-term smooths over time
         float correction = (adjustedDrift - 1.0) * P_GAIN + controller.integral;
 
+        // Asymmetric correction: We prefer to lower runtime for efficiency.
+        // Increasing runtime past 8-10 mins has diminishing returns in slug flow.
+        float gain = (correction > 0) ? 0.06 : 0.18; 
+
         // Convert correction to runtime adjustment
-        // If drift is 1.2, we need ~20% more time
-        // If drift is 0.8, we need ~20% less time
-        float adjustedRuntime = current.runtime * (1.0 + correction * 0.15);
+        float adjustedRuntime = current.runtime * (1.0 + correction * gain);
+
+        // Efficiency bias: gently pull runtime towards 8-10 minute sweet spot
+        if (adjustedRuntime > 10.0) {
+            adjustedRuntime -= 0.1; // Passive decay back to efficiency
+        }
 
         // Apply adjustment with smooth clamping
         current.runtime = round(adjustedRuntime);

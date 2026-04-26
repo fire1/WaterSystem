@@ -26,7 +26,7 @@
 //#define OPT_NIGHTTIME_WELL         // Well pump will work only at night time
 //#define OPT_DAYJOB_WELL 16       // The well pump will always have at least one run per day, regardless of the tank level.
 #define OPT_DAYS_JOB_WELL 3        // Maximum days of inactivite for the well pump.
-#define OPT_WELL_OVERTIME 1200000  //1500000  // Well pump overtime work limitation in millis. (1500000 limit of 25minutes)
+#define OPT_WELL_OVERTIME 900000  // Well pump overtime work limitation in millis. (15 minutes)
 #define OPT_MAIN_OVERTIME 1800000  // Main pump overtime work limitation in millis. (or 2700000 for 45 minutes)
 //
 // Used as debugging tool for
@@ -152,7 +152,7 @@ const uint8_t LevelSensorStopWell = 90;
 
 //
 // Defining the best pumping runtime
-const int8_t WellPumpDefaultRuntime = 12;
+const int8_t WellPumpDefaultRuntime = 10;
 const int8_t WellPumpDefaultBreaktime = 45;
 //
 // Define maximum days in millis() check

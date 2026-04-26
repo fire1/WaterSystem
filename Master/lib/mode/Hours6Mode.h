@@ -5,9 +5,9 @@
 #include "../Pump.h"
 #include "../Read.h"
 
-// Fixed timing: 12 minutes work, 168 minutes break = 3 hours cycle
-#define THREE_HOUR_RUNTIME 12
-#define THREE_HOUR_BREAK 360
+// Fixed timing: 10 minutes work, 350 minutes break = 6 hours cycle
+#define SIX_HOUR_RUNTIME 12
+#define SIX_HOUR_BREAK 350
 
 class Hours6Mode : public Mode {
 public:
@@ -20,8 +20,8 @@ public:
 
 
         // Static mode: fixed intervals regardless of sensor data
-        uint8_t currentRuntime = THREE_HOUR_RUNTIME;
-        unsigned long breakTimeInterval = THREE_HOUR_BREAK;
+        uint8_t currentRuntime = SIX_HOUR_RUNTIME;
+        unsigned long breakTimeInterval = SIX_HOUR_BREAK;
 
         // Debug output
         if (spanLg.active()) {

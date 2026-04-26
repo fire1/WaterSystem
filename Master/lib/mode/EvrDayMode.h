@@ -5,9 +5,9 @@
 #include "../Pump.h"
 #include "../Read.h"
 
-// Fixed timing: 12 minutes work, 48 minutes break = 1 hour cycle
-#define HOURLY_RUNTIME 12
-#define HOURLY_BREAK 1440 
+// Fixed timing: 10 minutes work, 1440 minutes break = 24 hour cycle
+#define DAILY_RUNTIME 10
+#define DAILY_BREAK 1440 
 
 class EvrDayMode : public Mode {
 public:
@@ -20,10 +20,10 @@ public:
     RunWell well(Read* read) override {
 
         // In this mode, we ignore levels and drift correction.
-        // We simply cycle the pump every hour.
+        // We simply cycle the pump every 24 hours.
         
-        uint8_t currentRuntime = HOURLY_RUNTIME;
-        unsigned long breakTimeInterval = HOURLY_BREAK;
+        uint8_t currentRuntime = DAILY_RUNTIME;
+        unsigned long breakTimeInterval = DAILY_BREAK;
 
         // Debug output for monitoring
         if (spanLg.active()) {

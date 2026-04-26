@@ -32,6 +32,7 @@ protected:
 private:
   Read *read;
   Buzz *buzz;
+  Time *time;
 
   RunWell runWell;
 
@@ -44,15 +45,24 @@ private:
     uint8_t mode = 0;
   };
 
+  struct MainState {
+    bool on = false;
+    unsigned long start = 0;
+  };
+
   uint8_t workIndex = 0;
   WellPoint pumpBuffer[WORK_LEN];
   WellState wellState;
+  MainState mainState;
   String warnMessage = "";
 
   unsigned long nextToOn = 0;
   unsigned long nextToOff = 0;
 
   const unsigned long timePrepareTurnOn = 10000;
+
+protected:
+  Data *modeMain;
   /**
    * Converts minutes to millis
    * @param minutes
@@ -231,6 +241,79 @@ private:
     }
   }
 
+  /**
+   * Starts the pump for main tank.
+   */
+  void pumpMain() {
+
+    uint8_t main = read->getMainLevel();
+
+    if (ctrlMain.isFailure()) {
+      if (spanLg.active())
+        dbgLn(F("[CTRL] /Main/ has failure!"));
+      return;
+    }
+
+    if (!ctrlMain.isOn() && !ctrlWell.isOn() && read->atNorm()) {
+      read->startWorkRead();
+
+      dbg(F("[CTRL] /Main/ at level "));
+      dbg(main);
+      dbg(F("cm turn ON"));
+      dbgLn();
+
+      ctrlMain.setOn(true);
+    }
+  }
+
+  /**
+   * Monitors the levels and turn off on Low or Full tank state
+   */
+  void handleMainStop() {
+    uint8_t levelMain = read->getMainLevel();
+    uint8_t levelWell = read->getWellLevel();
+
+    // MAIN
+    // Stop Main when Main is full
+    if (ctrlMain.isOn() && LevelSensorMainMax >= levelMain) {
+      ctrlMain.setOn(false);
+      ctrlMain.terminate();
+
+      setWarn(F(" TOP tank FULL! "));
+      dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
+
+      read->stopWorkRead();
+    }
+    // MAIN
+    // Stop when well is empty
+    if (ctrlMain.isOn() && LevelSensorStopWell <= levelWell) {
+      ctrlMain.setOn(false);
+      ctrlMain.terminate();
+
+      setWarn(F(" WELL tank VOID!"));
+      dbgLn(F("CTRL /Main/ turn off /Well empty/"));
+
+      read->stopWorkRead();
+    }
+
+#ifdef OPT_MAIN_OVERTIME
+    // Handle main pump overtime
+    if (ctrlMain.isOn()) {
+      if (mainState.start == 0) {
+        mainState.start = millis();
+      } else if (millis() - mainState.start > OPT_MAIN_OVERTIME) {
+        ctrlMain.setOn(false);
+        ctrlMain.failure();
+        mainState.start = 0;
+        setWarn(F("Main overtime!  "));
+        dbgLn(F("Warning: STOP /main/ Overtime work detected!"));
+      }
+    } else {
+      mainState.start = 0;
+    }
+#endif
+  }
+
   //
   // Shortcut/helper functions
   //
@@ -245,8 +328,37 @@ protected:
 #endif
 
   bool isWarnStop() {
-    // todo
-    return false;
+
+    //
+    // Check well for daytime
+#ifdef OPT_DAYTIME_WELL
+    if (!time->isDaytime()) {
+      setWarn(F("Not a daytime!  "));
+      return true;
+    }
+#endif
+    //
+    // Check well for nighttime, not ready.
+#ifdef OPT_NIGHTTIME_WELL
+    if (time->isDaytime()) {
+      setWarn(F("Not a nighttime!"));
+      return true;
+    }
+#endif
+    //
+    // Check well for low temp
+#ifdef OPT_PROTECT_COLD
+    if (time->isConn() && time->getTemp() < OPT_PROTECT_COLD) {
+      //
+      //  last runtime is below 2 hours, (pump head still hot).
+      if ((getWellTimer()) > 7200000) {
+        setWarn(F("Too cold to run!"));
+        return true;
+      }
+    }
+#endif
+
+    return false; // default state of the function
   }
 
   void setWarn(const __FlashStringHelper *msg) {
@@ -417,15 +529,42 @@ protected:
 
   virtual RunWell well(Read *read) = 0;
 
-  virtual bool main(Read *read) { return false; }
+  virtual bool main(Read *read) {
+    uint8_t levelMain = read->getMainLevel();
+    uint8_t levelWell = read->getWellLevel();
+    //
+    // Stop this function when sensor is not available
+    if (levelMain < LevelSensorBareMax(LevelSensorMainMax))
+      return false;
 
-  virtual void listen() {};
+    // Mapping values from 20 to 95, like 20 is Full and 95 empty
+    switch (modeMain->value()) {
+    default:
+    case 0: // Do noting
+      break;
+    case 1: // Full
+      if (levelMain > 34 && levelWell < 70)
+        return true;
+      break;
+    case 2: // Half
+      if (levelMain > 52 && levelWell < 55)
+        return true;
+      break;
+    case 3: // Void
+      if (levelMain > 78 && levelWell < 30)
+        return true;
+      break;
+    }
+    return false;
+  }
+
+  virtual void listen(){};
 
   virtual bool cutoff() { return false; }
 
 public:
-  void init(Read *rd, Buzz *bz) {
-    read = rd, buzz = bz;
+  void init(Read *rd, Buzz *bz, Data *mdM, Time *tm) {
+    read = rd, buzz = bz, modeMain = mdM, time = tm;
 
     runWell = RunWell{10, 5760}; // 4 days inactivity MAX!
     // wellState = WellState{false, 0, 0, 0, 0, 0};
@@ -434,6 +573,11 @@ public:
   void exec() {
 
     this->listen();
+
+    if (spanLg.active()) {
+      ctrlMain.clearTerminate();
+      ctrlWell.clearTerminate();
+    }
 
     if (!ctrlWell.isOn()) {
       if (spanLg.active())
@@ -444,8 +588,10 @@ public:
 
     if (!ctrlMain.isOn()) {
       if (this->main(read))
-        ctrlMain.setOn(true);
+        this->pumpMain();
     }
+
+    this->handleMainStop();
 
     if (cutoff()) {
       ctrlMain.setOn(false);

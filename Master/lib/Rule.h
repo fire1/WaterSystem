@@ -82,9 +82,6 @@ public:
   void loop() {
     this->handleDebug();
 
-    if (isInit)
-      isWarnStop();
-
     // Wait a while...
     // NOTE:
     // This "wait" depends strongly on collected data from sensors,
@@ -97,13 +94,9 @@ public:
     applyMode(modeWell->value());
 
     //
-    // Deprecated
-    /**
-    this->handleWellMode();
-    this->handleMainMode();
-    */
-
-    this->handleMainStop();
+    // Global Safety Layers
+    this->handleMutualExclusion();
+    this->handleSafety();
 
     //
     // Options for detecting an overtime
@@ -158,7 +151,7 @@ private:
     if (activeModeId != id) {
       activeMode = modes[id];
       activeModeId = id;
-      activeMode->init(read, buzz);
+      activeMode->init(read, buzz, modeMain, time);
     }
 
     if (activeMode == nullptr) {
@@ -173,6 +166,46 @@ private:
       this->setWarn(warnMsg);
 
     activeMode->debug();
+  }
+
+  /**
+   * @brief Critical fail-safe monitoring.
+   * Protects hardware from explosion (overfill) or dry-run damage.
+   */
+  void handleSafety() {
+    uint8_t levelMain = read->getMainLevel();
+    uint8_t levelWell = read->getWellLevel();
+
+    // FAIL-SAFE: Overfill Protection (Prevent tank explosion)
+    if (ctrlMain.isOn() && levelMain <= LevelSensorMainMax) {
+      ctrlMain.setOn(false);
+      ctrlMain.terminate();
+      setWarn(F("OVERFILL LIMIT! "));
+      dbgLn(F("[SAFETY] Main Tank Overfill detected! Emergency Stop."));
+      buzz->alarm();
+    }
+
+    // FAIL-SAFE: Well Dry-Run Protection
+    if (ctrlMain.isOn() && levelWell >= LevelSensorStopWell) {
+      ctrlMain.setOn(false);
+      ctrlMain.terminate();
+      setWarn(F("WELL DRY-RUN!  "));
+      dbgLn(F("[SAFETY] Well Tank empty during transfer! Emergency Stop."));
+    }
+  }
+
+  /**
+   * @brief Ensures both pumps are never ON at the same time.
+   * If both are detected ON, both are stopped for safety and a warning is set.
+   */
+  void handleMutualExclusion() {
+    if (ctrlWell.isOn() && ctrlMain.isOn()) {
+      dbgLn(F("[SAFETY] Mutual Exclusion Violation! Stopping both pumps."));
+      ctrlWell.setOn(false);
+      ctrlMain.setOn(false);
+      setWarn(F("PUMP CONFLICT!  "));
+      buzz->alarm();
+    }
   }
 
   /**
@@ -240,71 +273,6 @@ private:
     //
     // Returns last resolve state
     return this->isLowTemp;
-  }
-
-  /**
-   * Resolve well stop from several warnings
-   */
-  bool isWarnStop() {
-
-    //
-    // Check well for daytime
-#ifdef OPT_DAYTIME_WELL
-    if (!this->checkDaytime()) {
-
-      if (!isInit) {
-        if (this->isWarnDaytime)
-          return true;
-
-        this->isWarnDaytime = true; // flag to display only once
-        setWarn(F("Not a daytime!  "));
-        dbgLn(F("Warning: STOP /well/ It is not daytime!"));
-        return true;
-      }
-    } else
-      // Reset back to default
-      this->isWarnDaytime = false;
-
-#endif
-      //
-      // Check well for nighttime, not ready.
-#ifdef OPT_NIGHTTIME_WELL
-    if (!this->checkDaytime()) {
-
-      if (!isInit) {
-        if (!this->isWarnDaytime)
-          return true;
-
-        this->isWarnDaytime = true; // flag to display only once
-        setWarn(F("Not a nighttime!"));
-        dbgLn(F("Warning: STOP /well/ It is not nighttime!"));
-        return true;
-      }
-    } else
-      // Reset back to default
-      this->isWarnDaytime = false;
-
-#endif
-      //
-      // Check well for low temp
-#ifdef OPT_PROTECT_COLD
-    if (this->checkLowTemp()) {
-      if (!isInit) {
-        if (this->isWarnLowTemp)
-          return true;
-
-        this->isWarnLowTemp = true; // flag to display only once
-        setWarn(F("Too cold to run!"));
-        dbgLn(F("Warning: STOP /well/ Temperature too low!"));
-        return true;
-      }
-    } else
-      // Reset back to default
-      this->isWarnLowTemp = false;
-
-#endif
-
-    return false; // default state of the function
   }
 
   /**@deprecated Moved to Mode
@@ -506,103 +474,6 @@ private:
   }
 
   /**
-   * Starts the pump for main tank.
-   */
-  void pumpMain() {
-
-    uint8_t main = read->getMainLevel();
-
-    if (ctrlMain.isFailure()) {
-      if (spanSm.active())
-        dbgLn(F("[CTRL] /Main/ has failure!"));
-      return;
-    }
-
-    if (!ctrlMain.isOn() && !ctrlWell.isOn() && read->atNorm()) {
-      read->startWorkRead();
-
-      dbg(F("[CTRL] /Main/ at level "));
-      dbg(main);
-      dbg(F("cm turn ON"));
-      dbgLn();
-
-      ctrlMain.setOn(true);
-    }
-  }
-
-  /**
-   * Main pump work setup
-   */
-  void handleMainMode() {
-    uint8_t levelMain = read->getMainLevel();
-    uint8_t levelWell = read->getWellLevel();
-    //
-    // Stop this function when sensor is not available
-    if (levelMain < LevelSensorBareMax(LevelSensorMainMax))
-      return;
-
-    //
-    // Run the pump when it's daytime
-    if (!this->isDaytime) // todo, make also a freezing temperature check
-      return;
-
-    // Mapping values from 20 to 95, like 20 is Full and 95 empty
-    switch (modeMain->value()) {
-    default:
-    case 0: // Do noting
-      break;
-    case 1: // Full
-      if (levelMain > 34 && levelWell < 70)
-        return pumpMain();
-    case 2: // Half
-      if (levelMain > 52 && levelWell < 55)
-        return pumpMain();
-    case 3: // Void
-      if (levelMain > 78 && levelWell < 30)
-        return pumpMain();
-    }
-  }
-
-  /**
-   * Monitors the levels and turn off on Low or Full tank state
-   */
-  void handleMainStop() {
-    uint8_t levelMain = read->getMainLevel();
-    uint8_t levelWell = read->getWellLevel();
-
-    //
-    // After 5min clear terminate.
-
-    if (spanLg.active()) {
-      ctrlMain.clearTerminate();
-      ctrlWell.clearTerminate();
-    }
-
-    // MAIN
-    // Stop Main when Main is full
-    if (ctrlMain.isOn() && LevelSensorMainMax >= levelMain) {
-      ctrlMain.setOn(false);
-      ctrlMain.terminate();
-
-      setWarn(F(" TOP tank FULL! "));
-      dbgLn(F("CTRL /Main/ turn off  /TOP FULL/"));
-
-      read->stopWorkRead();
-    }
-    // MAIN
-    // Stop when well is empty
-    if (ctrlMain.isOn() && LevelSensorStopWell <= levelWell) {
-      ctrlMain.setOn(false);
-      ctrlMain.terminate();
-
-      setWarn(F(" WELL tank VOID!"));
-      dbgLn(F("CTRL /Main/ turn off /Well empty/"));
-
-      read->stopWorkRead();
-    }
-  }
-
-  /**
    * @brief Function to protect from overtime for well pump
    *
    */
@@ -630,20 +501,18 @@ private:
 
 #endif
   }
+
   /**
    * @brief Function to protect from overtime for main pump
-   *
+   * Final fallback if sensors fail.
    */
   void handleMainOvertime() {
 #ifdef OPT_MAIN_OVERTIME
-
-    //
     // Wait for main pump to start...
     if (!ctrlMain.isOn()) {
       mainStartTime = 0;
       return;
     }
-    //
     // Mark starting point of the work time for main pump.
     if (mainStartTime == 0) {
       mainStartTime = millis();
@@ -655,9 +524,9 @@ private:
       ctrlMain.failure();
       mainStartTime = 0;
       setWarn(F("Main overtime!  "));
-      dbgLn(F("Warning: STOP /main/ Overtime work detected!"));
+      dbgLn(F("Warning: STOP /main/ Overtime work detected (Fallback)!"));
+      buzz->alarm();
     }
-
 #endif
   }
 

@@ -5,9 +5,9 @@
 #include "../Pump.h"
 #include "../Read.h"
 
-// Fixed timing: 12 minutes work, 168 minutes break = 3 hours cycle
+// Fixed timing: 10 minutes work, 170 minutes break = 3 hours cycle
 #define THREE_HOUR_RUNTIME 12
-#define THREE_HOUR_BREAK 168
+#define THREE_HOUR_BREAK 170
 
 class Hours3Mode : public Mode {
 public:

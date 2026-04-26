@@ -5,8 +5,8 @@
 #include "../Pump.h"
 #include "../Read.h"
 
-// Fixed timing: 12 minutes work, 48 minutes break = 1 hour cycle
-#define HOURLY_RUNTIME 10
+// Fixed timing: 10 minutes work, 50 minutes break = 1 hour cycle
+#define HOURLY_RUNTIME 12
 #define HOURLY_BREAK 50
 
 class HourlyMode : public Mode {

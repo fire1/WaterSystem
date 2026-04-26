@@ -127,7 +127,7 @@ private:
 public:
     PidTnkMode() {
         // Initialize PID state
-        current = {12, 180, 0.0};
+        current = {10, 180, 0.0};
         best = current;
         effTracker = {0.0, 0.0, 0};
         controller = {0.0, 0.0};
@@ -194,7 +194,7 @@ public:
         optimizeBreaktime(drift, measuredEff, demandTarget);
 
         // ===== Step 9: Constrain and Return =====
-        current.runtime = constrain(current.runtime, 5, 20);
+        current.runtime = constrain(current.runtime, 5, 12);
         current.breaktime = constrain(current.breaktime, 45, 480);
 
         cycleCount++;
@@ -354,6 +354,8 @@ private:
     }
 
     // ===== Enhanced Runtime Optimization =====
+    // Goal: Achieve TARGET_RISE_CM (3cm) while maintaining high work efficiency
+    // Passing 8-10 mins in slug flow causes efficiency to drop significantly.
     void optimizeRuntime(float drift, float demandTarget) {
         // Accumulate integral error
         controller.integral = constrain(
@@ -369,14 +371,23 @@ private:
 
         // Base PID correction for 3cm target
         float correction = (adjustedDrift - 1.0) * P_GAIN + controller.integral;
-        float adjustedRuntime = current.runtime * (1.0 + correction * 0.15);
+
+        // Asymmetric gain: reluctant to increase runtime, eager to decrease to sweet spot
+        float gain = (correction > 0) ? 0.05 : 0.15; 
+        float adjustedRuntime = current.runtime * (1.0 + correction * gain);
 
         // Demand-aware adjustment: if well tank is below target, increase runtime slightly
+        // But still respect the efficiency principle
         float wellDeficit = demandTarget - tanks.wellCurrent.actualHeight;
         if (wellDeficit > 5.0) {
-            // Well tank below demand target: boost runtime
-            float boostFactor = min(1.2, 1.0 + (wellDeficit / 50.0));
+            // Well tank below demand target: boost runtime (max +20% boost)
+            float boostFactor = min(1.20, 1.0 + (wellDeficit / 60.0));
             adjustedRuntime *= boostFactor;
+        }
+
+        // Efficiency bias: gently pull runtime towards 8-10 minute sweet spot
+        if (adjustedRuntime > 10.0) {
+            adjustedRuntime -= 0.1; // Passive decay back to efficiency
         }
 
         current.runtime = round(adjustedRuntime);

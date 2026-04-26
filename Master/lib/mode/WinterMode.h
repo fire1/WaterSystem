@@ -5,7 +5,7 @@
 #include "../Pump.h"
 #include "../Read.h"
 
-#define WELL_DEFAULT_RUNTIME 12
+#define WELL_DEFAULT_RUNTIME 10
 #define WELL_SENSOR_FULL 20
 #define WELL_MIDPOINT 50    // Target thermal mass level
 #define MAIN_DRAIN_LIMIT 85 // Emergency house supply limit
@@ -83,7 +83,7 @@ public:
                                map(cappedBreak, 45, MAX_BREAK_TIME, 0, 8));
     }
 
-    finalRuntime = constrain(finalRuntime, 8, 15);
+    finalRuntime = constrain(finalRuntime, 8, 12);
 
     // Final Power Safety Check: If we calculated a start now but system is
     // busy, the pumpWell method handles the timing, but we log it.
