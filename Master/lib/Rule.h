@@ -19,6 +19,7 @@ private:
   WellState wellCtr;
 
   unsigned long mainStartTime = 0;
+  bool mainTimerArmed = false;
   //
   // Used to handle the schedule time properly
   struct WellSchedule {
@@ -275,212 +276,16 @@ private:
     return this->isLowTemp;
   }
 
-  /**@deprecated Moved to Mode
-   * Pumping well amplitude
-   * @param workMin
-   * @param stopMin
-   */
-  void pumpWell(uint8_t workMin, unsigned long stopMin) {
-
-    unsigned long msTimeToOff = this->calcMinutes(workMin);
-    unsigned long msTimeToOn = this->calcMinutes(stopMin);
-
-    this->nextToOff = msTimeToOff;
-    this->nextToOn = msTimeToOn;
-
-    if (cmd.show(F("dump:off"))) {
-      Serial.print(F("Stop min: "));
-      Serial.print(stopMin);
-      Serial.print(F(" ms: "));
-      Serial.println(msTimeToOn);
-    }
-    //
-    // Reset the clock when pump is manually run
-    if (ctrlWell.isOn() != wellCtr.on) {
-      wellCtr.on = ctrlWell.isOn();
-      wellCtr.time = millis();
-    }
-
-    //
-    // Turn pump OFF by timeout of mode
-    if (ctrlWell.isOn() && (getWellWorkTimer() >= msTimeToOff)) {
-      ctrlWell.setOn(false);
-      wellCtr.time = millis();
-
-      dbg(F("[CTRL] well to OFF"));
-      dbgLn();
-
-      read->stopWorkRead();
-    }
-
-    //
-    // Ignore next code when tank is full
-    if (!ctrlWell.isOn() && LevelSensorWellMax >= read->getWellLevel()) {
-      return;
-    }
-
-    if (ctrlWell.isFailure()) {
-      if (spanSm.active())
-        dbgLn(F("[CTRL] /Well/ has failure!"));
-      return;
-    }
-    //
-    // Data is not ready, brake the function
-    if (!ctrlWell.isOn() &&
-        read->getWellLevel() < LevelSensorBareMax(LevelSensorWellMax)) {
-      return;
-    }
-
-    if (isWarnStop())
-      return;
-
-    //
-    // Prepare, read levels before start
-    if (!ctrlWell.isOn() && !ctrlWell.isOn() &&
-        (getWellWorkTimer() >= (msTimeToOn - timePrepareTurnOn))) {
-      if (spanLg.active()) {
-        read->startWorkRead();
-        buzz->alarm();
-        dbg(F("[CTRL] Well prepare"));
-        dbgLn();
-      }
-    }
-
-    //
-    // Turn the pump on
-    if (!ctrlMain.isOn() && !ctrlWell.isOn() &&
-        (getWellWorkTimer() >= msTimeToOn)) {
-      wellCtr.time = millis();
-
-      dbg(F("[CTRL] Well to ON"));
-      dbgLn();
-
-      ctrlWell.setOn(true);
-    }
-  }
-
-  //
-  // Controls well pump
-  void handleWellMode() {
-
-    switch (modeWell->value()) {
-    default:
-    case 0:
-      // Noting
-      beatWell(0); // Disables the led heartbeat
-      break;
-
-    case 1:
-      // Easy
-      beatWell(2400);
-      pumpWellSchedule(ScheduleWellEasy);
-      handleDayjob();
-      break;
-
-    case 2:
-      // Fast
-      beatWell(1200);
-      pumpWellSchedule(ScheduleWellFast);
-      handleDayjob();
-      break;
-
-    case 3:
-      // Now!
-      beatWell(400);
-      pumpWell(WellPumpDefaultRuntime, WellPumpDefaultBreaktime);
-      // pumpWell(1, 2);
-      break;
-    }
-  }
-
-  /**
-   * Pump schedule for the well mode
-   * @param schedule
-   */
-  void pumpWellSchedule(PumpSchedule schedule) {
-
-    uint8_t mode = modeWell->value();
-    int16_t level = read->getWellLevel() + read->getMainLevel();
-
-    if (cmd.show(F("combo"), F("Shows combined level for schedule"))) {
-      cmd.print(F("Combo level"), level);
-    }
-
-    //
-    // Break the function when top tank is missing.
-    if (!read->atNorm()) {
-      if (!isWarnAtNorm) {
-        setWarn(F("Top tank missing"));
-        isWarnAtNorm = true;
-        //
-        // Reset warning message to be displayed again.
-      } else if (spanLg.active()) {
-        isWarnAtNorm = false;
-      }
-
-      return;
-    }
-
-    //
-    // Will wait for levels to be ready.
-    if (level < PumpScheduleCombinedMinLevel)
-      return;
-
-    //
-    // Removing the empty space from combined level.
-    level = level - PumpScheduleCombinedAbsence;
-    if (level < 0)
-      level = 0;
-
-    //
-    // Compare the lavels at "next" loop index (skips for loop each time)
-    if (level == this->wellSch.level && this->wellSch.mode == mode) {
-      if (cmd.show(F("schedule"))) {
-        Serial.print(F("[Schedule] well work: "));
-        Serial.print(this->wellSch.runtime);
-        Serial.print(" stop: ");
-        Serial.println(this->wellSch.stop);
-      }
-
-      pumpWell(wellSch.runtime, wellSch.stop);
-      return;
-    }
-
-    //
-    // Sets lowest value as default/backup value.
-    this->wellSch.stop = schedule.stops[0];
-
-    for (uint8_t i = 0; i < schedule.intervals; ++i) {
-      if (schedule.levels[i] > level) {
-
-        dbg(F("[Schedule] lvl below "));
-        dbg(schedule.levels[i]);
-        dbg(F(" Raw "));
-        dbg(level);
-        dbg(F(" stop "));
-        dbg(schedule.stops[i]);
-        dbg(F(" run "));
-        dbg(schedule.runtime);
-        dbg(F(" index: "));
-        dbgLn(i);
-
-        this->wellSch.stop = schedule.stops[i];
-      }
-    }
-
-    this->wellSch.runtime = schedule.runtime;
-    this->wellSch.level = level;
-    this->wellSch.mode = mode;
-  }
-
-  /**
+  /** @deprecated Moved to Mode
+   * Controls well pump
    * @brief Function to protect from overtime for well pump
    *
    */
   void handleWellOvertime() {
 #ifdef OPT_WELL_OVERTIME
     // 1sec to try to avoid millis overflow issue
-    if (ctrlWell.isOn() && activeMode->getWellStartTimer() > OPT_WELL_OVERTIME) {
+    if (ctrlWell.isOn() && activeMode != nullptr &&
+        overtime::wellExceeded(activeMode->getWellStartTimer())) {
       ctrlWell.setOn(false);
       ctrlWell.failure();
       setWarn(F("Well overtime!  "));
@@ -511,18 +316,20 @@ private:
     // Wait for main pump to start...
     if (!ctrlMain.isOn()) {
       mainStartTime = 0;
+      mainTimerArmed = false;
       return;
     }
-    // Mark starting point of the work time for main pump.
-    if (mainStartTime == 0) {
+    if (!mainTimerArmed) {
       mainStartTime = millis();
+      mainTimerArmed = true;
       return;
     }
 
-    if (millis() - mainStartTime > OPT_MAIN_OVERTIME) {
+    if (overtime::mainExceeded(millis() - mainStartTime)) {
       ctrlMain.setOn(false);
       ctrlMain.failure();
       mainStartTime = 0;
+      mainTimerArmed = false;
       setWarn(F("Main overtime!  "));
       dbgLn(F("Warning: STOP /main/ Overtime work detected (Fallback)!"));
       buzz->alarm();
@@ -554,73 +361,6 @@ private:
         beatLed.repeat();
       }
     }
-  }
-
-  /**
-   *  The well pump will be turned on once a day when it has not been running.
-   */
-  void handleDayjob() {
-#ifdef OPT_DAYJOB_WELL
-    //
-    // This function will be active only when clock is active.
-    if (!time->isConn())
-      return;
-
-    //
-    // Reset dayjob for the next day
-    if (!time->isDaytime())
-      wellHasDayjob = false;
-
-    //
-    // Pass the "On" pump state to dayjob state...
-    if (wellCtr.on && !wellHasDayjob)
-      wellHasDayjob = true;
-
-    //
-    // Skip dayjob when levels are not available.
-    if (!read->atNorm())
-      return;
-
-    //
-    // Turn on well for the dayjob
-    if (!wellHasDayjob && OPT_DAYJOB_WELL == time->getHour()) {
-      ctrlWell.setOn(true);
-      wellHasDayjob = true;
-    }
-
-#endif
-  }
-
-  void handleInactivityDays() {
-#ifdef OPT_DAYS_JOB_WELL
-    if (!time->isConn())
-      return;
-
-    //
-    // Reset dayjob for the next day
-    if (!time->isDaytime())
-      wellHasDayjob = false;
-
-    //
-    // Pass the "On" pump state to dayjob state...
-    if (wellCtr.on && !wellHasDayjob)
-      wellHasDayjob = true;
-
-    //
-    // Skip dayjob when levels are not available.
-    if (!read->atNorm())
-      return;
-
-    //
-    // Turn on well when well controll timer is above defined days (days of
-    // inactivity).
-    if (!wellHasDayjob && !ctrlWell.isOn() &&
-        wellCtr.time > DAYS_TO_MILLIS(OPT_DAYS_JOB_WELL)) {
-      ctrlWell.setOn(true);
-      wellHasDayjob = true;
-    }
-
-#endif
   }
 
   /**

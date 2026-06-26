@@ -48,6 +48,7 @@ private:
   struct MainState {
     bool on = false;
     unsigned long start = 0;
+    bool overtimeArmed = false;
   };
 
   uint8_t workIndex = 0;
@@ -299,17 +300,20 @@ protected:
 #ifdef OPT_MAIN_OVERTIME
     // Handle main pump overtime
     if (ctrlMain.isOn()) {
-      if (mainState.start == 0) {
+      if (!mainState.overtimeArmed) {
         mainState.start = millis();
-      } else if (millis() - mainState.start > OPT_MAIN_OVERTIME) {
+        mainState.overtimeArmed = true;
+      } else if (overtime::mainExceeded(millis() - mainState.start)) {
         ctrlMain.setOn(false);
         ctrlMain.failure();
         mainState.start = 0;
+        mainState.overtimeArmed = false;
         setWarn(F("Main overtime!  "));
         dbgLn(F("Warning: STOP /main/ Overtime work detected!"));
       }
     } else {
       mainState.start = 0;
+      mainState.overtimeArmed = false;
     }
 #endif
   }

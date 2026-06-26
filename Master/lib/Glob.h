@@ -26,8 +26,9 @@
 //#define OPT_NIGHTTIME_WELL         // Well pump will work only at night time
 //#define OPT_DAYJOB_WELL 16       // The well pump will always have at least one run per day, regardless of the tank level.
 #define OPT_DAYS_JOB_WELL 3        // Maximum days of inactivite for the well pump.
-#define OPT_WELL_OVERTIME 900000  // Well pump overtime work limitation in millis. (15 minutes)
-#define OPT_MAIN_OVERTIME 1800000  // Main pump overtime work limitation in millis. (or 2700000 for 45 minutes)
+#include "Overtime.h"
+#define OPT_WELL_OVERTIME overtime::WELL_LIMIT_MS   // 15 minutes
+#define OPT_MAIN_OVERTIME overtime::MAIN_LIMIT_MS   // 30 minutes (or 2700000 for 45 min)
 //
 // Used as debugging tool for
 //  Serial Input/Output.
