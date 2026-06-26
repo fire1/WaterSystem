@@ -567,6 +567,8 @@ protected:
   virtual bool cutoff() { return false; }
 
 public:
+  Time *getTime() const { return time; }
+
   void init(Read *rd, Buzz *bz, Data *mdM, Time *tm) {
     read = rd, buzz = bz, modeMain = mdM, time = tm;
 

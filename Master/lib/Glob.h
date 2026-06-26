@@ -30,6 +30,11 @@
 #define OPT_WELL_OVERTIME overtime::WELL_LIMIT_MS   // 15 minutes
 #define OPT_MAIN_OVERTIME overtime::MAIN_LIMIT_MS   // 30 minutes (or 2700000 for 45 min)
 //
+// Observer site for moon-adaptive pumping (Bulgaria default)
+#define SITE_LAT_DEG 42.7f
+#define SITE_LON_DEG 25.5f
+#define MOON_HORIZON_MARGIN_DEG 3.0f
+//
 // Used as debugging tool for
 //  Serial Input/Output.
 CmdSerial cmd;
@@ -264,6 +269,7 @@ extern Mode* modes[MODE_COUNT];
 #include "mode/PidTnkMode.h"
 #include "mode/EvrDayMode.h"
 #include "mode/CleansMode.h"
+#include "mode/Moon4Mode.h"
 
 
 

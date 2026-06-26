@@ -1,18 +1,19 @@
 # Host unit tests for Master firmware (no Arduino toolchain required).
 CXX      ?= g++
-CXXFLAGS ?= -std=c++17 -Wall -Wextra -I.
-TARGET   := overtime_tests
-SRC      := test_overtime.cpp
+CXXFLAGS ?= -std=c++17 -Wall -Wextra -I. -lm
+.PHONY: all test clean overtime_test moon_test
 
-.PHONY: all test clean
+all: overtime_tests moon_tests
 
-all: $(TARGET)
+overtime_tests: test_overtime.cpp TestHarness.h ../lib/Overtime.h
+	$(CXX) $(CXXFLAGS) -o $@ test_overtime.cpp
 
-$(TARGET): $(SRC) TestHarness.h ../lib/Overtime.h
-	$(CXX) $(CXXFLAGS) -o $@ $(SRC)
+moon_tests: test_moon.cpp TestHarness.h ../lib/Moon.h
+	$(CXX) $(CXXFLAGS) -o $@ test_moon.cpp
 
-test: $(TARGET)
-	./$(TARGET)
+test: overtime_tests moon_tests
+	./overtime_tests
+	./moon_tests
 
 clean:
-	rm -f $(TARGET)
+	rm -f overtime_tests moon_tests

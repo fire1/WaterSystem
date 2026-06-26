@@ -145,6 +145,9 @@ All modes extend `Mode` (`lib/Mode.h`). Well logic returns `RunWell { runtime, b
 | 8 | `PidRunMode` | Auto Run | PID-like adaptive (drift correction) |
 | 9 | `PidTnkMode` | Auto Tnk | PidRun + tank geometry / consumption |
 | 10 | `WinterMode` | Winter | Freeze protection using well water temp |
+| 11 | `Moon4Mode` | Moon | 4 h cycle; **2 h** when moon above horizon (RTC + `Moon.h`) |
+
+**Moon mode** (`Moon4Mode`): alternative to `Hours4Mode`. Uses DS3231 time and site constants (`SITE_LAT_DEG` / `SITE_LON_DEG` in `Glob.h`, default Bulgaria 42.7°N 25.5°E). When moon altitude &gt; `MOON_HORIZON_MARGIN_DEG` (3°), break is 108 min (~2 h cycle); otherwise 230 min (~4 h, same as Hours4). Requires `ENABLE_CLOCK`; falls back to 4 h if RTC is missing. Math in `lib/Moon.h` (host-testable).
 
 **Adaptive modes** (`PidRunMode`): states `SEARCH` → `RECOVERY` → `LONG_REST`; target `TARGET_RISE_CM` (3); tuned for airlift slug variability (`P_GAIN`, `I_GAIN`, efficiency EMA).
 
@@ -218,6 +221,7 @@ Master/
 │   ├── Read.h          # both sensors + averaging
 │   ├── Rule.h          # safety + mode orchestration
 │   ├── Mode.h          # base pumping state machine
+│   ├── Moon.h          # moon altitude / schedule helpers
 │   ├── mode/*.h        # concrete strategies
 │   ├── Pump.h          # SSR + debounce
 │   ├── Heat.h          # SSR thermal management
@@ -241,12 +245,18 @@ Overtime protection logic is extracted to `lib/Overtime.h` and verified on the h
 cd tests && make test
 ```
 
-Covers:
+Covers **overtime** (`Overtime.h`):
 - Well/main limits (15 min / 30 min) use strict `>` — exactly at the limit does **not** trip
 - `Rule::handleMainOvertime` two-phase arm (first on-tick arms, trip on later ticks)
 - `Mode::handleMainStop` main overtime branch matches Rule behaviour
 - `millis()` wrap-around (unsigned elapsed time)
 - Well overtime skipped when `activeMode` is null
+
+Covers **moon mode** (`Moon.h`):
+- Topocentric altitude for Bulgaria test coordinates
+- Full-moon night vs midday horizon checks
+- Schedule selection: 2 h vs 4 h break intervals
+- EU DST helper for local → UTC conversion
 
 ### On-device / simulation
 
