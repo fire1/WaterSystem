@@ -1,6 +1,7 @@
 #ifndef PidTnkMode_h
 #define PidTnkMode_h
 #include "../Mode.h"
+#include "../AirliftOpt.h"
 
 
 class PidTnkMode : public Mode {
@@ -123,6 +124,7 @@ private:
     ConsumptionTracker consumption;
     uint32_t lastTankUpdateTime;
     uint8_t mainTankCriticalCounter;  // Consecutive cycles below critical
+    bool deferBreakBoost;
 
 public:
     PidTnkMode() {
@@ -141,6 +143,7 @@ public:
         consumption = {0.0, 0.0, 0, 0.0, 0};
         lastTankUpdateTime = millis();
         mainTankCriticalCounter = 0;
+        deferBreakBoost = false;
     }
 
     const __FlashStringHelper *title() override {
@@ -162,8 +165,8 @@ public:
         // ===== Step 3: Fetch Well Performance Data =====
         float drift = constrain(this->calculateLastCorrection(), 0.5, 1.5);
         uint8_t rise = fetchRise(TARGET_RISE_CM);
-        uint16_t totalCycle = current.runtime + current.breaktime;
-        float measuredEff = (float)rise / (float)totalCycle;
+        float measuredEff =
+            airlift::riseEfficiency(rise, current.runtime);
 
         // Logging
         if (spanLg.active()) {
@@ -194,10 +197,12 @@ public:
         optimizeBreaktime(drift, measuredEff, demandTarget);
 
         // ===== Step 9: Constrain and Return =====
-        current.runtime = constrain(current.runtime, 5, 12);
+        current.runtime = constrain(current.runtime, airlift::RUNTIME_MIN,
+                                    airlift::RUNTIME_HARD_MAX);
         current.breaktime = constrain(current.breaktime, 45, 480);
 
         cycleCount++;
+        deferBreakBoost = false;
         return RunWell{current.runtime, current.breaktime};
     }
 
@@ -357,45 +362,38 @@ private:
     // Goal: Achieve TARGET_RISE_CM (3cm) while maintaining high work efficiency
     // Passing 8-10 mins in slug flow causes efficiency to drop significantly.
     void optimizeRuntime(float drift, float demandTarget) {
-        // Accumulate integral error
-        controller.integral = constrain(
-            controller.integral + (drift - 1.0) * I_GAIN,
-            -2.0, 2.0
-        );
-
-        // Apply hysteresis
-        float adjustedDrift = drift;
-        if (fabs(drift - 1.0) < DRIFT_DEADBAND) {
-            adjustedDrift = 1.0;
+        if (current.runtime < airlift::RUNTIME_SOFT_MAX) {
+            controller.integral = constrain(
+                controller.integral + (drift - 1.0f) * I_GAIN, -1.0f, 1.0f);
+        } else {
+            controller.integral = 0.f;
         }
 
-        // Base PID correction for 3cm target
-        float correction = (adjustedDrift - 1.0) * P_GAIN + controller.integral;
+        airlift::RuntimeAdjustResult adj = airlift::adjustRuntime(
+            drift, current.runtime, effTracker.trend, controller.integral,
+            P_GAIN, I_GAIN, DRIFT_DEADBAND);
 
-        // Asymmetric gain: reluctant to increase runtime, eager to decrease to sweet spot
-        float gain = (correction > 0) ? 0.05 : 0.15; 
-        float adjustedRuntime = current.runtime * (1.0 + correction * gain);
+        float adjustedRuntime = (float)adj.runtime;
+        deferBreakBoost = adj.deferToRest;
 
-        // Demand-aware adjustment: if well tank is below target, increase runtime slightly
-        // But still respect the efficiency principle
         float wellDeficit = demandTarget - tanks.wellCurrent.actualHeight;
-        if (wellDeficit > 5.0) {
-            // Well tank below demand target: boost runtime (max +20% boost)
-            float boostFactor = min(1.20, 1.0 + (wellDeficit / 60.0));
+        if (!deferBreakBoost && wellDeficit > 5.0f &&
+            adjustedRuntime < (float)airlift::RUNTIME_SOFT_MAX) {
+            float boostFactor = min(1.10f, 1.0f + (wellDeficit / 80.0f));
             adjustedRuntime *= boostFactor;
+            if (adjustedRuntime > (float)airlift::RUNTIME_SOFT_MAX)
+                adjustedRuntime = (float)airlift::RUNTIME_SOFT_MAX;
         }
 
-        // Efficiency bias: gently pull runtime towards 8-10 minute sweet spot
-        if (adjustedRuntime > 10.0) {
-            adjustedRuntime -= 0.1; // Passive decay back to efficiency
-        }
-
-        current.runtime = round(adjustedRuntime);
+        current.runtime = (uint8_t)(adjustedRuntime + 0.5f);
         controller.lastDrift = drift;
     }
 
-    // ===== Demand-Aware Breaktime Optimization =====
     void optimizeBreaktime(float drift, float measuredEff, float demandTarget) {
+        if (deferBreakBoost || (drift > 1.05f && current.runtime >= airlift::RUNTIME_SOFT_MAX)) {
+            current.breaktime = constrain(current.breaktime + 20, 45, BREAKTIME_EMERGENCY);
+        }
+
         switch (state) {
             case AGGRESSIVE: {
                 // Critical main tank: minimize rest to pump faster

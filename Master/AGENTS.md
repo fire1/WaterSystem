@@ -149,7 +149,7 @@ All modes extend `Mode` (`lib/Mode.h`). Well logic returns `RunWell { runtime, b
 
 **Moon mode** (`Moon4Mode`): alternative to `Hours4Mode`. Uses DS3231 time and site constants (`SITE_LAT_DEG` / `SITE_LON_DEG` in `Glob.h`, default Bulgaria 42.7°N 25.5°E). When moon altitude &gt; `MOON_HORIZON_MARGIN_DEG` (3°), break is 108 min (~2 h cycle); otherwise 230 min (~4 h, same as Hours4). Requires `ENABLE_CLOCK`; falls back to 4 h if RTC is missing. Math in `lib/Moon.h` (host-testable).
 
-**Adaptive modes** (`PidRunMode`): states `SEARCH` → `RECOVERY` → `LONG_REST`; target `TARGET_RISE_CM` (3); tuned for airlift slug variability (`P_GAIN`, `I_GAIN`, efficiency EMA).
+**Adaptive modes** (`PidRunMode`, `PidTnkMode`): states `SEARCH` → `RECOVERY` → `LONG_REST`; target `TARGET_RISE_CM` (3). Airlift-aware tuning in `lib/AirliftOpt.h` — 1 min compressor dead time excluded from efficiency; runtime capped at **10 min** soft max; under-performance extends **rest** instead of run when well depletes.
 
 **Main transfer** (`modeMainTank`): when well level is healthy (`read.atNorm()`), `pumpMain()` starts main pump until main full or well empty.
 
@@ -257,6 +257,10 @@ Covers **moon mode** (`Moon.h`):
 - Full-moon night vs midday horizon checks
 - Schedule selection: 2 h vs 4 h break intervals
 - EU DST helper for local → UTC conversion
+
+Covers **airlift optimization** (`AirliftOpt.h`):
+- Startup dead-minute compensation
+- Runtime soft cap (10 min) with defer-to-rest when under target
 
 ### On-device / simulation
 

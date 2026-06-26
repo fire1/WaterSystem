@@ -3,7 +3,7 @@ CXX      ?= g++
 CXXFLAGS ?= -std=c++17 -Wall -Wextra -I. -lm
 .PHONY: all test clean overtime_test moon_test
 
-all: overtime_tests moon_tests
+all: overtime_tests moon_tests airlift_tests
 
 overtime_tests: test_overtime.cpp TestHarness.h ../lib/Overtime.h
 	$(CXX) $(CXXFLAGS) -o $@ test_overtime.cpp
@@ -11,9 +11,13 @@ overtime_tests: test_overtime.cpp TestHarness.h ../lib/Overtime.h
 moon_tests: test_moon.cpp TestHarness.h ../lib/Moon.h
 	$(CXX) $(CXXFLAGS) -o $@ test_moon.cpp
 
-test: overtime_tests moon_tests
+airlift_tests: test_airlift.cpp TestHarness.h ../lib/AirliftOpt.h
+	$(CXX) $(CXXFLAGS) -o $@ test_airlift.cpp
+
+test: overtime_tests moon_tests airlift_tests
 	./overtime_tests
 	./moon_tests
+	./airlift_tests
 
 clean:
-	rm -f overtime_tests moon_tests
+	rm -f overtime_tests moon_tests airlift_tests
