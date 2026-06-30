@@ -40,11 +40,13 @@ WinterMode winterMode;
 PidRunMode pidRunMode;
 PidTnkMode pidTnkMode;
 Moon4Mode moon4Mode;
+TidRunMode tidRunMode;
 
 
 Mode *modes[] = {
     &cleansMode,&fasterMode, &hourlyMode, &hours3Mode, &hours4Mode, &hours6Mode,
     &evrDayMode, &d1FillMode, &pidRunMode, &pidTnkMode, &winterMode, &moon4Mode,
+    &tidRunMode,
                   };
 
 // Return title for mode index (flash string). Keeps Data.h free of

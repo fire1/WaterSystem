@@ -34,6 +34,8 @@
 #define SITE_LAT_DEG 42.7f
 #define SITE_LON_DEG 25.5f
 #define MOON_HORIZON_MARGIN_DEG 3.0f
+// M2 groundwater phase lag vs moon transit (hours); tune per well/aquifer
+#define SITE_TIDE_LAG_HOURS 1.0f
 //
 // Used as debugging tool for
 //  Serial Input/Output.
@@ -246,7 +248,7 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 
 // Forward declaration of Mode class and modes array
 class Mode;
-#define MODE_COUNT  12 // Including "none" mode
+#define MODE_COUNT  13 // Including "none" mode
 extern Mode* modes[MODE_COUNT];
 
 #include "Time.h"
@@ -270,6 +272,7 @@ extern Mode* modes[MODE_COUNT];
 #include "mode/EvrDayMode.h"
 #include "mode/CleansMode.h"
 #include "mode/Moon4Mode.h"
+#include "mode/TidRunMode.h"
 
 
 

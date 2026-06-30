@@ -5,9 +5,12 @@
  * Lightweight topocentric moon position for embedded / host unit tests.
  * Based on truncated Meeus "Astronomical Algorithms" lunar terms.
  *
- * Tide note: ocean high tides align more tightly with lunar meridian transit
- * (overhead / underfoot) than with mere visibility. This module uses
- * altitude > horizon margin as a practical proxy for inland groundwater timing.
+ * Tide note (M2 semidiurnal constituent, ~12h 25m between high waters):
+ * - High tide at lunar upper transit (overhead, HA≈0) and lower culmination
+ *   (underfoot/nadir, |HA|≈12h). Low tide midway (|HA|≈6h).
+ * - TidRunMode uses hour angle, not horizon altitude (Moon4Mode uses altitude).
+ * - Groundwater follows the same M2 frequency but lags; tune SITE_TIDE_LAG_HOURS.
+ * - Spring tides (new/full moon) widen the pumping window; neaps at quarters.
  */
 
 #include <math.h>
@@ -31,6 +34,7 @@ struct HorizonResult {
   float altitudeDeg;
   float azimuthDeg;
   float phaseFraction; // 0 = new, 0.5 = full, 1 = new
+  float hourAngleHours; // local HA in hours (-12 .. +12); 0 = transit, ±12 = nadir
 };
 
 inline float degNorm(float deg) {
@@ -238,6 +242,7 @@ inline HorizonResult computeHorizon(uint16_t year, uint8_t month, uint8_t day,
   r.altitudeDeg = alt;
   r.azimuthDeg = az;
   r.phaseFraction = moonPhaseFraction(moonLon, sunLon);
+  r.hourAngleHours = haHours;
   return r;
 }
 
@@ -247,6 +252,14 @@ inline float moonAltitudeDeg(uint16_t year, uint8_t month, uint8_t day,
   return computeHorizon(year, month, day, hourLocal, minuteLocal, latDeg,
                         lonDeg)
       .altitudeDeg;
+}
+
+inline float moonHourAngleHours(uint16_t year, uint8_t month, uint8_t day,
+                                uint8_t hourLocal, uint8_t minuteLocal,
+                                float latDeg, float lonDeg) {
+  return computeHorizon(year, month, day, hourLocal, minuteLocal, latDeg,
+                        lonDeg)
+      .hourAngleHours;
 }
 
 inline bool isMoonAboveHorizon(uint16_t year, uint8_t month, uint8_t day,
@@ -271,6 +284,59 @@ inline WellSchedule scheduleForMoon(bool rtcConnected, bool moonAbove) {
   if (!rtcConnected || !moonAbove)
     return WellSchedule{MOON_RUNTIME, MOON_BREAK_4H};
   return WellSchedule{MOON_RUNTIME, MOON_BREAK_2H};
+}
+
+/** M2 lunar semidiurnal period (NOAA/Wikipedia: 12h 25.2 min). */
+constexpr uint16_t M2_PERIOD_MIN = 745;
+constexpr uint16_t M2_HALF_PERIOD_MIN = 373; // high ↔ low (~6h 12.6 min)
+
+constexpr float TIDE_WINDOW_BASE_HOURS = 1.25f;  // ±1.25h around transit & nadir
+constexpr float TIDE_WINDOW_SPRING_EXTRA_H = 0.5f; // wider window at spring tides
+// Tuned for ~6 runs/24h (same ballpark as 4-Hour: 12+230=242 min → 6/day).
+// High: ~3–4 runs in M2 peaks; low: ~2–3 runs between peaks.
+constexpr uint16_t TIDE_BREAK_HIGH = 128; // 12+128 = 2h20m at tidal peak
+constexpr uint16_t TIDE_BREAK_LOW = 405;  // 12+405 = 6h57m between peaks
+
+inline float wrapHourAngle(float haHours) {
+  while (haHours < -12.f)
+    haHours += 24.f;
+  while (haHours > 12.f)
+    haHours -= 24.f;
+  return haHours;
+}
+
+/** Shift HA by site lag (groundwater M2 typically trails moon transit). */
+inline float applyTideLag(float haHours, float lagHours) {
+  return wrapHourAngle(haHours - lagHours);
+}
+
+/** 1 at new/full moon (spring tides), 0 at first/third quarter (neap). */
+inline float springTideFactor(float phaseFraction) {
+  return 1.f - fabsf(sinf(phaseFraction * 2.f * PI));
+}
+
+inline float tideWindowHours(float phaseFraction) {
+  return TIDE_WINDOW_BASE_HOURS +
+         springTideFactor(phaseFraction) * TIDE_WINDOW_SPRING_EXTRA_H;
+}
+
+/** High water near lunar transit (|HA| small) and nadir (|HA| near 12h). */
+inline bool isLunarTideHigh(float hourAngleHours, float windowHours) {
+  const float absHa = fabsf(hourAngleHours);
+  return absHa <= windowHours || absHa >= (12.f - windowHours);
+}
+
+inline bool isLunarTideHighAt(float hourAngleHours, float phaseFraction,
+                              float lagHours) {
+  const float ha = applyTideLag(hourAngleHours, lagHours);
+  return isLunarTideHigh(ha, tideWindowHours(phaseFraction));
+}
+
+/** Pump schedule for TidRunMode: shorter cycle at M2 peak, longer rest between. */
+inline WellSchedule scheduleForTide(bool rtcConnected, bool tideHigh) {
+  if (!rtcConnected || !tideHigh)
+    return WellSchedule{MOON_RUNTIME, TIDE_BREAK_LOW};
+  return WellSchedule{MOON_RUNTIME, TIDE_BREAK_HIGH};
 }
 
 } // namespace moon
