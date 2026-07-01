@@ -10,7 +10,7 @@ class Moon4Mode : public Mode {
 public:
   Moon4Mode() {}
 
-  const __FlashStringHelper *title() override { return F("Moon"); }
+  const __FlashStringHelper *title() override { return F("4h + Moon"); }
 
   RunWell well(Read *read) override {
     (void)read;

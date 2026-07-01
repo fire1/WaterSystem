@@ -10,7 +10,7 @@ class TidRunMode : public Mode {
 public:
   TidRunMode() {}
 
-  const __FlashStringHelper *title() override { return F("Tide"); }
+  const __FlashStringHelper *title() override { return F("Moon Tides"); }
 
   RunWell well(Read *read) override {
     (void)read;
