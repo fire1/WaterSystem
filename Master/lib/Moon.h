@@ -18,9 +18,9 @@
 
 namespace moon {
 
-constexpr float PI = 3.14159265f;
-constexpr float DEG2RAD = PI / 180.f;
-constexpr float RAD2DEG = 180.f / PI;
+constexpr float kPi = 3.14159265f;
+constexpr float DEG2RAD = kPi / 180.f;
+constexpr float RAD2DEG = 180.f / kPi;
 
 struct DateTimeUtc {
   uint16_t year;
@@ -46,7 +46,7 @@ inline float degNorm(float deg) {
 }
 
 inline float radNorm(float rad) {
-  const float twoPi = 2.f * PI;
+  const float twoPi = 2.f * kPi;
   while (rad < 0.f)
     rad += twoPi;
   while (rad >= twoPi)
@@ -312,7 +312,7 @@ inline float applyTideLag(float haHours, float lagHours) {
 
 /** 1 at new/full moon (spring tides), 0 at first/third quarter (neap). */
 inline float springTideFactor(float phaseFraction) {
-  return 1.f - fabsf(sinf(phaseFraction * 2.f * PI));
+  return 1.f - fabsf(sinf(phaseFraction * 2.f * kPi));
 }
 
 inline float tideWindowHours(float phaseFraction) {
