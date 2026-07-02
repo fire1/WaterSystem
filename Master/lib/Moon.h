@@ -8,7 +8,7 @@
  * Tide note (M2 semidiurnal constituent, ~12h 25m between high waters):
  * - High tide at lunar upper transit (overhead, HA≈0) and lower culmination
  *   (underfoot/nadir, |HA|≈12h). Low tide midway (|HA|≈6h).
- * - TidRunMode uses hour angle, not horizon altitude (Moon4Mode uses altitude).
+ * - TidRunMode and Moon4Mode use hour angle for M2 tide windows.
  * - Groundwater follows the same M2 frequency but lags; tune SITE_TIDE_LAG_HOURS.
  * - Spring tides (new/full moon) widen the pumping window; neaps at quarters.
  */
@@ -270,25 +270,33 @@ inline bool isMoonAboveHorizon(uint16_t year, uint8_t month, uint8_t day,
                          lonDeg) > marginDeg;
 }
 
-/** Pump schedule selection shared by Moon4Mode and unit tests. */
+/** Pump schedule selection shared by moon modes and unit tests. */
 struct WellSchedule {
   uint8_t runtime;
   uint16_t breaktime;
 };
 
 constexpr uint8_t MOON_RUNTIME = 12;
-constexpr uint16_t MOON_BREAK_2H = 108;  // 12 + 108 = 120 min
+constexpr uint16_t MOON_BREAK_3H = 168;  // 12 + 168 = 180 min (~3h cycle)
 constexpr uint16_t MOON_BREAK_4H = 230;  // same as Hours4Mode
-
-inline WellSchedule scheduleForMoon(bool rtcConnected, bool moonAbove) {
-  if (!rtcConnected || !moonAbove)
-    return WellSchedule{MOON_RUNTIME, MOON_BREAK_4H};
-  return WellSchedule{MOON_RUNTIME, MOON_BREAK_2H};
-}
 
 /** M2 lunar semidiurnal period (NOAA/Wikipedia: 12h 25.2 min). */
 constexpr uint16_t M2_PERIOD_MIN = 745;
 constexpr uint16_t M2_HALF_PERIOD_MIN = 373; // high ↔ low (~6h 12.6 min)
+
+/** Wall-clock minutes for a change in |hour angle| (M2 half-period = 6h HA span). */
+inline float haDeltaToMinutes(float deltaHours) {
+  return fabsf(deltaHours) * ((float)M2_HALF_PERIOD_MIN / 6.f);
+}
+
+inline uint16_t clampBreakMinutes(float minutes, uint16_t lo = 10,
+                                  uint16_t hi = 500) {
+  if (minutes < (float)lo)
+    return lo;
+  if (minutes > (float)hi)
+    return hi;
+  return (uint16_t)(minutes + 0.5f);
+}
 
 constexpr float TIDE_WINDOW_BASE_HOURS = 1.25f;  // ±1.25h around transit & nadir
 constexpr float TIDE_WINDOW_SPRING_EXTRA_H = 0.5f; // wider window at spring tides
@@ -337,6 +345,37 @@ inline WellSchedule scheduleForTide(bool rtcConnected, bool tideHigh) {
   if (!rtcConnected || !tideHigh)
     return WellSchedule{MOON_RUNTIME, TIDE_BREAK_LOW};
   return WellSchedule{MOON_RUNTIME, TIDE_BREAK_HIGH};
+}
+
+/**
+ * Moon4Mode: tide-peak runs with ~3h breaks; mid-gap run at |HA|≈6 during
+ * the long low-tide interval, then ~4h-equivalent wait until nadir peak.
+ */
+inline WellSchedule scheduleForTideMoon4(bool rtcConnected, float hourAngleHours,
+                                         float phaseFraction, float lagHours) {
+  if (!rtcConnected)
+    return WellSchedule{MOON_RUNTIME, MOON_BREAK_4H};
+
+  const float ha = applyTideLag(hourAngleHours, lagHours);
+  const float w = tideWindowHours(phaseFraction);
+  const float absHa = fabsf(ha);
+
+  if (isLunarTideHigh(ha, w))
+    return WellSchedule{MOON_RUNTIME, MOON_BREAK_3H};
+
+  constexpr float midHa = 6.f;
+  const float nadirHighStart = 12.f - w;
+
+  if (absHa < midHa)
+    return WellSchedule{
+        MOON_RUNTIME, clampBreakMinutes(haDeltaToMinutes(midHa - absHa))};
+
+  if (absHa < nadirHighStart)
+    return WellSchedule{MOON_RUNTIME,
+                        clampBreakMinutes(haDeltaToMinutes(nadirHighStart -
+                                                           absHa))};
+
+  return WellSchedule{MOON_RUNTIME, MOON_BREAK_3H};
 }
 
 } // namespace moon

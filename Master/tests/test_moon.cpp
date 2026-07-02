@@ -43,29 +43,41 @@ TEST(horizon_margin_respected) {
 // Schedule selection (Moon4Mode logic)
 // ---------------------------------------------------------------------------
 
-TEST(schedule_rtc_off_uses_4h) {
-  auto s = moon::scheduleForMoon(false, true);
+TEST(schedule_moon4_rtc_off_uses_4h) {
+  auto s = moon::scheduleForTideMoon4(false, 0.f, 0.f, 0.f);
   EXPECT_EQ(s.runtime, moon::MOON_RUNTIME);
   EXPECT_EQ(s.breaktime, moon::MOON_BREAK_4H);
 }
 
-TEST(schedule_moon_down_uses_4h) {
-  auto s = moon::scheduleForMoon(true, false);
-  EXPECT_EQ(s.breaktime, moon::MOON_BREAK_4H);
+TEST(schedule_moon4_tide_high_uses_3h) {
+  auto s = moon::scheduleForTideMoon4(true, 0.f, 0.f, 0.f);
+  EXPECT_EQ(s.breaktime, moon::MOON_BREAK_3H);
+  EXPECT_EQ((int)s.runtime + (int)s.breaktime, 180);
 }
 
-TEST(schedule_moon_up_uses_2h) {
-  auto s = moon::scheduleForMoon(true, true);
-  EXPECT_EQ(s.breaktime, moon::MOON_BREAK_2H);
+TEST(schedule_moon4_mid_gap_targets_half_period) {
+  const float w = moon::tideWindowHours(0.f);
+  // Lagged HA at low-tide midpoint (|HA|≈6)
+  auto s = moon::scheduleForTideMoon4(true, 6.f, 0.f, 0.f);
+  const uint16_t expected =
+      moon::clampBreakMinutes(moon::haDeltaToMinutes((12.f - w) - 6.f));
+  EXPECT_EQ(s.breaktime, expected);
 }
 
-TEST(schedule_2h_cycle_totals_120_minutes) {
-  auto s = moon::scheduleForMoon(true, true);
-  EXPECT_EQ((int)s.runtime + (int)s.breaktime, 120);
+TEST(schedule_moon4_approaching_mid_waits_for_midpoint) {
+  // |HA|=4 → 2h of HA until mid at 6
+  auto s = moon::scheduleForTideMoon4(true, 4.f, 0.f, 0.f);
+  const uint16_t expected = moon::clampBreakMinutes(moon::haDeltaToMinutes(2.f));
+  EXPECT_EQ(s.breaktime, expected);
 }
 
-TEST(schedule_4h_cycle_matches_hours4) {
-  auto s = moon::scheduleForMoon(true, false);
+TEST(schedule_moon4_3h_cycle_totals_180_minutes) {
+  auto s = moon::scheduleForTideMoon4(true, 0.f, 0.f, 0.f);
+  EXPECT_EQ((int)s.runtime + (int)s.breaktime, 180);
+}
+
+TEST(schedule_moon4_4h_fallback_totals_242_minutes) {
+  auto s = moon::scheduleForTideMoon4(false, 0.f, 0.f, 0.f);
   EXPECT_EQ((int)s.runtime + (int)s.breaktime, 242);
 }
 

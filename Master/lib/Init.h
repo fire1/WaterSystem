@@ -33,7 +33,6 @@ FasterMode fasterMode;
 HourlyMode hourlyMode;
 Hours3Mode hours3Mode;
 Hours4Mode hours4Mode;
-Hours6Mode hours6Mode;
 EvrDayMode evrDayMode;
 CleansMode cleansMode;
 WinterMode winterMode;
@@ -44,7 +43,7 @@ TidRunMode tidRunMode;
 
 
 Mode *modes[] = {
-    &cleansMode,&fasterMode, &hourlyMode, &hours3Mode, &hours4Mode, &hours6Mode,
+    &cleansMode,&fasterMode, &hourlyMode, &hours3Mode, &hours4Mode,
     &evrDayMode, &d1FillMode, &pidRunMode, &pidTnkMode, &winterMode, &moon4Mode,
     &tidRunMode,
                   };

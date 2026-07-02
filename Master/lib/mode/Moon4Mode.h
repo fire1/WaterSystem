@@ -16,25 +16,36 @@ public:
     (void)read;
 
     const bool rtcOk = getTime() != nullptr && getTime()->isConn();
-    bool moonUp = false;
-    float altitude = -90.f;
+    bool tideHigh = false;
+    float ha = 0.f;
+    float phase = 0.f;
+    float windowH = moon::TIDE_WINDOW_BASE_HOURS;
 
     if (rtcOk) {
       const DateTime now = getTime()->now();
-      altitude = moon::moonAltitudeDeg(now.year(), now.month(), now.day(),
-                                       now.hour(), now.minute(), SITE_LAT_DEG,
-                                       SITE_LON_DEG);
-      moonUp = altitude > MOON_HORIZON_MARGIN_DEG;
+      const auto h = moon::computeHorizon(now.year(), now.month(), now.day(),
+                                          now.hour(), now.minute(), SITE_LAT_DEG,
+                                          SITE_LON_DEG);
+      ha = h.hourAngleHours;
+      phase = h.phaseFraction;
+      windowH = moon::tideWindowHours(phase);
+      tideHigh = moon::isLunarTideHighAt(ha, phase, SITE_TIDE_LAG_HOURS);
     }
 
     const moon::WellSchedule sch =
-        moon::scheduleForMoon(rtcOk, moonUp);
+        moon::scheduleForTideMoon4(rtcOk, ha, phase, SITE_TIDE_LAG_HOURS);
 
     if (spanLg.active()) {
-      dbg(F("[MOON] alt="));
-      dbg(altitude);
-      dbg(F(" cycle="));
-      dbg(sch.breaktime == moon::MOON_BREAK_2H ? F("2h") : F("4h"));
+      dbg(F("[MOON] ha="));
+      dbg(ha);
+      dbg(F(" lagHa="));
+      dbg(moon::applyTideLag(ha, SITE_TIDE_LAG_HOURS));
+      dbg(F(" win="));
+      dbg(windowH);
+      dbg(F("h spring="));
+      dbg(moon::springTideFactor(phase));
+      dbg(F(" peak="));
+      dbg(tideHigh ? F("yes") : F("no"));
       dbg(F(" work="));
       dbg(sch.runtime);
       dbg(F("m break="));
