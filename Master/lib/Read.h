@@ -4,6 +4,7 @@
 #define Read_h
 
 #include "Glob.h"
+#include "Main.h"
 
 volatile unsigned long startTime;
 volatile unsigned long endTime;
@@ -108,6 +109,9 @@ public:
         digitalWrite(pinMainPower, LOW);
       }
     }
+
+    if (spanLg.active() && sensorMain.done)
+      mainTank::observeMainSample(this->main);
     /*
             if (spanLg.active()) {
                 if (sensorWell.error >= DisableSensorError)

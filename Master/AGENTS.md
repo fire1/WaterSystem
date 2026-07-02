@@ -77,7 +77,7 @@ Remote node at the main tank; Master powers the Slave and reads one distance byt
 - TX on pin 4 via **inverted** `SoftwareSerial` (`SoftwareSerial(-1, pinTx, true)`) @ 4800 baud.
 - 10-LED bar graph shows level locally; 1.2 s delay after each TX.
 
-**Why Slave?** Long cable run to main tank; dedicated MCU keeps timing stable and offloads pulse timing from the Mega.
+**Why Slave?** Long cable run (**60 m+** power/serial pair) to main tank; dedicated MCU keeps timing stable and offloads pulse timing from the Mega. UART readings can be **unstable** (false “empty” spikes for minutes); never use a single raw sample for pump-start decisions — see **Main tank handler** below.
 
 ---
 
@@ -151,7 +151,22 @@ All modes extend `Mode` (`lib/Mode.h`). Well logic returns `RunWell { runtime, b
 
 **Adaptive modes** (`PidRunMode`, `PidTnkMode`): states `SEARCH` → `RECOVERY` → `LONG_REST`; target `TARGET_RISE_CM` (3). Airlift-aware tuning in `lib/AirliftOpt.h` — 1 min compressor dead time excluded from efficiency; runtime capped at **10 min** soft max; under-performance extends **rest** instead of run when well depletes.
 
-**Main transfer** (`modeMainTank`): when well level is healthy (`read.atNorm()`), `pumpMain()` starts main pump until main full or well empty.
+### Main tank handler (`lib/Main.h`)
+
+Main transfer must **not** react to immediate/raw Slave readings. The 60 m cable and Slave firmware can report false low-water spikes for minutes. `Read.h` feeds `mainTank::observeMainSample()` on each `spanLg` tick (~7.6 s); `Main.h` keeps a ring of samples, **rejects spikes** (&gt; 12 cm from median), and requires **4 agreeing samples** before `hasStableMain()` is true. Pump **start** uses `stabilizedMain()`; pump **stop** still uses raw levels for fast fail-safe.
+
+**Scheduled transfer** (`modeMainTank` ≠ None): once per day at **21:00** (RTC required). If levels fail at 21:00, skip until next day.
+
+| `modeMainTank` | Start at 21:00 (stable main + raw well) |
+|----------------|----------------------------------------|
+| None | off |
+| Full | `main > 45`, `well < 45` |
+| Half | `main > 52`, `well < 55` |
+| Void | `main > 78`, `well < 30` |
+
+**Well-mode override**: `Mode::mainTransfer()` can return `Force` (bypass 9 pm gate). `TidRunMode` forces during lunar tide peak when `well < 45` and stable `main > 40`. Manual ON via UI unchanged; OFF always automatic when main full or well empty.
+
+**Leak detection**: compares stabilized main level every **30 min** while the main pump is off. A leak shows as **steady drain** — similar cm rise per interval (not a single big drop from showering). **Night** (23:00–06:00): 3 matching intervals, any level. **Day**: 4 intervals, only when main **> 50 cm** (tunable `MAIN_LEAK_DAY_MIN_LEVEL_CM`). Bursty use resets the rate history. Alarm → LCD **MAIN TANK LEAK!** + `Buzz::leakAlarm()`.
 
 ---
 
@@ -165,6 +180,7 @@ Final gatekeeper on top of mode intent and manual buttons.
 4. **Cold protection** — no well run below `OPT_PROTECT_COLD` (14 °C RTC) unless head still warm (&lt; 2 h since last run).
 5. **Daytime** — optional `OPT_DAYTIME_WELL` / `OPT_NIGHTTIME_WELL` via RTC.
 6. **SSR heat** (`Heat.h`) — NTC MF52 on A9; emergency shutdown + fan on pin 2 above `stopMaxTemp` (90 °C).
+7. **Main tank leak** (`Main.h` + `Rule::handleMainLeak`) — steady-drain rate sampling; night vs day thresholds.
 
 Startup waits `RULE_START_WAIT` (1.5 s) so sensors can settle before decisions.
 
@@ -221,6 +237,7 @@ Master/
 │   ├── Read.h          # both sensors + averaging
 │   ├── Rule.h          # safety + mode orchestration
 │   ├── Mode.h          # base pumping state machine
+│   ├── Main.h          # main transfer schedule, level stability, leak watch
 │   ├── Moon.h          # moon altitude / schedule helpers
 │   ├── mode/*.h        # concrete strategies
 │   ├── Pump.h          # SSR + debounce
@@ -261,6 +278,11 @@ Covers **moon mode** (`Moon.h`):
 Covers **airlift optimization** (`AirliftOpt.h`):
 - Startup dead-minute compensation
 - Runtime soft cap (10 min) with defer-to-rest when under target
+
+Covers **main tank handler** (`Main.h`):
+- 21:00 daily checkpoint and per-mode thresholds
+- Spike rejection and multi-sample stability before pump start
+- Steady-drain leak detection (constant rate over sample windows; night vs day rules)
 
 ### On-device / simulation
 

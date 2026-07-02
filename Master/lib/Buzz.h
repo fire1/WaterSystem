@@ -75,6 +75,21 @@ private:
             {-1,   0}  // End of melody marker
     };
 
+    const Note MelodyLeak[12] = {
+            {1200, 200},
+            {0,    100},
+            {1200, 200},
+            {0,    100},
+            {1200, 200},
+            {0,    100},
+            {1400, 300},
+            {0,    150},
+            {1400, 300},
+            {0,    150},
+            {1400, 300},
+            {-1,   0}
+    };
+
 public:
     Buzz() = default;
 
@@ -108,6 +123,10 @@ public:
 
     void alarm() {
         playMelody(MelodyAlarm);
+    }
+
+    void leakAlarm() {
+        playMelody(MelodyLeak);
     }
 
     void warn() {

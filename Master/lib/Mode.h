@@ -2,6 +2,7 @@
 #define ModeInterface_h
 
 #include "Glob.h"
+#include "Main.h"
 #include "Read.h"
 // Forward declarations to avoid circular dependencies
 
@@ -533,33 +534,34 @@ protected:
 
   virtual RunWell well(Read *read) = 0;
 
+  virtual mainTank::Intent mainTransfer(Read *read) {
+    (void)read;
+    return mainTank::Intent::Default;
+  }
+
   virtual bool main(Read *read) {
-    uint8_t levelMain = read->getMainLevel();
-    uint8_t levelWell = read->getWellLevel();
-    //
-    // Stop this function when sensor is not available
-    if (levelMain < LevelSensorBareMax(LevelSensorMainMax))
+    if (modeMain->value() == 0)
       return false;
 
-    // Mapping values from 20 to 95, like 20 is Full and 95 empty
-    switch (modeMain->value()) {
-    default:
-    case 0: // Do noting
-      break;
-    case 1: // Full
-      if (levelMain > 34 && levelWell < 70)
-        return true;
-      break;
-    case 2: // Half
-      if (levelMain > 52 && levelWell < 55)
-        return true;
-      break;
-    case 3: // Void
-      if (levelMain > 78 && levelWell < 30)
-        return true;
-      break;
+    if (!mainTank::hasStableMain())
+      return false;
+
+    const uint8_t levelMain = mainTank::stabilizedMain();
+    const uint8_t levelWell = read->getWellLevel();
+
+    mainTank::ClockNow now{};
+    const bool rtcOk = time != nullptr && time->isConn();
+    if (rtcOk) {
+      const DateTime dt = time->now();
+      now.year = dt.year();
+      now.month = dt.month();
+      now.day = dt.day();
+      now.hour = (uint8_t)dt.hour();
     }
-    return false;
+
+    return mainTank::shouldStartMain(
+        this->mainTransfer(read), rtcOk, now, {levelMain, levelWell},
+        mainTank::checkpointState, modeMain->value());
   }
 
   virtual void listen(){};

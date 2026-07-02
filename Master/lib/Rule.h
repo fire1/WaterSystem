@@ -103,6 +103,7 @@ public:
     // Options for detecting an overtime
     this->handleWellOvertime();
     this->handleMainOvertime();
+    this->handleMainLeak();
     isInit = false;
   }
 
@@ -335,6 +336,32 @@ private:
       buzz->alarm();
     }
 #endif
+  }
+
+  /**
+   * @brief Main tank leak watch — steady drain rate (not total volume loss).
+   */
+  void handleMainLeak() {
+    if (!mainTank::hasStableMain())
+      return;
+
+    const uint8_t level = mainTank::stabilizedMain();
+    uint8_t hour = 12;
+    if (time->isConn())
+      hour = (uint8_t)time->now().hour();
+
+    mainTank::leakWatch.tick(level, ctrlMain.isOn(), millis(), hour);
+
+    if (!mainTank::leakWatch.isAlarm())
+      return;
+
+    setWarn(F("MAIN TANK LEAK! "));
+    if (spanLg.active()) {
+      buzz->leakAlarm();
+      dbg(F("[LEAK] steady drain main="));
+      dbg(level);
+      dbgLn(F("cm"));
+    }
   }
 
   /**

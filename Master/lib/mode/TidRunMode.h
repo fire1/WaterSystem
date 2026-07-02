@@ -1,6 +1,7 @@
 #ifndef TidRunMode_h
 #define TidRunMode_h
 
+#include "../Main.h"
 #include "../Mode.h"
 #include "../Moon.h"
 #include "../Pump.h"
@@ -11,6 +12,35 @@ public:
   TidRunMode() {}
 
   const __FlashStringHelper *title() override { return F("Moon Tides"); }
+
+  // TEMP: tide-peak main transfer off — monitor well-tank rise first.
+  mainTank::Intent mainTransfer(Read *read) override {
+    (void)read;
+    return mainTank::Intent::Default;
+#if 0
+    const bool rtcOk = getTime() != nullptr && getTime()->isConn();
+    if (!rtcOk)
+      return mainTank::Intent::Default;
+
+    const DateTime now = getTime()->now();
+    const auto h = moon::computeHorizon(now.year(), now.month(), now.day(),
+                                        now.hour(), now.minute(), SITE_LAT_DEG,
+                                        SITE_LON_DEG);
+    const bool tideHigh =
+        moon::isLunarTideHighAt(h.hourAngleHours, h.phaseFraction,
+                                SITE_TIDE_LAG_HOURS);
+    const uint8_t levelMain = mainTank::hasStableMain()
+                                  ? mainTank::stabilizedMain()
+                                  : read->getMainLevel();
+    const uint8_t levelWell = read->getWellLevel();
+
+    if (tideHigh && levelWell < mainTank::MAIN_LEVEL_WELL_MAX &&
+        levelMain > mainTank::MAIN_LEVEL_MAIN_OVERRIDE)
+      return mainTank::Intent::Force;
+
+    return mainTank::Intent::Default;
+#endif
+  }
 
   RunWell well(Read *read) override {
     (void)read;
