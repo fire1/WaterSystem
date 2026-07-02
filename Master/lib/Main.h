@@ -5,7 +5,7 @@
 
 namespace mainTank {
 
-constexpr uint8_t MAIN_CHECKPOINT_HOUR = 21;
+constexpr uint8_t MAIN_CHECKPOINT_HOUR = 22;
 constexpr uint8_t MAIN_LEVEL_MAIN_MIN = 45;
 constexpr uint8_t MAIN_LEVEL_WELL_MAX = 45;
 constexpr uint8_t MAIN_LEVEL_MAIN_OVERRIDE = 40;

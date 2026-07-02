@@ -155,9 +155,9 @@ All modes extend `Mode` (`lib/Mode.h`). Well logic returns `RunWell { runtime, b
 
 Main transfer must **not** react to immediate/raw Slave readings. The 60 m cable and Slave firmware can report false low-water spikes for minutes. `Read.h` feeds `mainTank::observeMainSample()` on each `spanLg` tick (~7.6 s); `Main.h` keeps a ring of samples, **rejects spikes** (&gt; 12 cm from median), and requires **4 agreeing samples** before `hasStableMain()` is true. Pump **start** uses `stabilizedMain()`; pump **stop** still uses raw levels for fast fail-safe.
 
-**Scheduled transfer** (`modeMainTank` ≠ None): once per day at **21:00** (RTC required). If levels fail at 21:00, skip until next day.
+**Scheduled transfer** (`modeMainTank` ≠ None): once per day at **22:00** (RTC required). If levels fail at 22:00, skip until next day.
 
-| `modeMainTank` | Start at 21:00 (stable main + raw well) |
+| `modeMainTank` | Start at 22:00 (stable main + raw well) |
 |----------------|----------------------------------------|
 | None | off |
 | Full | `main > 45`, `well < 45` |
@@ -280,7 +280,7 @@ Covers **airlift optimization** (`AirliftOpt.h`):
 - Runtime soft cap (10 min) with defer-to-rest when under target
 
 Covers **main tank handler** (`Main.h`):
-- 21:00 daily checkpoint and per-mode thresholds
+- 22:00 daily checkpoint and per-mode thresholds
 - Spike rejection and multi-sample stability before pump start
 - Steady-drain leak detection (constant rate over sample windows; night vs day rules)
 

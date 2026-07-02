@@ -14,10 +14,10 @@ static ClockNow clockAt(uint8_t hour, uint8_t day = 2, uint8_t month = 7,
   return {year, month, day, hour};
 }
 
-TEST(scheduled_fires_at_hour_21_with_good_levels) {
+TEST(scheduled_fires_at_hour_22_with_good_levels) {
   CheckpointState state{};
   const Levels levels{50, 30};
-  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(21), levels,
+  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(22), levels,
                                 state, 1));
 }
 
@@ -26,22 +26,22 @@ TEST(scheduled_does_not_fire_at_hour_20) {
   const Levels levels{50, 30};
   EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(20), levels,
                                state, 1));
-  EXPECT_FALSE(sameCalendarDay(state, clockAt(21)));
+  EXPECT_FALSE(sameCalendarDay(state, clockAt(22)));
 }
 
-TEST(scheduled_does_not_fire_at_hour_22) {
+TEST(scheduled_does_not_fire_at_hour_23) {
   CheckpointState state{};
   const Levels levels{50, 30};
-  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(22), levels,
+  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(23), levels,
                                state, 1));
 }
 
-TEST(scheduled_skips_rest_of_day_after_failed_21_check) {
+TEST(scheduled_skips_rest_of_day_after_failed_22_check) {
   CheckpointState state{};
   const Levels bad{40, 30};
-  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(21), bad, state,
+  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(22), bad, state,
                                1));
-  EXPECT_TRUE(sameCalendarDay(state, clockAt(21)));
+  EXPECT_TRUE(sameCalendarDay(state, clockAt(22)));
 
   const Levels good{50, 30};
   EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(22), good, state,
@@ -51,18 +51,18 @@ TEST(scheduled_skips_rest_of_day_after_failed_21_check) {
 TEST(scheduled_does_not_double_fire_same_day) {
   CheckpointState state{};
   const Levels levels{50, 30};
-  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(21), levels, state,
+  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(22), levels, state,
                               1));
-  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(21), levels,
+  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(22), levels,
                                state, 1));
 }
 
 TEST(scheduled_fires_again_on_next_day) {
   CheckpointState state{};
   const Levels levels{50, 30};
-  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(21, 2), levels,
+  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(22, 2), levels,
                               state, 1));
-  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(21, 3), levels,
+  EXPECT_TRUE(shouldStartMain(Intent::Default, true, clockAt(22, 3), levels,
                               state, 1));
 }
 
@@ -86,47 +86,47 @@ TEST(scheduled_full_mode_uses_45cm_main_threshold) {
 TEST(scheduled_requires_rtc) {
   CheckpointState state{};
   const Levels levels{50, 30};
-  EXPECT_FALSE(shouldStartMain(Intent::Default, false, clockAt(21), levels,
+  EXPECT_FALSE(shouldStartMain(Intent::Default, false, clockAt(23), levels,
                                state, 1));
 }
 
 TEST(force_works_without_rtc) {
   CheckpointState state{};
   const Levels levels{42, 30};
-  EXPECT_TRUE(shouldStartMain(Intent::Force, false, clockAt(21), levels, state,
+  EXPECT_TRUE(shouldStartMain(Intent::Force, false, clockAt(23), levels, state,
                               1));
 }
 
 TEST(block_never_starts) {
   CheckpointState state{};
   const Levels levels{50, 30};
-  EXPECT_FALSE(shouldStartMain(Intent::Block, true, clockAt(21), levels, state,
+  EXPECT_FALSE(shouldStartMain(Intent::Block, true, clockAt(23), levels, state,
                                1));
 }
 
 TEST(none_mode_never_starts) {
   CheckpointState state{};
   const Levels levels{50, 30};
-  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(21), levels,
+  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(23), levels,
                               state, 0));
 }
 
 TEST(sensor_not_ready_blocks_start) {
   CheckpointState state{};
   const Levels levels{18, 30};
-  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(21), levels,
+  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(23), levels,
                                state, 1));
   EXPECT_FALSE(shouldStartMain(Intent::Force, true, clockAt(14), levels, state,
                                1));
 }
 
-TEST(half_mode_thresholds_at_21) {
+TEST(half_mode_thresholds_at_22) {
   EXPECT_TRUE(levelsOkScheduled({53, 50}, 2));
   EXPECT_FALSE(levelsOkScheduled({52, 50}, 2));
   EXPECT_FALSE(levelsOkScheduled({53, 55}, 2));
 }
 
-TEST(void_mode_thresholds_at_21) {
+TEST(void_mode_thresholds_at_22) {
   EXPECT_TRUE(levelsOkScheduled({79, 25}, 3));
   EXPECT_FALSE(levelsOkScheduled({78, 25}, 3));
   EXPECT_FALSE(levelsOkScheduled({79, 30}, 3));
