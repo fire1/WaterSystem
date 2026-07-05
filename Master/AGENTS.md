@@ -30,12 +30,14 @@ The well uses an **airlift pump** with variable slug flow, so adaptive modes tun
 
 Ultrasonic distance increases as water level drops (parking-sensor style).
 
-| Tank | Full (cm) | Empty (cm) | ~Volume/cm |
-|------|-----------|------------|------------|
-| Well (Tank1) | 20 | 110 | ~15 L |
-| Main (Tank2) | 20 | 105 | ~12 L |
+| Tank | Footprint (L×W) | Height | Full (cm) | Empty (cm) | ~Volume/cm | Full volume |
+|------|-----------------|--------|-----------|------------|------------|-------------|
+| Well (Tank1) | 1.0 m × 1.5 m | 1.0 m | 20 | 110 | ~15 L | ~1500 L |
+| Main (Tank2) | 1.0 m × 1.2 m | 1.0 m | 20 | 105 | ~12 L | ~1200 L |
 
-Safe margins: `LevelSensorWellMax` / `LevelSensorMainMax` = 20 cm; well dry-run stop at 90 cm (`LevelSensorStopWell`).
+Water depth from tank bottom (cm) ≈ `(emptyReading − sensorReading) × height / (emptyReading − fullReading)`.
+
+Safe margins: `LevelSensorWellMax` / `LevelSensorMainMax` = 20 cm; well dry-run stop at 90 cm (`LevelSensorStopWell`). Main pump intake sits **15 cm** above the well floor (`WELL_PUMP_BOTTOM_MARGIN_CM`) — that volume is not drawable.
 
 ---
 
@@ -155,16 +157,18 @@ All modes extend `Mode` (`lib/Mode.h`). Well logic returns `RunWell { runtime, b
 
 Main transfer must **not** react to immediate/raw Slave readings. The 60 m cable and Slave firmware can report false low-water spikes for minutes. `Read.h` feeds `mainTank::observeMainSample()` on each `spanLg` tick (~7.6 s); `Main.h` keeps a ring of samples, **rejects spikes** (&gt; 12 cm from median), and requires **4 agreeing samples** before `hasStableMain()` is true. Pump **start** uses `stabilizedMain()`; pump **stop** still uses raw levels for fast fail-safe.
 
-**Scheduled transfer** (`modeMainTank` ≠ None): once per day at **22:00** (RTC required). If levels fail at 22:00, skip until next day.
+**Scheduled transfer** (`modeMainTank` ≠ None): once per day at **22:10** (RTC required). If levels fail at the checkpoint, skip until next day.
 
-| `modeMainTank` | Start at 22:00 (stable main + raw well) |
+| `modeMainTank` | Start at 22:10 (stable main + raw well) |
 |----------------|----------------------------------------|
 | None | off |
-| Full | `main > 45`, `well < 45` |
-| Half | `main > 52`, `well < 55` |
-| Void | `main > 78`, `well < 30` |
+| Full | main **> 42 cm** (needs fill); well **≥ ~60 cm usable water** (sensor **< 43 cm**) |
+| Half | main **> 52 cm**; well **< 55 cm** sensor |
+| Void | main **> 78 cm**; well **< 30 cm** sensor |
 
-**Well-mode override**: `Mode::mainTransfer()` can return `Force` (bypass 9 pm gate). `TidRunMode` forces during lunar tide peak when `well < 45` and stable `main > 40`. Manual ON via UI unchanged; OFF always automatic when main full or well empty.
+**Full-mode well minimum** (`MAIN_LEVEL_WELL_MAX`): require **60 cm** drawable water above the pump intake, plus **15 cm** bottom margin the pipe cannot reach → **75 cm** total water depth from the floor (~**1125 L** in the 1.0×1.5×1.0 m well). On the sensor scale that is reading **≤ 42 cm** (`wellLevel < 43`). Lower sensor reading = more water in the tank.
+
+**Well-mode override**: `Mode::mainTransfer()` can return `Force` (bypass 22:10 gate). `TidRunMode` forces during lunar tide peak when the well meets the same minimum and stable `main > 40`. Manual ON via UI unchanged; OFF always automatic when main full or well empty.
 
 **Leak detection**: compares stabilized main level every **30 min** while the main pump is off. A leak shows as **steady drain** — similar cm rise per interval (not a single big drop from showering). **Night** (23:00–06:00): 3 matching intervals, any level. **Day**: 4 intervals, only when main **> 50 cm** (tunable `MAIN_LEAK_DAY_MIN_LEVEL_CM`). Bursty use resets the rate history. Alarm → LCD **MAIN TANK LEAK!** + `Buzz::leakAlarm()`.
 

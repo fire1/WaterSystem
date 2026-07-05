@@ -557,6 +557,7 @@ protected:
       now.month = dt.month();
       now.day = dt.day();
       now.hour = (uint8_t)dt.hour();
+      now.minute = (uint8_t)dt.minute();
     }
 
     return mainTank::shouldStartMain(

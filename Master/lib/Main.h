@@ -6,9 +6,29 @@
 namespace mainTank {
 
 constexpr uint8_t MAIN_CHECKPOINT_HOUR = 22;
-constexpr uint8_t MAIN_LEVEL_MAIN_MIN = 45;
-constexpr uint8_t MAIN_LEVEL_WELL_MAX = 45;
+constexpr uint8_t MAIN_CHECKPOINT_MINUTE = 10;
+constexpr uint8_t MAIN_LEVEL_MAIN_MIN = 42;
 constexpr uint8_t MAIN_LEVEL_MAIN_OVERRIDE = 40;
+
+/** Well tank 1.0 x 1.5 x 1.0 m; sensor 20 cm (full) .. 110 cm (empty). */
+constexpr uint8_t WELL_TANK_HEIGHT_CM = 100;
+constexpr uint8_t WELL_SENSOR_FULL_CM = 20;
+constexpr uint8_t WELL_SENSOR_EMPTY_CM = 110;
+constexpr uint8_t WELL_PUMP_BOTTOM_MARGIN_CM = 15;
+/** Minimum drawable water above the main-pump intake (not sensor reading). */
+constexpr uint8_t WELL_MIN_USABLE_DEPTH_CM = 60;
+constexpr uint8_t WELL_SENSOR_SPAN_CM =
+    WELL_SENSOR_EMPTY_CM - WELL_SENSOR_FULL_CM;
+constexpr uint8_t WELL_MIN_TOTAL_DEPTH_CM =
+    WELL_MIN_USABLE_DEPTH_CM + WELL_PUMP_BOTTOM_MARGIN_CM;
+
+/** Max well sensor reading for start: wellLevel must be strictly below this. */
+constexpr uint8_t wellMaxForMinDepth(uint8_t minTotalDepthCm) {
+  return WELL_SENSOR_EMPTY_CM -
+         (minTotalDepthCm * WELL_SENSOR_SPAN_CM) / WELL_TANK_HEIGHT_CM;
+}
+
+constexpr uint8_t MAIN_LEVEL_WELL_MAX = wellMaxForMinDepth(WELL_MIN_TOTAL_DEPTH_CM);
 constexpr uint8_t MAIN_SENSOR_BARE_MIN = 19; // LevelSensorBareMax(LevelSensorMainMax)
 
 /** Slow main-level samples (reject 60 m cable / Slave UART spikes). */
@@ -50,6 +70,7 @@ struct ClockNow {
   uint8_t month;
   uint8_t day;
   uint8_t hour;
+  uint8_t minute;
 };
 
 struct Stability {
@@ -260,10 +281,12 @@ inline void markCheckpointFired(CheckpointState &state, const ClockNow &now) {
   state.lastDay = now.day;
 }
 
-/** Once per day at MAIN_CHECKPOINT_HOUR; always latches (skip if levels bad). */
+/** Once per day at MAIN_CHECKPOINT_HOUR:MINUTE; always latches (skip if levels bad). */
 inline bool shouldFireCheckpoint(const ClockNow &now, CheckpointState &state,
                                  bool levelsOkNow) {
   if (now.hour != MAIN_CHECKPOINT_HOUR)
+    return false;
+  if (now.minute < MAIN_CHECKPOINT_MINUTE)
     return false;
   if (sameCalendarDay(state, now))
     return false;

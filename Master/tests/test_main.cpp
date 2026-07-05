@@ -10,8 +10,8 @@
 using namespace mainTank;
 
 static ClockNow clockAt(uint8_t hour, uint8_t day = 2, uint8_t month = 7,
-                        uint16_t year = 2026) {
-  return {year, month, day, hour};
+                        uint16_t year = 2026, uint8_t minute = 10) {
+  return {year, month, day, hour, minute};
 }
 
 TEST(scheduled_fires_at_hour_22_with_good_levels) {
@@ -27,6 +27,14 @@ TEST(scheduled_does_not_fire_at_hour_20) {
   EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(20), levels,
                                state, 1));
   EXPECT_FALSE(sameCalendarDay(state, clockAt(22)));
+}
+
+TEST(scheduled_does_not_fire_before_minute_10) {
+  CheckpointState state{};
+  const Levels levels{50, 30};
+  EXPECT_FALSE(shouldStartMain(Intent::Default, true, clockAt(22, 2, 7, 2026, 5),
+                               levels, state, 1));
+  EXPECT_FALSE(sameCalendarDay(state, clockAt(22, 2, 7, 2026, 5)));
 }
 
 TEST(scheduled_does_not_fire_at_hour_23) {
@@ -78,9 +86,16 @@ TEST(force_uses_40cm_main_threshold) {
   EXPECT_FALSE(levelsOkOverride({40, 30}));
 }
 
-TEST(scheduled_full_mode_uses_45cm_main_threshold) {
-  EXPECT_TRUE(levelsOkScheduled({46, 30}, 1));
-  EXPECT_FALSE(levelsOkScheduled({45, 30}, 1));
+TEST(scheduled_full_mode_uses_42cm_main_threshold) {
+  EXPECT_TRUE(levelsOkScheduled({43, 30}, 1));
+  EXPECT_FALSE(levelsOkScheduled({42, 30}, 1));
+}
+
+TEST(full_mode_well_needs_60cm_usable_water) {
+  EXPECT_EQ((int)MAIN_LEVEL_WELL_MAX, 43);
+  EXPECT_EQ((int)WELL_MIN_TOTAL_DEPTH_CM, 75);
+  EXPECT_TRUE(levelsOkScheduled({43, 42}, 1));
+  EXPECT_FALSE(levelsOkScheduled({43, 43}, 1));
 }
 
 TEST(scheduled_requires_rtc) {
