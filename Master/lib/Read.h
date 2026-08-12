@@ -141,6 +141,8 @@ public:
   //
   uint8_t getWellLevel() { return this->well; }
 
+  bool isWellReady() { return sensorWell.done; }
+
   uint8_t getMainLevel() { return this->main; }
 
   //

@@ -159,6 +159,9 @@ protected:
     unsigned long msTimeToOff = this->calcMinutes(workMin);
     unsigned long msTimeToOn = this->calcMinutes(stopMin);
 
+    if (!ctrlWell.isOn() && read->isWellReady())
+      wellTopOff::state.observeFull(read->getWellLevel(), LevelSensorWellMax);
+
     this->nextToOff = msTimeToOff;
     this->nextToOn = msTimeToOn;
 
@@ -182,6 +185,7 @@ protected:
     if (ctrlWell.isOn() && (getWellTimer() >= msTimeToOff)) {
       ctrlWell.setOn(false);
       wellState.stop = wellState.timer = millis();
+      wellTopOff::state.completeRun();
 
       dbg(F("[CTRL] well to OFF"));
       dbgLn();
@@ -197,7 +201,8 @@ protected:
 
     //
     // Ignore next code when tank is full
-    if (!ctrlWell.isOn() && LevelSensorWellMax >= read->getWellLevel()) {
+    if (!ctrlWell.isOn() && LevelSensorWellMax >= read->getWellLevel() &&
+        !wellTopOff::state.allowsRun()) {
       return;
     }
 
@@ -258,6 +263,8 @@ protected:
 
     if (!ctrlMain.isOn() && !ctrlWell.isOn() && read->atNorm()) {
       read->startWorkRead();
+
+      wellTopOff::state.resetOnMainStart();
 
       dbg(F("[CTRL] /Main/ at level "));
       dbg(main);

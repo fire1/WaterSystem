@@ -46,12 +46,12 @@ public:
             // Read pointer to PROGMEM string
             return pgm_read_word(&(dataNames[index]));
         } else {
-            // if (index == 0) {
-            //     src = PSTR("None");
-            // } else {
-                const __FlashStringHelper* t = getModeTitle(index);
-                if (t) src = (PGM_P)t;
-            // }
+            const __FlashStringHelper* t = getModeTitle(index);
+            if (t) {
+                src = (PGM_P)t;
+            } else if (index == 3) {
+                src = PSTR("Idle / 3d");
+            }
         }
 
         // Copy up to width bytes from PROGMEM, stop on NUL, preserve trailing spaces
@@ -91,6 +91,9 @@ public:
     }
 
 private:
+    static constexpr uint8_t MODE_LAYOUT_MARKER = 0xA5;
+    static constexpr uint8_t MODE_LAYOUT_MARKER_ADDR = 3;
+
     uint8_t stored;
     uint8_t numOptions;
     uint8_t eepromAddress;
@@ -100,6 +103,21 @@ private:
 
     void readEepRom() {
         uint8_t storedValue = EEPROM.read(eepromAddress);
+
+        // Migrate the former 12-entry well-mode table once. Unsupported
+        // legacy modes become the new Idle / 3d (off) entry.
+        if (eepromAddress == 2 && numOptions == 4 &&
+            EEPROM.read(MODE_LAYOUT_MARKER_ADDR) != MODE_LAYOUT_MARKER) {
+            switch (storedValue) {
+                case 9:  storedValue = 2; break; // Winter
+                case 10: storedValue = 1; break; // 3h + Moon
+                case 11: storedValue = 0; break; // Moon Tides
+                default: storedValue = 3; break; // Cleans/unsupported -> off
+            }
+            EEPROM.update(eepromAddress, storedValue);
+            EEPROM.update(MODE_LAYOUT_MARKER_ADDR, MODE_LAYOUT_MARKER);
+        }
+
         stored = index = (storedValue < numOptions) ? storedValue : 0;
     }
 };

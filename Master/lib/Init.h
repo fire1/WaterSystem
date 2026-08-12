@@ -43,9 +43,7 @@ TidRunMode tidRunMode;
 
 
 Mode *modes[] = {
-    &cleansMode,&fasterMode, &hourlyMode, &hours3Mode, &hours4Mode,
-    &evrDayMode, &d1FillMode, &pidRunMode, &pidTnkMode, &winterMode, &moon4Mode,
-    &tidRunMode,
+    &tidRunMode, &moon4Mode, &winterMode, nullptr,
                   };
 
 // Return title for mode index (flash string). Keeps Data.h free of
@@ -53,7 +51,7 @@ Mode *modes[] = {
 inline const __FlashStringHelper *getModeTitle(uint8_t idx) {
   if (idx < MODE_COUNT && modes[idx])
     return modes[idx]->getTitleFlash();
-  return (const __FlashStringHelper *)PSTR("");
+  return nullptr;
 }
 
 //

@@ -150,7 +150,7 @@ private:
       return;
     }
 
-    if (activeModeId != id) {
+    if (activeModeId != id || activeMode == nullptr) {
       activeMode = modes[id];
       activeModeId = id;
       activeMode->init(read, buzz, modeMain, time);
