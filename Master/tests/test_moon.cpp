@@ -1,5 +1,5 @@
 /**
- * Host unit tests for moon position and Moon4Mode schedule selection.
+ * Host unit tests for moon position and Moon3Mode schedule selection.
  *
  * Build & run (from Master/tests):
  *   make moon_test && ./moon_tests
@@ -40,7 +40,7 @@ TEST(horizon_margin_respected) {
 }
 
 // ---------------------------------------------------------------------------
-// Schedule selection (Moon4Mode logic)
+// Schedule selection (Moon3Mode logic)
 // ---------------------------------------------------------------------------
 
 TEST(schedule_moon4_rtc_off_uses_4h) {

@@ -1,16 +1,16 @@
-#ifndef Moon4Mode_h
-#define Moon4Mode_h
+#ifndef Moon3Mode_h
+#define Moon3Mode_h
 
 #include "../Mode.h"
 #include "../Moon.h"
 #include "../Pump.h"
 #include "../Read.h"
 
-class Moon4Mode : public Mode {
+class Moon3Mode : public Mode {
 public:
-  Moon4Mode() {}
+  Moon3Mode() {}
 
-  const __FlashStringHelper *title() override { return F("4h + Moon"); }
+  const __FlashStringHelper *title() override { return F("3h + Moon"); }
 
   RunWell well(Read *read) override {
     (void)read;

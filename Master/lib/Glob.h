@@ -271,7 +271,7 @@ extern Mode* modes[MODE_COUNT];
 #include "mode/PidTnkMode.h"
 #include "mode/EvrDayMode.h"
 #include "mode/CleansMode.h"
-#include "mode/Moon4Mode.h"
+#include "mode/Moon3Mode.h"
 #include "mode/TidRunMode.h"
 
 

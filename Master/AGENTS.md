@@ -147,9 +147,9 @@ All modes extend `Mode` (`lib/Mode.h`). Well logic returns `RunWell { runtime, b
 | 8 | `PidRunMode` | Auto Run | PID-like adaptive (drift correction) |
 | 9 | `PidTnkMode` | Auto Tnk | PidRun + tank geometry / consumption |
 | 10 | `WinterMode` | Winter | Freeze protection using well water temp |
-| 11 | `Moon4Mode` | Moon | 4 h cycle; **2 h** when moon above horizon (RTC + `Moon.h`) |
+| 11 | `Moon3Mode` | Moon | 3 h cycle; **2 h** when moon above horizon (RTC + `Moon.h`) |
 
-**Moon mode** (`Moon4Mode`): alternative to `Hours4Mode`. Uses DS3231 time and site constants (`SITE_LAT_DEG` / `SITE_LON_DEG` in `Glob.h`, default Bulgaria 42.7°N 25.5°E). When moon altitude &gt; `MOON_HORIZON_MARGIN_DEG` (3°), break is 108 min (~2 h cycle); otherwise 230 min (~4 h, same as Hours4). Requires `ENABLE_CLOCK`; falls back to 4 h if RTC is missing. Math in `lib/Moon.h` (host-testable).
+**Moon mode** (`Moon3Mode`): tide-based 3 h cycle with a 2 h tide-peak interval. Uses DS3231 time and site constants (`SITE_LAT_DEG` / `SITE_LON_DEG` in `Glob.h`, default Bulgaria 42.7°N 25.5°E). Requires `ENABLE_CLOCK`; falls back to the longer interval if RTC is missing. Math in `lib/Moon.h` (host-testable).
 
 **Adaptive modes** (`PidRunMode`, `PidTnkMode`): states `SEARCH` → `RECOVERY` → `LONG_REST`; target `TARGET_RISE_CM` (3). Airlift-aware tuning in `lib/AirliftOpt.h` — 1 min compressor dead time excluded from efficiency; runtime capped at **10 min** soft max; under-performance extends **rest** instead of run when well depletes.
 

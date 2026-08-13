@@ -8,7 +8,7 @@
  * Tide note (M2 semidiurnal constituent, ~12h 25m between high waters):
  * - High tide at lunar upper transit (overhead, HA≈0) and lower culmination
  *   (underfoot/nadir, |HA|≈12h). Low tide midway (|HA|≈6h).
- * - TidRunMode and Moon4Mode use hour angle for M2 tide windows.
+ * - TidRunMode and Moon3Mode use hour angle for M2 tide windows.
  * - Groundwater follows the same M2 frequency but lags; tune SITE_TIDE_LAG_HOURS.
  * - Spring tides (new/full moon) widen the pumping window; neaps at quarters.
  */
@@ -348,7 +348,7 @@ inline WellSchedule scheduleForTide(bool rtcConnected, bool tideHigh) {
 }
 
 /**
- * Moon4Mode: tide-peak runs with ~3h breaks; mid-gap run at |HA|≈6 during
+ * Moon3Mode: tide-peak runs with ~3h breaks; mid-gap run at |HA|≈6 during
  * the long low-tide interval, then ~4h-equivalent wait until nadir peak.
  */
 inline WellSchedule scheduleForTideMoon4(bool rtcConnected, float hourAngleHours,
