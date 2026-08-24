@@ -7,6 +7,15 @@
 #include "../Pump.h"
 #include "../Read.h"
 
+// Extra lag on top of SITE_TIDE_LAG_HOURS — shifts the pump window
+// ~15 min later so Moon Tides catches the rising-pressure phase of the tide.
+static constexpr float TIDE_MODE_EXTRA_LAG_HOURS = 0.25f;
+//
+// Approximate pump sessions per M2 cycle (~12h 25min), simulated:
+//   Moon Tides: ~3 runs/cycle  (1 peak + 2 gap waits)  → ~6 runs/day
+//   3h + Moon:  ~4-5 runs/cycle (peak + mid-low extra)  → ~8-10 runs/day
+//   Difference: Moon Tides pumps ~2 fewer sessions per M2 cycle.
+
 class TidRunMode : public Mode {
 public:
   TidRunMode() {}
@@ -28,7 +37,7 @@ public:
                                         SITE_LON_DEG);
     const bool tideHigh =
         moon::isLunarTideHighAt(h.hourAngleHours, h.phaseFraction,
-                                SITE_TIDE_LAG_HOURS);
+                                SITE_TIDE_LAG_HOURS + TIDE_MODE_EXTRA_LAG_HOURS);
     const uint8_t levelMain = mainTank::hasStableMain()
                                   ? mainTank::stabilizedMain()
                                   : read->getMainLevel();
@@ -46,7 +55,6 @@ public:
     (void)read;
 
     const bool rtcOk = getTime() != nullptr && getTime()->isConn();
-    bool tideHigh = false;
     float ha = 0.f;
     float phase = 0.f;
     float windowH = moon::TIDE_WINDOW_BASE_HOURS;
@@ -59,16 +67,19 @@ public:
       ha = h.hourAngleHours;
       phase = h.phaseFraction;
       windowH = moon::tideWindowHours(phase);
-      tideHigh = moon::isLunarTideHighAt(ha, phase, SITE_TIDE_LAG_HOURS);
     }
 
-    const moon::WellSchedule sch = moon::scheduleForTide(rtcOk, tideHigh);
+    constexpr float lag = SITE_TIDE_LAG_HOURS + TIDE_MODE_EXTRA_LAG_HOURS;
+    const bool tideHigh =
+        rtcOk && moon::isLunarTideHighAt(ha, phase, lag);
+    const moon::WellSchedule sch =
+        moon::scheduleForTide(rtcOk, ha, phase, lag);
 
     if (spanLg.active()) {
       dbg(F("[TIDE] ha="));
       dbg(ha);
       dbg(F(" lagHa="));
-      dbg(moon::applyTideLag(ha, SITE_TIDE_LAG_HOURS));
+      dbg(moon::applyTideLag(ha, lag));
       dbg(F(" win="));
       dbg(windowH);
       dbg(F("h spring="));

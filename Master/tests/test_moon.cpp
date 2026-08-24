@@ -125,27 +125,40 @@ TEST(m2_half_period_matches_noaa) {
   EXPECT_EQ((int)moon::M2_PERIOD_MIN, 745);
 }
 
-TEST(tide_break_totals_target_six_per_day) {
-  EXPECT_EQ((int)moon::MOON_RUNTIME + (int)moon::TIDE_BREAK_HIGH, 140);
-  EXPECT_EQ((int)moon::MOON_RUNTIME + (int)moon::TIDE_BREAK_LOW, 417);
-}
-
-TEST(schedule_tide_rtc_off_uses_low_break) {
-  auto s = moon::scheduleForTide(false, true);
+TEST(schedule_tide_rtc_off_uses_4h_break) {
+  auto s = moon::scheduleForTide(false, 0.f, 0.f, 0.f);
   EXPECT_EQ(s.runtime, moon::MOON_RUNTIME);
-  EXPECT_EQ(s.breaktime, moon::TIDE_BREAK_LOW);
+  EXPECT_EQ(s.breaktime, moon::MOON_BREAK_4H);
 }
 
-TEST(schedule_tide_low_uses_long_break) {
-  auto s = moon::scheduleForTide(true, false);
-  EXPECT_EQ(s.breaktime, moon::TIDE_BREAK_LOW);
-  EXPECT_EQ((int)s.runtime + (int)s.breaktime, 417);
+TEST(schedule_tide_low_before_transit_waits_for_peak_window) {
+  const float w = moon::tideWindowHours(0.f);
+  auto s = moon::scheduleForTide(true, -4.f, 0.f, 0.f);
+  const uint16_t expected =
+      moon::clampBreakMinutes(moon::haDeltaToMinutes(4.f - w));
+  EXPECT_EQ(s.breaktime, expected);
 }
 
-TEST(schedule_tide_high_uses_short_break) {
-  auto s = moon::scheduleForTide(true, true);
-  EXPECT_EQ(s.breaktime, moon::TIDE_BREAK_HIGH);
-  EXPECT_EQ((int)s.runtime + (int)s.breaktime, 140);
+TEST(schedule_tide_low_after_transit_waits_for_nadir_peak_window) {
+  const float w = moon::tideWindowHours(0.f);
+  auto s = moon::scheduleForTide(true, 4.f, 0.f, 0.f);
+  const uint16_t expected =
+      moon::clampBreakMinutes(moon::haDeltaToMinutes((12.f - w) - 4.f));
+  EXPECT_EQ(s.breaktime, expected);
+}
+
+TEST(schedule_tide_mid_gap_skips_extra_low_run) {
+  const float w = moon::tideWindowHours(0.f);
+  auto s = moon::scheduleForTide(true, 6.f, 0.f, 0.f);
+  const uint16_t expected =
+      moon::clampBreakMinutes(moon::haDeltaToMinutes((12.f - w) - 6.f));
+  EXPECT_EQ(s.breaktime, expected);
+}
+
+TEST(schedule_tide_high_uses_3h_cycle) {
+  auto s = moon::scheduleForTide(true, 0.f, 0.f, 0.f);
+  EXPECT_EQ(s.breaktime, moon::MOON_BREAK_3H);
+  EXPECT_EQ((int)s.runtime + (int)s.breaktime, 180);
 }
 
 // ---------------------------------------------------------------------------

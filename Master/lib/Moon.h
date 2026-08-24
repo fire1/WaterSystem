@@ -300,11 +300,6 @@ inline uint16_t clampBreakMinutes(float minutes, uint16_t lo = 10,
 
 constexpr float TIDE_WINDOW_BASE_HOURS = 1.25f;  // ±1.25h around transit & nadir
 constexpr float TIDE_WINDOW_SPRING_EXTRA_H = 0.5f; // wider window at spring tides
-// Tuned for ~6 runs/24h (same ballpark as 4-Hour: 12+230=242 min → 6/day).
-// High: ~3–4 runs in M2 peaks; low: ~2–3 runs between peaks.
-constexpr uint16_t TIDE_BREAK_HIGH = 128; // 12+128 = 2h20m at tidal peak
-constexpr uint16_t TIDE_BREAK_LOW = 405;  // 12+405 = 6h57m between peaks
-
 inline float wrapHourAngle(float haHours) {
   while (haHours < -12.f)
     haHours += 24.f;
@@ -340,11 +335,23 @@ inline bool isLunarTideHighAt(float hourAngleHours, float phaseFraction,
   return isLunarTideHigh(ha, tideWindowHours(phaseFraction));
 }
 
-/** Pump schedule for TidRunMode: shorter cycle at M2 peak, longer rest between. */
-inline WellSchedule scheduleForTide(bool rtcConnected, bool tideHigh) {
-  if (!rtcConnected || !tideHigh)
-    return WellSchedule{MOON_RUNTIME, TIDE_BREAK_LOW};
-  return WellSchedule{MOON_RUNTIME, TIDE_BREAK_HIGH};
+/**
+ * TidRunMode: keep the 3h cadence only inside lunar high-water windows,
+ * otherwise wait until the next peak window begins.
+ */
+inline WellSchedule scheduleForTide(bool rtcConnected, float hourAngleHours,
+                                    float phaseFraction, float lagHours) {
+  if (!rtcConnected)
+    return WellSchedule{MOON_RUNTIME, MOON_BREAK_4H};
+
+  const float ha = applyTideLag(hourAngleHours, lagHours);
+  const float w = tideWindowHours(phaseFraction);
+
+  if (isLunarTideHigh(ha, w))
+    return WellSchedule{MOON_RUNTIME, MOON_BREAK_3H};
+
+  const float deltaHa = (ha < -w) ? (-w - ha) : ((12.f - w) - ha);
+  return WellSchedule{MOON_RUNTIME, clampBreakMinutes(haDeltaToMinutes(deltaHa))};
 }
 
 /**

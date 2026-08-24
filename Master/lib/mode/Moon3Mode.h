@@ -6,6 +6,10 @@
 #include "../Pump.h"
 #include "../Read.h"
 
+// Approximate pump sessions per M2 cycle (~12h 25min), simulated:
+//   3h + Moon:  ~4-5 runs/cycle (2 peak + 2-3 mid-low gap) → ~8-10 runs/day
+//   Moon Tides: ~3 runs/cycle  (1 peak + 2 gap waits)      → ~6 runs/day
+//   Difference: 3h + Moon adds 1 extra run in the low-tide gap per half-cycle.
 class Moon3Mode : public Mode {
 public:
   Moon3Mode() {}
