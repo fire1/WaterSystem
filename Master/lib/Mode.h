@@ -583,7 +583,14 @@ public:
     read = rd, buzz = bz, modeMain = mdM, time = tm;
 
     runWell = RunWell{10, 5760}; // 4 days inactivity MAX!
-    // wellState = WellState{false, 0, 0, 0, 0, 0};
+    // Fresh break countdown when entering this mode; keep mid-run timing if
+    // the well pump is already on (manual or carry-over from another mode).
+    if (!ctrlWell.isOn()) {
+      wellState.on = false;
+      wellState.timer = millis();
+    } else {
+      wellState.on = true;
+    }
   }
 
   void exec() {
@@ -659,9 +666,11 @@ public:
   /**
    * @brief Gets next timer ON action for display
    */
-  unsigned long getNextOn() { // ISSUE
-    if (!wellState.on)
-      return this->nextToOn - getWellTimer();
+  unsigned long getNextOn() {
+    if (!wellState.on) {
+      const unsigned long elapsed = getWellTimer();
+      return (elapsed >= this->nextToOn) ? 0UL : (this->nextToOn - elapsed);
+    }
 
     return this->nextToOn;
   }
@@ -670,8 +679,10 @@ public:
    * @brief Gets next timer OFF action for display
    */
   unsigned long getNextOff() {
-    if (wellState.on)
-      return this->nextToOff - getWellTimer();
+    if (wellState.on) {
+      const unsigned long elapsed = getWellTimer();
+      return (elapsed >= this->nextToOff) ? 0UL : (this->nextToOff - elapsed);
+    }
 
     return this->nextToOff;
   }

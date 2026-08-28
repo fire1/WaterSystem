@@ -187,4 +187,30 @@ TEST(bulgaria_winter_no_dst) {
   EXPECT_FALSE(moon::isBulgariaDst(2024, 1, 15));
 }
 
+TEST(hour_angle_changes_within_the_hour) {
+  auto a = moon::computeHorizon(2026, 8, 28, 1, 0, LAT, LON);
+  auto b = moon::computeHorizon(2026, 8, 28, 1, 30, LAT, LON);
+  EXPECT_TRUE(fabsf(a.hourAngleHours - b.hourAngleHours) > 0.01f);
+}
+
+TEST(tide_schedule_waits_for_transit_after_moon_rise) {
+  // Aug 27 2026 ~19:45 local — moon just above horizon, transit still hours away
+  auto h = moon::computeHorizon(2026, 8, 27, 19, 45, LAT, LON);
+  EXPECT_TRUE(h.altitudeDeg >= 0.f && h.altitudeDeg < 10.f);
+  constexpr float lag = 1.25f;
+  EXPECT_FALSE(moon::isLunarTideHighAt(h.hourAngleHours, h.phaseFraction, lag));
+  auto sch = moon::scheduleForTide(true, h.hourAngleHours, h.phaseFraction, lag);
+  EXPECT_TRUE(sch.breaktime > moon::MOON_BREAK_3H);
+}
+
+TEST(tide_peak_aligns_with_moon_transit_not_rise) {
+  auto rise = moon::computeHorizon(2026, 8, 27, 19, 45, LAT, LON);
+  auto transit = moon::computeHorizon(2026, 8, 27, 1, 15, LAT, LON);
+  EXPECT_TRUE(transit.altitudeDeg > rise.altitudeDeg + 20.f);
+  constexpr float lag = 1.25f;
+  EXPECT_FALSE(moon::isLunarTideHighAt(rise.hourAngleHours, rise.phaseFraction, lag));
+  EXPECT_TRUE(moon::isLunarTideHighAt(transit.hourAngleHours, transit.phaseFraction,
+                                       lag));
+}
+
 int main() { return run_test_harness(); }

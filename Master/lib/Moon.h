@@ -103,8 +103,11 @@ inline float localBulgariaToUtcHours(uint16_t year, uint8_t month, uint8_t day,
   return utc;
 }
 
-inline float julianDay(uint16_t year, uint8_t month, uint8_t day,
-                       float hourUtc) {
+constexpr float J2000 = 2451545.0f;
+
+/** Days since J2000.0 — keeps sub-hour precision in 32-bit float (unlike full JD). */
+inline float daysSinceJ2000(uint16_t year, uint8_t month, uint8_t day,
+                            float hourUtc) {
   uint16_t y = year;
   uint8_t m = month;
   if (m <= 2) {
@@ -115,11 +118,16 @@ inline float julianDay(uint16_t year, uint8_t month, uint8_t day,
   const int B = 2 - A + A / 4;
   const float jd0 = (float)((int)(365.25f * (y + 4716)) +
                             (int)(30.6001f * (m + 1)) + day + B - 1524.5f);
-  return jd0 + hourUtc / 24.f;
+  return (jd0 - J2000) + hourUtc / 24.f;
 }
 
-inline void sunEcliptic(float jd, float &lonDeg, float &latDeg) {
-  const float T = (jd - 2451545.0f) / 36525.f;
+inline float julianDay(uint16_t year, uint8_t month, uint8_t day,
+                       float hourUtc) {
+  return J2000 + daysSinceJ2000(year, month, day, hourUtc);
+}
+
+inline void sunEcliptic(float daysSinceJ2000, float &lonDeg, float &latDeg) {
+  const float T = daysSinceJ2000 / 36525.f;
   const float L0 = degNorm(280.46646f + 36000.76983f * T);
   const float M = (357.52911f + 35999.05029f * T) * DEG2RAD;
   const float C = (1.914602f - 0.004817f * T - 0.000014f * T * T) * sinf(M) +
@@ -129,8 +137,8 @@ inline void sunEcliptic(float jd, float &lonDeg, float &latDeg) {
   latDeg = 0.f;
 }
 
-inline void moonEcliptic(float jd, float &lonDeg, float &latDeg) {
-  const float T = (jd - 2451545.0f) / 36525.f;
+inline void moonEcliptic(float daysSinceJ2000, float &lonDeg, float &latDeg) {
+  const float T = daysSinceJ2000 / 36525.f;
   const float Lp = (218.3164477f + 481267.88123421f * T) * DEG2RAD;
   const float D = (297.8501921f + 445267.1114034f * T) * DEG2RAD;
   const float M = (357.5291092f + 35999.0502909f * T) * DEG2RAD;
@@ -150,9 +158,9 @@ inline void moonEcliptic(float jd, float &lonDeg, float &latDeg) {
   latDeg = lat * RAD2DEG;
 }
 
-inline void eclipticToEquatorial(float jd, float lonDeg, float latDeg,
+inline void eclipticToEquatorial(float daysSinceJ2000, float lonDeg, float latDeg,
                                  float &raHours, float &decDeg) {
-  const float T = (jd - 2451545.0f) / 36525.f;
+  const float T = daysSinceJ2000 / 36525.f;
   const float eps = (23.439291f - 0.0130042f * T) * DEG2RAD;
   const float lon = lonDeg * DEG2RAD;
   const float lat = latDeg * DEG2RAD;
@@ -174,16 +182,16 @@ inline void eclipticToEquatorial(float jd, float lonDeg, float latDeg,
   decDeg = asinf(ze) * RAD2DEG;
 }
 
-inline float greenwichMeanSiderealHours(float jd) {
-  float gmstDeg = 280.46061837f + 360.98564736629f * (jd - 2451545.0f);
+inline float greenwichMeanSiderealHours(float daysSinceJ2000) {
+  float gmstDeg = 280.46061837f + 360.98564736629f * daysSinceJ2000;
   gmstDeg = gmstDeg - floorf(gmstDeg / 360.f) * 360.f;
   if (gmstDeg < 0.f)
     gmstDeg += 360.f;
   return gmstDeg / 15.f;
 }
 
-inline float localSiderealHours(float jd, float lonDeg) {
-  float lst = greenwichMeanSiderealHours(jd) + lonDeg / 15.f;
+inline float localSiderealHours(float daysSinceJ2000, float lonDeg) {
+  float lst = greenwichMeanSiderealHours(daysSinceJ2000) + lonDeg / 15.f;
   while (lst < 0.f)
     lst += 24.f;
   while (lst >= 24.f)
@@ -205,16 +213,16 @@ inline HorizonResult computeHorizon(uint16_t year, uint8_t month, uint8_t day,
                                     float latDeg, float lonDeg) {
   const float utc = localBulgariaToUtcHours(year, month, day, hourLocal,
                                             minuteLocal);
-  const float jd = julianDay(year, month, day, utc);
+  const float d = daysSinceJ2000(year, month, day, utc);
 
   float moonLon, moonLat, sunLon, sunLat;
-  moonEcliptic(jd, moonLon, moonLat);
-  sunEcliptic(jd, sunLon, sunLat);
+  moonEcliptic(d, moonLon, moonLat);
+  sunEcliptic(d, sunLon, sunLat);
 
   float ra, dec;
-  eclipticToEquatorial(jd, moonLon, moonLat, ra, dec);
+  eclipticToEquatorial(d, moonLon, moonLat, ra, dec);
 
-  const float lst = localSiderealHours(jd, lonDeg);
+  const float lst = localSiderealHours(d, lonDeg);
   float haHours = lst - ra;
   if (haHours < -12.f)
     haHours += 24.f;
