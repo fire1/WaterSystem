@@ -11,10 +11,9 @@
 // ~15 min later so Moon Tides catches the rising-pressure phase of the tide.
 static constexpr float TIDE_MODE_EXTRA_LAG_HOURS = 0.25f;
 //
-// Approximate pump sessions per M2 cycle (~12h 25min), simulated:
-//   Moon Tides: ~3 runs/cycle  (1 peak + 2 gap waits)  → ~6 runs/day
-//   3h + Moon:  ~4-5 runs/cycle (peak + mid-low extra)  → ~8-10 runs/day
-//   Difference: Moon Tides pumps ~2 fewer sessions per M2 cycle.
+// Peak cadence (scheduleForTide): ~3 runs per high-tide window with adaptive
+// rest (45–90 min, spring/neap). Two peaks per M2 (~12h 25min) → ~6 runs/day.
+// Outside peaks: wait until the next transit/nadir window (no low-tide runs).
 
 class TidRunMode : public Mode {
 public:

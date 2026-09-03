@@ -155,10 +155,27 @@ TEST(schedule_tide_mid_gap_skips_extra_low_run) {
   EXPECT_EQ(s.breaktime, expected);
 }
 
-TEST(schedule_tide_high_uses_3h_cycle) {
-  auto s = moon::scheduleForTide(true, 0.f, 0.f, 0.f);
-  EXPECT_EQ(s.breaktime, moon::MOON_BREAK_3H);
-  EXPECT_EQ((int)s.runtime + (int)s.breaktime, 180);
+TEST(schedule_tide_high_uses_adaptive_peak_break) {
+  // Spring (phase 0): wider window → break clamped at MOON_BREAK_PEAK_MAX
+  auto spring = moon::scheduleForTide(true, 0.f, 0.f, 0.f);
+  EXPECT_EQ(spring.breaktime, moon::peakBreakMinutes(0.f));
+  EXPECT_EQ(spring.breaktime, moon::MOON_BREAK_PEAK_MAX);
+  EXPECT_EQ(spring.runtime, moon::MOON_RUNTIME);
+
+  // Neap (phase 0.25): narrower window → shorter rest than spring max
+  auto neap = moon::scheduleForTide(true, 0.f, 0.25f, 0.f);
+  EXPECT_EQ(neap.breaktime, moon::peakBreakMinutes(0.25f));
+  EXPECT_TRUE(neap.breaktime >= moon::MOON_BREAK_PEAK_MIN);
+  EXPECT_TRUE(neap.breaktime < moon::MOON_BREAK_PEAK_MAX);
+}
+
+TEST(peak_break_spaces_three_runs_across_window) {
+  const float wMin = moon::tideWindowMinutes(0.25f); // neap
+  const uint16_t br = moon::peakBreakMinutes(0.25f);
+  const float span =
+      (float)moon::TIDE_PEAK_TARGET_RUNS * (float)moon::MOON_RUNTIME +
+      (float)(moon::TIDE_PEAK_TARGET_RUNS - 1) * (float)br;
+  EXPECT_TRUE(fabsf(span - wMin) < 1.5f);
 }
 
 // ---------------------------------------------------------------------------
@@ -200,7 +217,7 @@ TEST(tide_schedule_waits_for_transit_after_moon_rise) {
   constexpr float lag = 1.25f;
   EXPECT_FALSE(moon::isLunarTideHighAt(h.hourAngleHours, h.phaseFraction, lag));
   auto sch = moon::scheduleForTide(true, h.hourAngleHours, h.phaseFraction, lag);
-  EXPECT_TRUE(sch.breaktime > moon::MOON_BREAK_3H);
+  EXPECT_TRUE(sch.breaktime > moon::MOON_BREAK_PEAK_MAX);
 }
 
 TEST(tide_peak_aligns_with_moon_transit_not_rise) {
