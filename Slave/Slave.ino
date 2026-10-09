@@ -46,26 +46,13 @@ void setup() {
 }
 
 //
-// Distance in cm
-int index = 0;
-double distances;
+// Distance in cm — average 60 ultrasonic samples before TX
+slaveLogic::SampleAverage levelAvg;
 int data = 0;
 void loop() {
-  // float read = getSurfaceDistance();
   float read = readSensor();
 
-  //  dbg(F("rd: "));
-  //  Serial.println(read);
-
-  distances += read;
-  index++;
-
-  if (index > 60) {
-
-    data = distances / index;
-    index = 0;
-    distances = data;
-
+  if (levelAvg.push(read, data)) {
     lightUp(data);
 
     dbg(F("\t\t TX: "));

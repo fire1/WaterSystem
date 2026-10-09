@@ -1,0 +1,4 @@
+cmake-build-*/
+compile_commands.json
+*.log
+tests/*_tests

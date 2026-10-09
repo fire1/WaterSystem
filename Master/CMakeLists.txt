@@ -1,66 +1,47 @@
-cmake_minimum_required(VERSION 3.10)
-project(WaterSystem CXX)
+# CLion project for Master (Arduino Mega 2560).
+# Open this Master/ folder as the CLion project root.
+#
+# Autocomplete: index target wires Arduino core + variant + libraries.
+# Build/upload: custom targets call arduino-cli (see cmake/ArduinoClion.cmake).
+#
+# Env overrides (optional):
+#   ARDUINO15            Arduino15 data dir
+#   ARDUINO_LIBRARIES    sketchbook libraries dir
+#   ARDUINO_SKETCHBOOK   parent of libraries/
+#   ARDUINO_CLI          path to arduino-cli
+#   ARDUINO_PORT         upload port (/dev/ttyACM0, COM3, ...)
 
-# 1. SET PATHS
-set(ARDUINO_CORE_PATH "$ENV{HOME}/.arduino15/packages/arduino/hardware/avr/1.8.7")
-set(AVR_TOOLCHAIN_PATH "$ENV{HOME}/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/avr/include")
+cmake_minimum_required(VERSION 3.16)
+project(Master LANGUAGES CXX)
 
-# 2. DEFINE THE CHIP AND ARDUINO VERSION
-add_definitions(-D__AVR_ATmega2560__ -DARDUINO=10800 -DF_CPU=16000000L -D__AVR__)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 11)
 
-# 3. INCLUDE DIRECTORIES
-include_directories(".")
-include_directories("lib")
+get_filename_component(WS_CMAKE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cmake" ABSOLUTE)
+include("${WS_CMAKE_DIR}/ArduinoClion.cmake")
 
-# Core Arduino Headers
-include_directories(
-        "${ARDUINO_CORE_PATH}/cores/arduino"
-        "${ARDUINO_CORE_PATH}/variants/mega"
-        "${AVR_TOOLCHAIN_PATH}"
+file(GLOB_RECURSE MASTER_HEADERS
+  CONFIGURE_DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/lib/*.h"
 )
 
-# Core Arduino Libraries (SoftwareSerial, Wire, etc.)
-file(GLOB CORE_LIBS "${ARDUINO_CORE_PATH}/libraries/*")
-foreach(LIB_DIR ${CORE_LIBS})
-    if(IS_DIRECTORY ${LIB_DIR})
-        include_directories(${LIB_DIR})
-        # Some libraries have a 'src' folder
-        if(EXISTS "${LIB_DIR}/src")
-            include_directories("${LIB_DIR}/src")
-        endif()
-    endif()
-endforeach()
-
-# User Arduino Libraries (AsyncDelay, RTClib, etc.)
-file(GLOB USER_LIBS "$ENV{HOME}/Arduino/libraries/*")
-foreach(LIB_DIR ${USER_LIBS})
-    if(IS_DIRECTORY ${LIB_DIR})
-        include_directories(${LIB_DIR})
-        if(EXISTS "${LIB_DIR}/src")
-            include_directories("${LIB_DIR}/src")
-        endif()
-    endif()
-endforeach()
-
-# Arduino15 Libraries (LiquidCrystal, etc.)
-file(GLOB ARD15_LIBS "$ENV{HOME}/.arduino15/libraries/*")
-foreach(LIB_DIR ${ARD15_LIBS})
-    if(IS_DIRECTORY ${LIB_DIR})
-        include_directories(${LIB_DIR})
-        if(EXISTS "${LIB_DIR}/src")
-            include_directories("${LIB_DIR}/src")
-        endif()
-    endif()
-endforeach()
-
-# 4. SOURCES
-file(GLOB_RECURSE SOURCES 
-    "*.ino" 
-    "lib/*.h" 
-    "lib/*.cpp"
+set(MASTER_SOURCES
+  "${CMAKE_CURRENT_SOURCE_DIR}/Master.ino"
+  ${MASTER_HEADERS}
 )
 
-# Tell CLion to treat .ino files as C++
-set_source_files_properties(Master.ino PROPERTIES LANGUAGE CXX)
+# CLion / clangd indexing (ATmega2560 + mega variant)
+arduino_clion_add_index_target(Master_index __AVR_ATmega2560__ mega
+  SOURCES ${MASTER_SOURCES}
+)
 
-add_executable(WaterSystem ${SOURCES})
+# Real firmware: arduino:avr:mega / ATmega2560 (default CLion build target)
+arduino_clion_add_cli_targets("arduino:avr:mega:cpu=atmega2560" DEFAULT)
+
+# Host unit tests (optional; same as Master/tests/Makefile)
+add_custom_target(host_tests
+  COMMAND ${CMAKE_MAKE_PROGRAM} test
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+  USES_TERMINAL
+  COMMENT "Run Master host unit tests"
+)

@@ -5,6 +5,7 @@
 
 #include "Glob.h"
 #include "Main.h"
+#include "SensorProto.h"
 
 volatile unsigned long startTime;
 volatile unsigned long endTime;
@@ -22,17 +23,9 @@ private:
   // Read counter when system idles
   uint8_t idleReadIndex = 0;
 
-  struct LevelSensorAverage {
-    uint8_t index = 0;
-    uint8_t readings[LevelSensorReads];
-    uint32_t average = 0;
-    uint8_t error = 0;
-    bool done = false;
-  };
-
   //
-  // Average from sensors
-  LevelSensorAverage sensorWell, sensorMain;
+  // Average from sensors (well UART + Slave RX)
+  sensorProto::LevelAverage sensorWell, sensorMain;
 
   bool isWorkRead = false;
   bool isWellReadSent;
@@ -324,24 +317,8 @@ private:
    * @param sensor
    * @param newValue
    */
-  void pushAverage(LevelSensorAverage &sensor, int newValue) {
-    // Subtract the oldest reading from the total
-    sensor.average -= sensor.readings[sensor.index];
-    // Store the new reading
-    sensor.readings[sensor.index] = newValue;
-    // Move to the next position in the array
-    sensor.index = (sensor.index + 1) % LevelSensorReads;
-
-    // Calculate the average
-    sensor.average = 0;
-    for (int i = 0; i < LevelSensorReads; ++i) {
-      sensor.average += sensor.readings[i];
-    }
-    sensor.average /= LevelSensorReads;
-
-    // Mark data as done and clear any problems
-    sensor.done = true;
-    sensor.error = 0;
+  void pushAverage(sensorProto::LevelAverage &sensor, int newValue) {
+    sensor.push(newValue);
   }
 
   //
@@ -372,13 +349,10 @@ private:
       dataLow = readFrames[1];
       dataSum = readFrames[2];
 
-      //
-      // Verify received data by comparing two chunks of the received data.
-      if ((dataTop + dataLow) != (dataSum + verifyCorrection)) {
-        //
-        // Nothing to do, distance is already 0
-      } else
-        distance = ((dataTop << 8) + dataLow) * 0.1;
+      uint16_t parsed = 0;
+      sensorProto::parseWellUartFrame(startByte, dataTop, dataLow, dataSum,
+                                      parsed, verifyCorrection);
+      distance = parsed;
 
       digitalWrite(pinLed, LOW);
       return true; // finish the reading

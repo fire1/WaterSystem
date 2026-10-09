@@ -2,11 +2,10 @@ CompileFlags:
   CompilationDatabase: cmake-build-debug
   Add:
     - -std=c++11
-    - -D__AVR_ATmega2560__
+    - -D__AVR_ATmega8__
     - -DARDUINO=10819
     - -DF_CPU=16000000L
     - -D__AVR__
-    - -DUSBCON
     - -DARDUINO_ARCH_AVR
     - -I.
     - -Ilib

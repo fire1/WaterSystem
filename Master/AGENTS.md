@@ -250,8 +250,41 @@ Master/
 │   ├── Data.h          # EEPROM settings
 │   ├── Menu.h / Draw.h # LCD UI
 │   ├── Buzz.h, Span.h, Util.h, DrIn.h, Stat.h
-├── CMakeLists.txt      # CLion/IDE indexing (ATmega2560), not Arduino CLI build
+├── CMakeLists.txt      # CLion project (indexing + arduino-cli targets)
 └── diagram.json        # Wokwi simulation wiring
+```
+
+---
+
+## CLion / CMake
+
+Open **`Master/`** (or **`Slave/`**) as the CLion project root — not necessarily the repo root. Shared discovery lives in [`cmake/ArduinoClion.cmake`](../cmake/ArduinoClion.cmake).
+
+| Board | FQBN | Index MCU / variant |
+|-------|------|---------------------|
+| Master Mega 2560 | `arduino:avr:mega:cpu=atmega2560` | `__AVR_ATmega2560__` / `mega` |
+| Slave ATmega8 (NG) | `arduino:avr:atmegang:cpu=atmega8` | `__AVR_ATmega8__` / `standard` |
+
+**Autocomplete:** target `Master_index` / `Slave_index` adds Arduino core, board variant, AVR libc, bundled AVR libs, and sketchbook libraries. After CMake reload, `compile_commands.json` feeds clangd (see `.clangd`).
+
+**Build / upload (CLion targets):**
+- `firmware` / `arduino-compile` — `arduino-cli compile`
+- `arduino-upload` — compile + upload (needs `ARDUINO_PORT`)
+- `host_tests` — host unit tests (`tests/Makefile`)
+
+**Env (optional, OS-aware defaults otherwise):**
+
+| Variable | Purpose |
+|----------|---------|
+| `ARDUINO15` | Arduino15 data dir (Linux `~/.arduino15`, macOS `~/Library/Arduino15`, Windows `%LOCALAPPDATA%\Arduino15`) |
+| `ARDUINO_LIBRARIES` / `ARDUINO_SKETCHBOOK` | User libraries |
+| `ARDUINO_CLI` | Path to `arduino-cli` |
+| `ARDUINO_PORT` | Upload port (`/dev/ttyACM0`, `COM3`, …) |
+
+```bash
+# Example (Linux)
+export ARDUINO_PORT=/dev/ttyACM0
+cd Master && cmake -B cmake-build-debug && cmake --build cmake-build-debug --target arduino-compile
 ```
 
 ---
@@ -260,10 +293,14 @@ Master/
 
 ### Host unit tests (`tests/`)
 
-Overtime protection logic is extracted to `lib/Overtime.h` and verified on the host (no board required):
+Pure logic is extracted to headers and verified on the host (no board required):
 
 ```bash
-cd tests && make test
+# From repo root (Master + Slave):
+make test
+
+# Master only:
+cd Master/tests && make test
 ```
 
 Covers **overtime** (`Overtime.h`):
@@ -288,8 +325,14 @@ Covers **main tank handler** (`Main.h`):
 - Spike rejection and multi-sample stability before pump start
 - Steady-drain leak detection (constant rate over sample windows; night vs day rules)
 
+Covers **sensor protocol** (`SensorProto.h`):
+- Well JSN-SR04T UART frame parse (start `0xFF`, checksum + `verifyCorrection`)
+- 4-sample rolling average used for well UART and Slave RX bytes
+
+Slave host tests live in `Slave/tests/` (pulse→cm, LED map, 60-sample TX average).
+
 ### On-device / simulation
 
 - **Arduino IDE / CLI**: compile `Master.ino` for **Arduino Mega 2560**; libraries include AsyncDelay, RTClib, LiquidCrystal, SoftwareSerial, CmdSerial.
-- **CMake**: `CMakeLists.txt` targets IDE code intelligence against local Arduino AVR toolchain paths.
+- **CLion CMake**: open `Master/`; use `arduino-compile` / `arduino-upload` targets (see **CLion / CMake** above).
 - **Wokwi**: serial commands `well <20-95>` / `main <20-95>` to inject levels.

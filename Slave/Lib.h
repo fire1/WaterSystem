@@ -7,10 +7,13 @@
 #define dbgLn(x)
 #endif
 
+#include "lib/SlaveLogic.h"
+
 //
 // Map function to map distance values to the range of LEDs
 uint8_t mapDistanceToLEDs(uint8_t distance) {
-  return map(distance, minDistance, maxDistance, 0, numLeds);
+  return slaveLogic::mapDistanceToLeds(distance, minDistance, maxDistance,
+                                       numLeds);
 }
 
 
@@ -39,7 +42,6 @@ void lightUp(int data, unsigned int upTime = 25) {
   digitalWrite(ledPins[ledsToTurnOn], HIGH);
 }
 
-
 //
 // Read sensor distance
 uint16_t readSensor() {
@@ -50,7 +52,8 @@ uint16_t readSensor() {
   digitalWrite(pinTrg, LOW);
 
   float duration = pulseIn(pinEch, HIGH);
-  float distance = (duration * .0343) / 2;
+  uint16_t distance = slaveLogic::distanceFromPulseUs(
+      static_cast<unsigned long>(duration));
   // Serial.print("Distance: ");
   // Serial.println(distance);
 
