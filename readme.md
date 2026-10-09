@@ -1,4 +1,6 @@
-# WaterSystem: Automated Water Pump Control
+# WaterSystem
+
+Automated well → well-tank → main-tank water management.
 
 ```
               _|=|__________
@@ -8,83 +10,102 @@
             ||  || /--\ ||  ||                                      //
             ||[]|| | .| ||[]||                                     //
          () ||__||_|__|_||__||     ()          ___    __ [~~~~~~] //   ___
-        ( )|-|-|-|====|-|-|-|||-|  ( ) 	      (_(O)--^|| [______]//`--(O)_)
+        ( )|-|-|-|====|-|-|-|||-|  ( )        (_(O)--^|| [______]//`--(O)_)
        ^^^^^^^^^^^====^^^^^^^^^^^^^^^^^^^^^^^YYYY^^^^^||^^^^^^^^^^^^^^YYYY^^^^^^/
-                                                      ||
-                                                      ||
                                                       ||
                                                      {~~}
                                                      {__}
 ```
 
-The WaterSystem is an intelligent and automated solution designed for the precise control of water pumps in a fluid
-management
-system. This project is specifically tailored for scenarios where multiple containers with varying water levels need to
-be
-efficiently managed to ensure a continuous and optimal water supply.
+An **Arduino Mega 2560** (Master) runs pumps, UI, RTC scheduling, and safety rules. An **ATmega8** (Slave) at the main tank reads the ultrasonic sensor and sends level bytes over a long two-wire power/serial link (~60 m+).
 
-## Key Features
+```
+  [Well] --airlift--> [Well Tank] --main pump--> [Main Tank]
+         well pump              (long cable)
+                                    |
+                            [ATmega8 Slave + JSN-SR04T]
+```
 
-1. **Pump Control:** The system automates the operation of water pumps based on real-time water levels in different
-   containers.
-   Pumps are activated or deactivated as needed to maintain optimal water levels
-   at [specific periods](#specific-periods).
+## Features
 
-2. **Container Monitoring:** Water levels in multiple containers are constantly monitored using sensors. This
-   information is crucial
-   for making informed decisions about when and how long to activate the pumps.
+- Selectable well pumping modes (hourly / multi-hour, adaptive airlift PID-style, moon/tide, winter, …)
+- Scheduled main-tank transfer with spike-resistant level stability and leak watch
+- Mutual exclusion, overtime, dry-run / overfill, cold, and SSR thermal protection
+- 16×2 LCD UI, manual pump controls, serial debug commands
 
-3. **User-Defined Settings:** Users can customize the system's behavior by setting thresholds for water levels and
-   specifying pump
-   activation and deactivation criteria. This flexibility allows the system to adapt to different environments and
-   requirements.
+Deep firmware notes (pins, modes, protocols): **[Master/AGENTS.md](Master/AGENTS.md)**.
 
-4. **Data Logging:** The system logs water level data over time, providing users with historical insights into water
-   usage patterns.
-   This data can be valuable for analyzing trends and optimizing the overall efficiency of water distribution.
+## Repository layout
 
-5. **User Interface:** A user-friendly interface, potentially implemented using an LCD display or other visualization
-   tools, allows
-   users to interact with and monitor the system. Users can view current water levels, system status, and configure
-   settings.
+| Path | Role |
+|------|------|
+| [`Master/`](Master/) | Mega 2560 sketch — open this folder in CLion |
+| [`Slave/`](Slave/) | ATmega8 sketch — open this folder in CLion |
+| [`docs/`](docs/) | Wiring notes (long-range UART, SSR, …) |
+| [`cmake/`](cmake/) | Shared CLion / Arduino helpers |
 
-6. **Fault Detection:** The system incorporates fault detection mechanisms to identify and alert users about any
-   anomalies or
-   malfunctions, ensuring a reliable and resilient operation.
+Branches: **`main`** is the official release line; **`dev`** is ongoing work.
 
-<a name="specific-periods"></a> <ins>Specific Periods</ins>
+## Build & IDE
 
-The system utilizes a Real-Time Clock (RTC) module to intelligently schedule pump operations during specific periods of
-the day,
-days of the week, and even across different seasons. By integrating time-based control, the WaterSystem ensures
-efficient water
-management aligned with user-defined schedules. This feature enhances the system's adaptability to varying water needs
-and
-contributes to overall resource optimization.
+**Arduino CLI** (firmware):
 
-## [UI Demo](https://wokwi.com/projects/392574312711891969)
+```bash
+arduino-cli compile -b arduino:avr:mega:cpu=atmega2560 Master
+# Slave: arduino:avr:atmegang:cpu=atmega8  (see Slave/readme.md)
+```
 
-This is a simple demo of the UI. \
-For simulating some water level in the tank/s use `well` or `main` command with value from `20` to `95`.\
-All commands can be checked when you write help in the Serial monitor.
+**CLion:** open `Master/` or `Slave/` as the project root (not the repo root). CMake wires autocomplete and `arduino-cli` targets (`arduino-compile`, `arduino-upload`). Optional env: `ARDUINO15`, `ARDUINO_LIBRARIES`, `ARDUINO_PORT`. Details in [Master/AGENTS.md](Master/AGENTS.md#clion--cmake).
 
+Libraries used on Master include LiquidCrystal, AsyncDelay, RTClib, SoftwareSerial, CmdSerial.
 
+## Tests
 
-## Potential Components
+Host unit tests run on the PC with `g++` — **no Arduino board or toolchain required**. Pure logic lives in headers; sketches stay on-device.
 
-* Arduino board (e.g., Arduino Mega2560) - I'm using Mega as primary device and AtMega8 as Slave device.
-* Liquid Crystal Display (LCD) - For diferent modes and level reads.
-* Push buttons for user input
-* LEDs for status indication
-* Buzzer for sound output
+### Where things live
 
-* Two water containers with ultrasonic sensors for water level monitoring.
-* Arduino board controlling the system, including pumps and sensor readings.
-* Pump 1 for drawing water from the well.
-* Pump 2 for raising water to a higher place.
-* An optional Atmega8 microcontroller for data processing in the raised tank.
+| Path | What it covers |
+|------|----------------|
+| [`Master/tests/`](Master/tests/) | Master host tests + shared [`TestHarness.h`](Master/tests/TestHarness.h) |
+| [`Master/lib/Overtime.h`](Master/lib/Overtime.h) | Pump overtime limits / Rule arming |
+| [`Master/lib/Moon.h`](Master/lib/Moon.h) | Moon altitude, tide windows, DST helpers |
+| [`Master/lib/AirliftOpt.h`](Master/lib/AirliftOpt.h) | Airlift runtime/rest tuning |
+| [`Master/lib/Main.h`](Master/lib/Main.h) | Main transfer schedule, level stability, leak watch |
+| [`Master/lib/WellTopOff.h`](Master/lib/WellTopOff.h) | Extra well runs after tank full |
+| [`Master/lib/SensorProto.h`](Master/lib/SensorProto.h) | Well UART frame parse + 4-sample average (Slave RX path) |
+| [`Slave/tests/`](Slave/tests/) | Slave host tests |
+| [`Slave/lib/SlaveLogic.h`](Slave/lib/SlaveLogic.h) | Pulse→cm, LED bar map, 60-sample TX average |
+
+### How to run
+
+```bash
+# Everything (Master + Slave) from repo root
+make test
+
+# Master only
+cd Master/tests && make test
+
+# Slave only
+cd Slave/tests && make test
+
+# Single Master suite (examples)
+cd Master/tests && make sensor_tests && ./sensor_tests
+cd Master/tests && make moon_tests && ./moon_tests
+```
+
+`make clean` in `Master/tests` or `Slave/tests` removes the built `*_tests` binaries. CLion: open `Master/` or `Slave/` and build the `host_tests` target.
+
+## UI demo
+
+[Wokwi UI demo](https://wokwi.com/projects/392574312711891969) — inject levels with `well` / `main` values `20`–`95`; type `help` in the serial monitor for commands.
+
+## Hardware (summary)
+
+- Master: Arduino Mega 2560 — pumps (SSR), well JSN-SR04T (UART), Slave poll, LCD, RTC (DS3231), buzzer, SSR fan/NTC
+- Slave: ATmega8 — main-tank JSN-SR04T (trigger/echo), inverted UART TX @ 4800, local LED bar
+- Two tanks with ultrasonic level sensors; airlift well pump + main transfer pump
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
+MIT — see [LICENSE](LICENSE).
