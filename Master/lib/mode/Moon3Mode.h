@@ -27,9 +27,9 @@ public:
 
     if (rtcOk) {
       const DateTime now = getTime()->now();
-      const auto h = moon::computeHorizon(now.year(), now.month(), now.day(),
-                                          now.hour(), now.minute(), SITE_LAT_DEG,
-                                          SITE_LON_DEG);
+      const auto h = moon::computeTideState(now.year(), now.month(), now.day(),
+                                            now.hour(), now.minute(), SITE_LAT_DEG,
+                                            SITE_LON_DEG);
       ha = h.hourAngleHours;
       phase = h.phaseFraction;
       windowH = moon::tideWindowHours(phase);
@@ -39,7 +39,7 @@ public:
     const moon::WellSchedule sch =
         moon::scheduleForTideMoon4(rtcOk, ha, phase, SITE_TIDE_LAG_HOURS);
 
-    if (spanLg.active()) {
+    if (cmd.show(F("mode"))){
       dbg(F("[MOON] ha="));
       dbg(ha);
       dbg(F(" lagHa="));

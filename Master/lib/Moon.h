@@ -5,6 +5,11 @@
  * Lightweight topocentric moon position for embedded / host unit tests.
  * Based on truncated Meeus "Astronomical Algorithms" lunar terms.
  *
+ * Performance (Arduino Mega soft-float): always reduce mean anomalies to
+ * [0°, 360°) before sinf/cosf. Unreduced angles grow with years since J2000
+ * and turn each trig call into a long busy-loop — moon modes call this from
+ * the main loop every spanLg (~7.6 s) and will stall UI / pump control.
+ *
  * Tide note (M2 semidiurnal constituent, ~12h 25m between high waters):
  * - High tide at lunar upper transit (overhead, HA≈0) and lower culmination
  *   (underfoot/nadir, |HA|≈12h). Low tide midway (|HA|≈6h).
@@ -37,19 +42,23 @@ struct HorizonResult {
   float hourAngleHours; // local HA in hours (-12 .. +12); 0 = transit, ±12 = nadir
 };
 
+/** O(1) degree wrap — never use subtract-in-a-loop (grows with years since J2000). */
 inline float degNorm(float deg) {
-  while (deg < 0.f)
+  deg -= 360.f * floorf(deg / 360.f);
+  if (deg < 0.f)
     deg += 360.f;
-  while (deg >= 360.f)
+  if (deg >= 360.f)
     deg -= 360.f;
   return deg;
 }
 
+/** O(1) radian wrap to [0, 2π). */
 inline float radNorm(float rad) {
   const float twoPi = 2.f * kPi;
-  while (rad < 0.f)
+  rad -= twoPi * floorf(rad / twoPi);
+  if (rad < 0.f)
     rad += twoPi;
-  while (rad >= twoPi)
+  if (rad >= twoPi)
     rad -= twoPi;
   return rad;
 }
@@ -128,8 +137,9 @@ inline float julianDay(uint16_t year, uint8_t month, uint8_t day,
 
 inline void sunEcliptic(float daysSinceJ2000, float &lonDeg, float &latDeg) {
   const float T = daysSinceJ2000 / 36525.f;
+  // Reduce mean anomaly before sinf — AVR soft-float reduction is O(|angle|).
   const float L0 = degNorm(280.46646f + 36000.76983f * T);
-  const float M = (357.52911f + 35999.05029f * T) * DEG2RAD;
+  const float M = degNorm(357.52911f + 35999.05029f * T) * DEG2RAD;
   const float C = (1.914602f - 0.004817f * T - 0.000014f * T * T) * sinf(M) +
                   (0.019993f - 0.000101f * T) * sinf(2.f * M) +
                   0.000289f * sinf(3.f * M);
@@ -139,11 +149,13 @@ inline void sunEcliptic(float daysSinceJ2000, float &lonDeg, float &latDeg) {
 
 inline void moonEcliptic(float daysSinceJ2000, float &lonDeg, float &latDeg) {
   const float T = daysSinceJ2000 / 36525.f;
-  const float Lp = (218.3164477f + 481267.88123421f * T) * DEG2RAD;
-  const float D = (297.8501921f + 445267.1114034f * T) * DEG2RAD;
-  const float M = (357.5291092f + 35999.0502909f * T) * DEG2RAD;
-  const float Mp = (134.9633964f + 477198.8675055f * T) * DEG2RAD;
-  const float F = (93.2720950f + 483202.0175233f * T) * DEG2RAD;
+  // Critical for 24/7 Mega: unreduced Lp/D/Mp (~2000+ rad in 2020s) make
+  // libm sinf spin for tens–hundreds of ms and stall UI / pump control.
+  const float Lp = degNorm(218.3164477f + 481267.88123421f * T) * DEG2RAD;
+  const float D = degNorm(297.8501921f + 445267.1114034f * T) * DEG2RAD;
+  const float M = degNorm(357.5291092f + 35999.0502909f * T) * DEG2RAD;
+  const float Mp = degNorm(134.9633964f + 477198.8675055f * T) * DEG2RAD;
+  const float F = degNorm(93.2720950f + 483202.0175233f * T) * DEG2RAD;
 
   float lon = Lp + (6.288774f * sinf(Mp) + 1.274027f * sinf(2.f * D - Mp) +
                     0.658314f * sinf(2.f * D) + 0.213618f * sinf(2.f * Mp) -
@@ -192,9 +204,10 @@ inline float greenwichMeanSiderealHours(float daysSinceJ2000) {
 
 inline float localSiderealHours(float daysSinceJ2000, float lonDeg) {
   float lst = greenwichMeanSiderealHours(daysSinceJ2000) + lonDeg / 15.f;
-  while (lst < 0.f)
+  lst -= 24.f * floorf(lst / 24.f);
+  if (lst < 0.f)
     lst += 24.f;
-  while (lst >= 24.f)
+  if (lst >= 24.f)
     lst -= 24.f;
   return lst;
 }
@@ -206,6 +219,44 @@ inline float moonPhaseFraction(float moonLonDeg, float sunLonDeg) {
   if (phase > 1.f)
     phase = 1.f;
   return phase;
+}
+
+/**
+ * Tide inputs only (HA + phase). Pump modes call this — skips altitude/azimuth
+ * trig that nothing in firmware uses.
+ */
+struct TideState {
+  float phaseFraction;
+  float hourAngleHours;
+};
+
+inline TideState computeTideState(uint16_t year, uint8_t month, uint8_t day,
+                                  uint8_t hourLocal, uint8_t minuteLocal,
+                                  float latDeg, float lonDeg) {
+  (void)latDeg; // HA needs LST + RA only; lat reserved for API symmetry
+  const float utc = localBulgariaToUtcHours(year, month, day, hourLocal,
+                                            minuteLocal);
+  const float d = daysSinceJ2000(year, month, day, utc);
+
+  float moonLon, moonLat, sunLon, sunLat;
+  moonEcliptic(d, moonLon, moonLat);
+  sunEcliptic(d, sunLon, sunLat);
+
+  float ra, dec;
+  eclipticToEquatorial(d, moonLon, moonLat, ra, dec);
+  (void)dec;
+
+  const float lst = localSiderealHours(d, lonDeg);
+  float haHours = lst - ra;
+  if (haHours < -12.f)
+    haHours += 24.f;
+  if (haHours > 12.f)
+    haHours -= 24.f;
+
+  TideState t;
+  t.phaseFraction = moonPhaseFraction(moonLon, sunLon);
+  t.hourAngleHours = haHours;
+  return t;
 }
 
 inline HorizonResult computeHorizon(uint16_t year, uint8_t month, uint8_t day,
@@ -237,18 +288,10 @@ inline HorizonResult computeHorizon(uint16_t year, uint8_t month, uint8_t day,
       sinf(lat) * sinf(decR) + cosf(lat) * cosf(decR) * cosf(ha);
   const float alt = asinf(sinAlt) * RAD2DEG;
 
-  const float cosAzNum = sinf(decR) - sinf(lat) * sinAlt;
-  const float cosAzDen = cosf(lat) * cosf(asinf(sinAlt));
-  float az = 0.f;
-  if (fabsf(cosAzDen) > 1e-6f) {
-    az = acosf(cosAzNum / cosAzDen) * RAD2DEG;
-    if (sinf(ha) > 0.f)
-      az = 360.f - az;
-  }
-
+  // Azimuth unused by firmware; keep field for API / tests without acosf cost.
   HorizonResult r;
   r.altitudeDeg = alt;
-  r.azimuthDeg = az;
+  r.azimuthDeg = 0.f;
   r.phaseFraction = moonPhaseFraction(moonLon, sunLon);
   r.hourAngleHours = haHours;
   return r;
@@ -314,9 +357,10 @@ inline uint16_t clampBreakMinutes(float minutes, uint16_t lo = 10,
 constexpr float TIDE_WINDOW_BASE_HOURS = 1.25f;  // ±1.25h around transit & nadir
 constexpr float TIDE_WINDOW_SPRING_EXTRA_H = 0.5f; // wider window at spring tides
 inline float wrapHourAngle(float haHours) {
-  while (haHours < -12.f)
+  haHours -= 24.f * floorf((haHours + 12.f) / 24.f);
+  if (haHours <= -12.f)
     haHours += 24.f;
-  while (haHours > 12.f)
+  if (haHours > 12.f)
     haHours -= 24.f;
   return haHours;
 }

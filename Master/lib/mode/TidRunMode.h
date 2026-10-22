@@ -31,9 +31,9 @@ public:
       return mainTank::Intent::Default;
 
     const DateTime now = getTime()->now();
-    const auto h = moon::computeHorizon(now.year(), now.month(), now.day(),
-                                        now.hour(), now.minute(), SITE_LAT_DEG,
-                                        SITE_LON_DEG);
+    const auto h = moon::computeTideState(now.year(), now.month(), now.day(),
+                                          now.hour(), now.minute(), SITE_LAT_DEG,
+                                          SITE_LON_DEG);
     const bool tideHigh =
         moon::isLunarTideHighAt(h.hourAngleHours, h.phaseFraction,
                                 SITE_TIDE_LAG_HOURS + TIDE_MODE_EXTRA_LAG_HOURS);
@@ -60,9 +60,9 @@ public:
 
     if (rtcOk) {
       const DateTime now = getTime()->now();
-      const auto h = moon::computeHorizon(now.year(), now.month(), now.day(),
-                                          now.hour(), now.minute(), SITE_LAT_DEG,
-                                          SITE_LON_DEG);
+      const auto h = moon::computeTideState(now.year(), now.month(), now.day(),
+                                            now.hour(), now.minute(), SITE_LAT_DEG,
+                                            SITE_LON_DEG);
       ha = h.hourAngleHours;
       phase = h.phaseFraction;
       windowH = moon::tideWindowHours(phase);
@@ -74,7 +74,7 @@ public:
     const moon::WellSchedule sch =
         moon::scheduleForTide(rtcOk, ha, phase, lag);
 
-    if (spanLg.active()) {
+    if (cmd.show(F("mode"))){
       dbg(F("[TIDE] ha="));
       dbg(ha);
       dbg(F(" lagHa="));
