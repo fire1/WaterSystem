@@ -11,6 +11,10 @@
 const uint8_t ClockMaxConnectAttempts = 10;
 /** EEPROM: last applied Bulgaria DST state for the DS3231 wall clock. */
 static constexpr uint8_t E_ADDR_DST_FLAG = 4;
+/** EEPROM: DST logic scheme (bumped when first-boot migrate semantics change). */
+static constexpr uint8_t E_ADDR_DST_SCHEME = 5;
+/** Scheme 1: first install / broken "seed calendar, no ±1h" → one opposite seed + step. */
+static constexpr uint8_t DST_SCHEME_VER = 1;
 
 class Time {
 private:
@@ -64,7 +68,7 @@ public:
     }
 
     // Align wall clock to EU DST if EEPROM flag disagrees (e.g. after
-    // power-off across the Oct/Mar change). First boot only seeds the flag.
+    // power-off across the Oct/Mar change).
     this->applyDstCorrection();
   }
 
@@ -73,10 +77,27 @@ public:
      */
   void adjust() {
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    // Compile-time stamp is local; re-seed DST flag from calendar.
+    // Compile-time stamp is local; mark DST flag aligned to calendar.
     const DateTime n = rtc.now();
     const bool dst = moon::isBulgariaDst(n.year(), n.month(), n.day());
     EEPROM.update(E_ADDR_DST_FLAG, moon::dstFlagFromCalendar(dst));
+    EEPROM.update(E_ADDR_DST_SCHEME, DST_SCHEME_VER);
+  }
+
+  /** Nudge wall clock by whole hours and sync DST flag to the calendar. */
+  void skewHours(int8_t hours) {
+    if (!this->isConnected || hours == 0)
+      return;
+    const DateTime n = rtc.now();
+    if (hours > 0)
+      rtc.adjust(n + TimeSpan(0, hours, 0, 0));
+    else
+      rtc.adjust(n - TimeSpan(0, -hours, 0, 0));
+    const DateTime after = rtc.now();
+    const bool dst =
+        moon::isBulgariaDst(after.year(), after.month(), after.day());
+    EEPROM.update(E_ADDR_DST_FLAG, moon::dstFlagFromCalendar(dst));
+    EEPROM.update(E_ADDR_DST_SCHEME, DST_SCHEME_VER);
   }
 
   //
@@ -131,7 +152,11 @@ private:
   /**
    * Keep DS3231 on Bulgaria civil time (EET/EEST).
    * RTC has no timezone — we step ±1 h when the calendar DST state changes.
-   * Unset EEPROM flag: seed only (assume the current wall time is already correct).
+   *
+   * First install (scheme unset / old): DS3231 usually still holds the previous
+   * season's offset. Seed the *opposite* of the calendar flag so the missed
+   * ±1 h runs once, then mark scheme current. Later boots only step when the
+   * stored flag disagrees with the calendar.
    */
   void applyDstCorrection() {
     if (!this->isConnected)
@@ -140,13 +165,17 @@ private:
     const DateTime n = rtc.now();
     const bool calendarDst =
         moon::isBulgariaDst(n.year(), n.month(), n.day());
-    const uint8_t stored = EEPROM.read(E_ADDR_DST_FLAG);
+    uint8_t stored = EEPROM.read(E_ADDR_DST_FLAG);
+    const bool needMigrate =
+        EEPROM.read(E_ADDR_DST_SCHEME) != DST_SCHEME_VER;
 
-    if (stored == moon::DST_FLAG_UNSET) {
-      EEPROM.update(E_ADDR_DST_FLAG, moon::dstFlagFromCalendar(calendarDst));
-      Serial.print(F("[CLK] DST flag seeded "));
-      Serial.println(calendarDst ? F("EEST") : F("EET"));
-      return;
+    if (needMigrate || stored == moon::DST_FLAG_UNSET) {
+      // Opposite of calendar → SpringForward / FallBack on this same pass.
+      stored = moon::dstMigrateSeedFlag(calendarDst);
+      EEPROM.update(E_ADDR_DST_FLAG, stored);
+      EEPROM.update(E_ADDR_DST_SCHEME, DST_SCHEME_VER);
+      Serial.print(F("[CLK] DST migrate seed "));
+      Serial.println(stored == moon::DST_FLAG_SUMMER ? F("EEST") : F("EET"));
     }
 
     const moon::DstClockAction action =
@@ -162,6 +191,7 @@ private:
       Serial.println(F("[CLK] DST fall back -1h (EET)"));
     }
     EEPROM.update(E_ADDR_DST_FLAG, moon::dstFlagFromCalendar(calendarDst));
+    EEPROM.update(E_ADDR_DST_SCHEME, DST_SCHEME_VER);
   }
 
   /**
@@ -223,6 +253,13 @@ private:
       cmd.print(F("Clock adjusted"), F("OK"));
     }
 
+    int8_t skew = 0;
+    if (cmd.set(F("clock:skew"), skew,
+                F("Nudge RTC by whole hours (e.g. -1 / +1)."))) {
+      this->skewHours(skew);
+      cmd.print(F("Clock skewed h"), skew);
+    }
+
     if (cmd.show(F("clock:dst"), F("Show RTC DST flag / calendar."))) {
       const DateTime n = this->now();
       const bool cal = moon::isBulgariaDst(n.year(), n.month(), n.day());
@@ -231,9 +268,11 @@ private:
       Serial.print(cal ? F("EEST") : F("EET"));
       Serial.print(F(" flag="));
       if (fl == moon::DST_FLAG_UNSET)
-        Serial.println(F("unset"));
+        Serial.print(F("unset"));
       else
-        Serial.println(fl == moon::DST_FLAG_SUMMER ? F("EEST") : F("EET"));
+        Serial.print(fl == moon::DST_FLAG_SUMMER ? F("EEST") : F("EET"));
+      Serial.print(F(" scheme="));
+      Serial.println(EEPROM.read(E_ADDR_DST_SCHEME));
     }
   }
 };

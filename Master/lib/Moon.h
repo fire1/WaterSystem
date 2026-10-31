@@ -130,6 +130,14 @@ inline uint8_t dstFlagFromCalendar(bool calendarDst) {
   return calendarDst ? DST_FLAG_SUMMER : DST_FLAG_WINTER;
 }
 
+/**
+ * First-install seed: opposite of calendar so dstClockAction applies the
+ * missed seasonal ±1 h (RTC usually still holds the previous offset).
+ */
+inline uint8_t dstMigrateSeedFlag(bool calendarDst) {
+  return calendarDst ? DST_FLAG_WINTER : DST_FLAG_SUMMER;
+}
+
 /** Convert local civil time (Bulgaria) to UTC hours (0–24 fraction ok). */
 inline float localBulgariaToUtcHours(uint16_t year, uint8_t month, uint8_t day,
                                      uint8_t hour, uint8_t minute) {

@@ -248,7 +248,7 @@ extern Span spanMx(250005);  //Loop span at 60k loops
 
 // Forward declaration of Mode class and modes array
 class Mode;
-#define MODE_COUNT  4 // Moon Tides, 3h + Moon, Winter, Idle / 3d (off)
+#define MODE_COUNT  5 // Moon Tides, 3h + Moon, 3-Hour, Winter, Idle / 3d (off)
 extern Mode* modes[MODE_COUNT];
 
 #include "Time.h"

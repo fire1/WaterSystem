@@ -255,6 +255,21 @@ TEST(dst_clock_action_already_aligned) {
               moon::DstClockAction::None);
 }
 
+TEST(dst_migrate_seed_triggers_fall_back_in_winter) {
+  // First flash after Oct change: calendar winter, RTC still on summer.
+  const uint8_t seed = moon::dstMigrateSeedFlag(false);
+  EXPECT_TRUE(seed == moon::DST_FLAG_SUMMER);
+  EXPECT_TRUE(moon::dstClockAction(false, seed) ==
+              moon::DstClockAction::FallBack);
+}
+
+TEST(dst_migrate_seed_triggers_spring_forward_in_summer) {
+  const uint8_t seed = moon::dstMigrateSeedFlag(true);
+  EXPECT_TRUE(seed == moon::DST_FLAG_WINTER);
+  EXPECT_TRUE(moon::dstClockAction(true, seed) ==
+              moon::DstClockAction::SpringForward);
+}
+
 TEST(bulgaria_dst_ended_by_2026_10_31) {
   EXPECT_FALSE(moon::isBulgariaDst(2026, 10, 31));
   EXPECT_TRUE(moon::isBulgariaDst(2026, 10, 24)); // day before last Sunday

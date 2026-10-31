@@ -49,7 +49,8 @@ public:
             const __FlashStringHelper* t = getModeTitle(index);
             if (t) {
                 src = (PGM_P)t;
-            } else if (index == 3) {
+            } else if (index + 1 == numOptions) {
+                // Last slot is off (nullptr in modes[])
                 src = PSTR("Idle / 3d");
             }
         }
@@ -91,7 +92,10 @@ public:
     }
 
 private:
-    static constexpr uint8_t MODE_LAYOUT_MARKER = 0xA5;
+    /** 5-mode table: Moon Tides, 3h + Moon, 3-Hour, Winter, Idle. */
+    static constexpr uint8_t MODE_LAYOUT_MARKER = 0xA6;
+    /** Previous 4-mode table (no fixed 3-Hour). */
+    static constexpr uint8_t MODE_LAYOUT_MARKER_V4 = 0xA5;
     static constexpr uint8_t MODE_LAYOUT_MARKER_ADDR = 3;
 
     uint8_t stored;
@@ -104,15 +108,27 @@ private:
     void readEepRom() {
         uint8_t storedValue = EEPROM.read(eepromAddress);
 
-        // Migrate the former 12-entry well-mode table once. Unsupported
-        // legacy modes become the new Idle / 3d (off) entry.
-        if (eepromAddress == 2 && numOptions == 4 &&
+        // Well-mode EEPROM layout migrations (address 2).
+        if (eepromAddress == 2 && numOptions == 5 &&
             EEPROM.read(MODE_LAYOUT_MARKER_ADDR) != MODE_LAYOUT_MARKER) {
-            switch (storedValue) {
-                case 9:  storedValue = 2; break; // Winter
-                case 10: storedValue = 1; break; // 3h + Moon
-                case 11: storedValue = 0; break; // Moon Tides
-                default: storedValue = 3; break; // Cleans/unsupported -> off
+            const uint8_t prev = EEPROM.read(MODE_LAYOUT_MARKER_ADDR);
+            if (prev == MODE_LAYOUT_MARKER_V4) {
+                // Insert fixed 3-Hour at index 2; shift Winter / Idle up.
+                switch (storedValue) {
+                    case 0: break;              // Moon Tides
+                    case 1: break;              // 3h + Moon
+                    case 2: storedValue = 3; break; // Winter
+                    case 3: storedValue = 4; break; // Idle
+                    default: storedValue = 4; break;
+                }
+            } else {
+                // Former 12-entry table → current slots.
+                switch (storedValue) {
+                    case 9:  storedValue = 3; break; // Winter
+                    case 10: storedValue = 1; break; // 3h + Moon
+                    case 11: storedValue = 0; break; // Moon Tides
+                    default: storedValue = 4; break; // unsupported → Idle
+                }
             }
             EEPROM.update(eepromAddress, storedValue);
             EEPROM.update(MODE_LAYOUT_MARKER_ADDR, MODE_LAYOUT_MARKER);

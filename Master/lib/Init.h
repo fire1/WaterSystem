@@ -43,8 +43,8 @@ TidRunMode tidRunMode;
 
 
 Mode *modes[] = {
-    &tidRunMode, &moon3Mode, &winterMode, nullptr,
-                  };
+    &tidRunMode, &moon3Mode, &hours3Mode, &winterMode, nullptr,
+};
 
 // Return title for mode index (flash string). Keeps Data.h free of
 // ModeInterface.
