@@ -267,21 +267,30 @@ private:
     else
       lcd.print(F(" ")); // 4
 
-    lcd.print(formatMsToTime(rule->getNextOff())); // 8
+    // Time fields are fixed 5 chars (same width as formatMsToTime) so
+    // overlays replace the previous value without clearing the LCD.
+    unsigned long nextOff = rule->getNextOff();
+    if (nextOff == 0)
+      lcd.print(F("hold ")); // held off — 5 chars
+    else
+      lcd.print(formatMsToTime(nextOff)); // 5
 
-    lcd.print(F(" / ")); // 9
+    lcd.print(F(" / ")); // 3
 
     // When stopped
     // Print to on time
     if (!ctrlWell.isOn())
       lcd.print(F("~"));
     else
-      lcd.print(F(" ")); // 10
+      lcd.print(F(" ")); // 1
     unsigned long next = rule->getNextOn();
     if (next > MaxDaysInMillis) {
-      lcd.print(F("[\xF3]"));
+      lcd.print(F("[\xF3]  ")); // 5 chars (pad)
+    } else if (next == 0) {
+      // Tank full / schedule ready but start blocked — held off
+      lcd.print(F("hold ")); // 5 chars
     } else
-      lcd.print(formatMsToTime(rule->getNextOn())); // 13
+      lcd.print(formatMsToTime(next)); // 5
 
     // lcd.print(F(" "));
   }

@@ -1,0 +1,29 @@
+---
+description: 16x2 LCD menu uses fixed-width field overlays (no clear) — keep string lengths stable
+globs: lib/Menu.h,lib/Draw.h
+alwaysApply: false
+---
+
+# LCD fixed-width overlay rendering
+
+The Master UI draws on a **16×2** character LCD. Screens are **not cleared** on each refresh; new values are printed over the previous ones at fixed cursor positions. This is intentional and cheaper than `lcd.clear()` / full redraws.
+
+## Rules when changing Menu / Draw text
+
+1. **Same field → same character count** as whatever can appear in that slot (including spaces). A shorter string leaves **ghost characters** from the previous value.
+2. Prefer padding with trailing spaces over clearing the line.
+3. Full-line messages should be **exactly 16 characters** (or print spaces to the end of the line).
+4. Info time WORK/WAIT durations use **5 characters**, matching `formatMsToTime()` (`dtostrf` width 4 + unit). Alternatives in that slot:
+   - `hold ` — schedule ready / tank full / pump held off
+   - `[\xF3]  ` — wait longer than `MaxDaysInMillis` (pad to 5)
+5. Do not introduce variable-length status phrases (`"Held off"`, `"Waiting…"`) into a fixed slot unless the whole line layout is redesigned around them.
+
+## Example
+
+```cpp
+// BAD — "off" is 3 chars; previous "12.5m" leaves trailing "m"
+lcd.print(F("off"));
+
+// GOOD — same width as formatMsToTime
+lcd.print(F("hold "));
+```

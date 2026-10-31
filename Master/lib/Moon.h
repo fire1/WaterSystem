@@ -99,6 +99,37 @@ inline bool isBulgariaDst(uint16_t year, uint8_t month, uint8_t day) {
   return day < lastSundayOfMonth(year, 10);
 }
 
+/** EEPROM DST flag: 0 = EET (UTC+2), 1 = EEST (UTC+3), 0xFF = unset. */
+constexpr uint8_t DST_FLAG_WINTER = 0;
+constexpr uint8_t DST_FLAG_SUMMER = 1;
+constexpr uint8_t DST_FLAG_UNSET = 0xFF;
+
+/** RTC wall-clock nudge for EU DST when EEPROM flag disagrees with calendar. */
+enum class DstClockAction : int8_t {
+  None = 0,
+  SpringForward = 1, // +1 hour
+  FallBack = -1      // -1 hour
+};
+
+/**
+ * Decide whether the DS3231 (local Bulgaria wall time) needs a ±1 h step.
+ * storedFlag UNSET → no move (caller should only seed the flag from calendar).
+ */
+inline DstClockAction dstClockAction(bool calendarDst, uint8_t storedFlag) {
+  if (storedFlag == DST_FLAG_UNSET)
+    return DstClockAction::None;
+  const bool storedDst = storedFlag == DST_FLAG_SUMMER;
+  if (calendarDst && !storedDst)
+    return DstClockAction::SpringForward;
+  if (!calendarDst && storedDst)
+    return DstClockAction::FallBack;
+  return DstClockAction::None;
+}
+
+inline uint8_t dstFlagFromCalendar(bool calendarDst) {
+  return calendarDst ? DST_FLAG_SUMMER : DST_FLAG_WINTER;
+}
+
 /** Convert local civil time (Bulgaria) to UTC hours (0–24 fraction ok). */
 inline float localBulgariaToUtcHours(uint16_t year, uint8_t month, uint8_t day,
                                      uint8_t hour, uint8_t minute) {

@@ -231,6 +231,36 @@ TEST(bulgaria_winter_no_dst) {
   EXPECT_FALSE(moon::isBulgariaDst(2024, 1, 15));
 }
 
+TEST(dst_clock_action_unset_never_moves) {
+  EXPECT_TRUE(moon::dstClockAction(true, moon::DST_FLAG_UNSET) ==
+              moon::DstClockAction::None);
+  EXPECT_TRUE(moon::dstClockAction(false, moon::DST_FLAG_UNSET) ==
+              moon::DstClockAction::None);
+}
+
+TEST(dst_clock_action_spring_forward) {
+  EXPECT_TRUE(moon::dstClockAction(true, moon::DST_FLAG_WINTER) ==
+              moon::DstClockAction::SpringForward);
+}
+
+TEST(dst_clock_action_fall_back) {
+  EXPECT_TRUE(moon::dstClockAction(false, moon::DST_FLAG_SUMMER) ==
+              moon::DstClockAction::FallBack);
+}
+
+TEST(dst_clock_action_already_aligned) {
+  EXPECT_TRUE(moon::dstClockAction(true, moon::DST_FLAG_SUMMER) ==
+              moon::DstClockAction::None);
+  EXPECT_TRUE(moon::dstClockAction(false, moon::DST_FLAG_WINTER) ==
+              moon::DstClockAction::None);
+}
+
+TEST(bulgaria_dst_ended_by_2026_10_31) {
+  EXPECT_FALSE(moon::isBulgariaDst(2026, 10, 31));
+  EXPECT_TRUE(moon::isBulgariaDst(2026, 10, 24)); // day before last Sunday
+  EXPECT_FALSE(moon::isBulgariaDst(2026, 10, 25)); // last Sunday Oct 2026
+}
+
 TEST(hour_angle_changes_within_the_hour) {
   auto a = moon::computeHorizon(2026, 8, 28, 1, 0, LAT, LON);
   auto b = moon::computeHorizon(2026, 8, 28, 1, 30, LAT, LON);

@@ -218,6 +218,10 @@ Startup waits `RULE_START_WAIT` (1.5 s) so sensors can settle before decisions.
 - Mode selection, manual pump toggles, time/heat info screens.
 - Backlight auto-off after 4 min (`SuspendDisplayTime`).
 - Fault indicator (char 235) on pump failure/terminate.
+- **Fixed-width overlay drawing** (no `lcd.clear()` between refreshes): each field
+  reprints the same character count as the previous value so glyphs do not ghost.
+  Time info WORK/WAIT slots are **5 chars** (`formatMsToTime`, or `hold ` / `[∞]  `
+  when the well is held off or the wait is unbounded).
 - Wokwi UI demo: https://wokwi.com/projects/392574312711891969
 
 ---
