@@ -71,8 +71,9 @@ public:
     constexpr float lag = SITE_TIDE_LAG_HOURS + TIDE_MODE_EXTRA_LAG_HOURS;
     const bool tideHigh =
         rtcOk && moon::isLunarTideHighAt(ha, phase, lag);
-    const moon::WellSchedule sch =
-        moon::scheduleForTide(rtcOk, ha, phase, lag);
+    moon::WellSchedule sch = moon::scheduleForTide(rtcOk, ha, phase, lag);
+    if (sch.breaktime < moon::MOON_BREAK_PEAK_MIN)
+      sch.breaktime = moon::MOON_BREAK_PEAK_MIN;
 
     if (cmd.show(F("mode"))){
       dbg(F("[TIDE] ha="));

@@ -345,7 +345,8 @@ inline float haDeltaToMinutes(float deltaHours) {
   return fabsf(deltaHours) * ((float)M2_HALF_PERIOD_MIN / 6.f);
 }
 
-inline uint16_t clampBreakMinutes(float minutes, uint16_t lo = 10,
+inline uint16_t clampBreakMinutes(float minutes,
+                                  uint16_t lo = MOON_BREAK_PEAK_MIN,
                                   uint16_t hi = 500) {
   if (minutes < (float)lo)
     return lo;
@@ -413,6 +414,10 @@ inline bool isLunarTideHighAt(float hourAngleHours, float phaseFraction,
 /**
  * TidRunMode: dense cadence (~3 runs) inside lunar high-water windows,
  * otherwise wait until the next peak window begins.
+ *
+ * Wait-to-peak rests are floored at MOON_BREAK_PEAK_MIN (~45). When the next
+ * window is closer than that, enter peak cadence early — otherwise the break
+ * shrinks toward ~10–15 min as HA approaches the edge (seen on restart).
  */
 inline WellSchedule scheduleForTide(bool rtcConnected, float hourAngleHours,
                                     float phaseFraction, float lagHours) {
@@ -426,12 +431,16 @@ inline WellSchedule scheduleForTide(bool rtcConnected, float hourAngleHours,
     return WellSchedule{MOON_RUNTIME, peakBreakMinutes(phaseFraction)};
 
   const float deltaHa = (ha < -w) ? (-w - ha) : ((12.f - w) - ha);
-  return WellSchedule{MOON_RUNTIME, clampBreakMinutes(haDeltaToMinutes(deltaHa))};
+  const float waitMin = haDeltaToMinutes(deltaHa);
+  if (waitMin <= (float)MOON_BREAK_PEAK_MIN)
+    return WellSchedule{MOON_RUNTIME, peakBreakMinutes(phaseFraction)};
+  return WellSchedule{MOON_RUNTIME, clampBreakMinutes(waitMin)};
 }
 
 /**
  * Moon3Mode: tide-peak runs with ~3h breaks; mid-gap run at |HA|≈6 during
  * the long low-tide interval, then ~4h-equivalent wait until nadir peak.
+ * Same MOON_BREAK_PEAK_MIN floor as TidRunMode on wait paths.
  */
 inline WellSchedule scheduleForTideMoon4(bool rtcConnected, float hourAngleHours,
                                          float phaseFraction, float lagHours) {
@@ -448,14 +457,22 @@ inline WellSchedule scheduleForTideMoon4(bool rtcConnected, float hourAngleHours
   constexpr float midHa = 6.f;
   const float nadirHighStart = 12.f - w;
 
-  if (absHa < midHa)
-    return WellSchedule{
-        MOON_RUNTIME, clampBreakMinutes(haDeltaToMinutes(midHa - absHa))};
+  if (absHa < midHa) {
+    const float toMid = haDeltaToMinutes(midHa - absHa);
+    // Close to mid-gap: run now, then wait for nadir (do not emit a <45 rest).
+    if (toMid <= (float)MOON_BREAK_PEAK_MIN)
+      return WellSchedule{
+          MOON_RUNTIME,
+          clampBreakMinutes(haDeltaToMinutes(nadirHighStart - absHa))};
+    return WellSchedule{MOON_RUNTIME, clampBreakMinutes(toMid)};
+  }
 
-  if (absHa < nadirHighStart)
-    return WellSchedule{MOON_RUNTIME,
-                        clampBreakMinutes(haDeltaToMinutes(nadirHighStart -
-                                                           absHa))};
+  if (absHa < nadirHighStart) {
+    const float toNadir = haDeltaToMinutes(nadirHighStart - absHa);
+    if (toNadir <= (float)MOON_BREAK_PEAK_MIN)
+      return WellSchedule{MOON_RUNTIME, MOON_BREAK_3H};
+    return WellSchedule{MOON_RUNTIME, clampBreakMinutes(toNadir)};
+  }
 
   return WellSchedule{MOON_RUNTIME, MOON_BREAK_3H};
 }

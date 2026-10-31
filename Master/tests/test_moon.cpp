@@ -155,6 +155,33 @@ TEST(schedule_tide_mid_gap_skips_extra_low_run) {
   EXPECT_EQ(s.breaktime, expected);
 }
 
+TEST(schedule_tide_near_window_enters_peak_not_submin_break) {
+  // Just outside spring transit window (w=1.75): raw wait would be ~10–15 min.
+  const float w = moon::tideWindowHours(0.f);
+  auto s = moon::scheduleForTide(true, -(w + 0.05f), 0.f, 0.f);
+  EXPECT_EQ(s.breaktime, moon::peakBreakMinutes(0.f));
+  EXPECT_TRUE(s.breaktime >= moon::MOON_BREAK_PEAK_MIN);
+
+  auto nearNadir = moon::scheduleForTide(true, (12.f - w) - 0.05f, 0.f, 0.f);
+  EXPECT_EQ(nearNadir.breaktime, moon::peakBreakMinutes(0.f));
+  EXPECT_TRUE(nearNadir.breaktime >= moon::MOON_BREAK_PEAK_MIN);
+}
+
+TEST(schedule_tide_break_never_below_peak_min_on_2026_10_31) {
+  constexpr float lag = 1.25f; // SITE_TIDE_LAG + TidRun extra
+  for (int t = 0; t < 24 * 60; t += 1) {
+    const int hour = t / 60;
+    const int minute = t % 60;
+    auto h = moon::computeTideState(2026, 10, 31, hour, minute, LAT, LON);
+    auto sch =
+        moon::scheduleForTide(true, h.hourAngleHours, h.phaseFraction, lag);
+    auto sch4 = moon::scheduleForTideMoon4(true, h.hourAngleHours,
+                                           h.phaseFraction, 1.0f);
+    EXPECT_TRUE(sch.breaktime >= moon::MOON_BREAK_PEAK_MIN);
+    EXPECT_TRUE(sch4.breaktime >= moon::MOON_BREAK_PEAK_MIN);
+  }
+}
+
 TEST(schedule_tide_high_uses_adaptive_peak_break) {
   // Spring (phase 0): wider window → break clamped at MOON_BREAK_PEAK_MAX
   auto spring = moon::scheduleForTide(true, 0.f, 0.f, 0.f);

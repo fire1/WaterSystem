@@ -36,8 +36,10 @@ public:
       tideHigh = moon::isLunarTideHighAt(ha, phase, SITE_TIDE_LAG_HOURS);
     }
 
-    const moon::WellSchedule sch =
+    moon::WellSchedule sch =
         moon::scheduleForTideMoon4(rtcOk, ha, phase, SITE_TIDE_LAG_HOURS);
+    if (sch.breaktime < moon::MOON_BREAK_PEAK_MIN)
+      sch.breaktime = moon::MOON_BREAK_PEAK_MIN;
 
     if (cmd.show(F("mode"))){
       dbg(F("[MOON] ha="));
